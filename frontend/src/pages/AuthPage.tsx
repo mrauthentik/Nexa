@@ -1,0 +1,156 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+
+const AuthPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle authentication logic here
+    console.log('Form submitted:', formData);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  return (
+    <div className="min-h-screen grid md:grid-cols-2">
+      {/* Left Side - Auth Form */}
+      <div className="flex items-center justify-center p-4 sm:p-6 md:p-8 bg-white relative">
+        {/* Back Button */}
+        <Link
+          to="/"
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
+        >
+          <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+          <span className="text-xs sm:text-sm font-medium">Back to Home</span>
+        </Link>
+
+        <div className="w-full max-w-md">
+          {/* Logo/Brand */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-primary-600 rounded-full"></div>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              {isLogin ? 'Welcome Back' : 'Create Your Account'}
+            </h1>
+            <p className="text-gray-600 text-xs sm:text-sm">
+              {isLogin ? 'Sign in to access your practice tests' : 'Join NEXA and start acing your NOUN exams'}
+            </p>
+          </div>
+
+          {/* Auth Form */}
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            <div>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                required
+              />
+            </div>
+
+            {!isLogin && (
+              <div>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 sm:gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors font-medium shadow-md hover:shadow-lg"
+                style={{ color: '#ffffff' }}
+              >
+                {isLogin ? 'Sign In' : 'Sign Up'}
+              </button>
+            </div>
+          </form>
+
+          {/* Footer Links */}
+          {isLogin && (
+            <div className="mt-4 sm:mt-6 text-center">
+              <a href="#" className="text-xs sm:text-sm text-gray-600 hover:text-primary-600 transition-colors">
+                Forgot your password?
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Side - Hero Image */}
+      <div className="hidden md:block relative bg-gradient-to-br from-gray-100 to-gray-200 min-h-[400px] md:min-h-screen">
+        <div className="absolute inset-0">
+          <img
+            src="/img (3).jpg"
+            alt="Online learning"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/10"></div>
+        </div>
+        
+        {/* Overlay Content */}
+        <div className="relative h-full flex flex-col items-center justify-center p-6 md:p-8 lg:p-12 text-white">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4 text-center drop-shadow-lg">
+            NOUN Exam Experience Assistant
+          </h2>
+          <p className="text-base md:text-lg lg:text-xl text-center drop-shadow-md">
+            NEXA - Practice, Track, Excel
+          </p>
+          
+          {/* Decorative Element */}
+          <div className="mt-8 md:mt-12 text-center">
+            <div className="inline-block bg-white/10 backdrop-blur-sm rounded-xl md:rounded-2xl p-4 md:p-6 lg:p-8 border border-white/20">
+              <p className="text-xs sm:text-sm md:text-base">Computer-Based Training Platform</p>
+              <p className="text-xs mt-1 md:mt-2 opacity-80">Success is your Nickname 🚀</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthPage;
