@@ -38,7 +38,7 @@ const SettingsPage = () => {
   const [preferences, setPreferences] = useState({
     language: 'en',
     timezone: 'Africa/Lagos',
-    theme: 'light'
+    theme: localStorage.getItem('theme') || 'light'
   });
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -79,7 +79,19 @@ const SettingsPage = () => {
 
   const handleSavePreferences = () => {
     console.log('Saving preferences:', preferences);
+    // Save theme to localStorage
+    localStorage.setItem('theme', preferences.theme);
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('themeChange'));
     alert('Preferences updated!');
+  };
+
+  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTheme = e.target.value;
+    setPreferences({ ...preferences, theme: newTheme });
+    // Immediately apply theme
+    localStorage.setItem('theme', newTheme);
+    window.dispatchEvent(new Event('themeChange'));
   };
 
   return (
@@ -393,13 +405,15 @@ const SettingsPage = () => {
                   <select
                     name="theme"
                     value={preferences.theme}
-                    onChange={handlePreferenceChange}
+                    onChange={handleThemeChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto</option>
+                    <option value="light">Light Mode</option>
+                    <option value="dark">Dark Mode</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Choose your preferred color scheme. Changes apply immediately.
+                  </p>
                 </div>
               </div>
               <button

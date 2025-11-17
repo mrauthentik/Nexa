@@ -1,16 +1,4 @@
 import { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  FileText,
-  Settings,
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
 
 const AdminDashboard = () => {
   const [currentDate, setCurrentDate] = useState(new Date(2023, 0, 1));
@@ -146,9 +134,13 @@ const AdminDashboard = () => {
                     <h3 className="text-4xl font-bold text-gray-900">{stat.value}</h3>
                   </div>
                   {stat.trend === 'up' ? (
-                    <TrendingUp className="text-green-600" size={24} />
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
                   ) : (
-                    <TrendingDown className="text-red-600" size={24} />
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                    </svg>
                   )}
                 </div>
                 <p className="text-xs text-gray-600">{stat.change}</p>
@@ -160,28 +152,95 @@ const AdminDashboard = () => {
             {/* Performance Overview */}
             <div className="col-span-2 bg-white rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Student Performance Overview</h3>
-                <select className="px-3 py-1 border rounded-lg text-sm">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Student Performance Overview</h3>
+                  <p className="text-sm text-gray-500">Average test scores across all courses</p>
+                </div>
+                <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
                   <option>This Month</option>
                   <option>Last Month</option>
                   <option>This Year</option>
                 </select>
               </div>
-              <div className="h-64 flex items-end justify-between gap-2">
-                {/* Simplified chart */}
-                {[65, 78, 85, 72, 88, 75, 82].map((height, i) => (
-                  <div 
-                    key={i}
-                    className="flex-1 bg-gradient-to-t from-primary-500 to-primary-300 rounded-t-lg hover:opacity-80 transition-opacity cursor-pointer"
-                    style={{ height: `${height}%` }}
-                  ></div>
-                ))}
+              
+              {/* Chart Container */}
+              <div className="relative h-64">
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400 pr-2">
+                  <span>100%</span>
+                  <span>75%</span>
+                  <span>50%</span>
+                  <span>25%</span>
+                  <span>0%</span>
+                </div>
+                
+                {/* Chart area */}
+                <div className="ml-8 h-full relative">
+                  {/* Grid lines */}
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <div key={i} className="border-t border-gray-200"></div>
+                    ))}
+                  </div>
+                  
+                  {/* Bar Chart */}
+                  <div className="absolute inset-0 flex items-end justify-between gap-2 px-2">
+                    {[
+                      { height: 65, color: 'from-blue-400 to-blue-600', label: '65%' },
+                      { height: 78, color: 'from-indigo-400 to-indigo-600', label: '78%' },
+                      { height: 85, color: 'from-purple-400 to-purple-600', label: '85%' },
+                      { height: 72, color: 'from-pink-400 to-pink-600', label: '72%' },
+                      { height: 88, color: 'from-rose-400 to-rose-600', label: '88%' },
+                      { height: 75, color: 'from-orange-400 to-orange-600', label: '75%' },
+                      { height: 82, color: 'from-amber-400 to-amber-600', label: '82%' }
+                    ].map((bar, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center group">
+                        <div className="relative w-full">
+                          {/* Tooltip */}
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-2 py-1 rounded text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            {bar.label}
+                          </div>
+                          {/* Bar */}
+                          <div 
+                            className={`w-full bg-gradient-to-t ${bar.color} rounded-t-lg transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg`}
+                            style={{ height: `${bar.height * 2.5}px` }}
+                          >
+                            {/* Shine effect */}
+                            <div className="w-full h-full bg-gradient-to-r from-white/20 to-transparent rounded-t-lg"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* X-axis labels */}
+                <div className="absolute bottom-0 left-8 right-0 flex justify-between text-xs text-gray-400 mt-2 px-2">
+                  <span>Week 1</span>
+                  <span>Week 2</span>
+                  <span>Week 3</span>
+                  <span>Week 4</span>
+                </div>
               </div>
-              <div className="flex justify-between mt-4 text-xs text-gray-500">
-                <span>Week 1</span>
-                <span>Week 2</span>
-                <span>Week 3</span>
-                <span>Week 4</span>
+              
+              {/* Stats below chart */}
+              <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">88%</p>
+                  <p className="text-xs text-gray-500">Peak</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">77.8%</p>
+                  <p className="text-xs text-gray-500">Average</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-500">+8.5%</p>
+                  <p className="text-xs text-gray-500">Growth</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-500">1,248</p>
+                  <p className="text-xs text-gray-500">Students</p>
+                </div>
               </div>
             </div>
 
