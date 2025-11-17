@@ -125,9 +125,12 @@ const AdminDashboard = () => {
             <p className="text-sm text-gray-500">Welcome back, Administrator</p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-              + Create Test
-            </button>
+            <a href="/admin/add-summary" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+              + Add Summary
+            </a>
+            <a href="/admin/add-questions" className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+              + Add Questions
+            </a>
             <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-semibold">
               A
             </div>

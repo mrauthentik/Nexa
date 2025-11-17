@@ -10,6 +10,8 @@ import SummariesPage from './pages/SummariesPage'
 import SummaryDetailPage from './pages/SummaryDetailPage'
 import SchedulePage from './pages/SchedulePage'
 import CBTPracticePage from './pages/CBTPracticePage'
+import AdminAddSummary from './pages/AdminAddSummary'
+import AdminAddQuestions from './pages/AdminAddQuestions'
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
           <Route path="/summaries/:id" element={<SummaryDetailPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/cbt-practice" element={<CBTPracticePage />} />
+          <Route path="/admin/add-summary" element={<AdminAddSummary />} />
+          <Route path="/admin/add-questions" element={<AdminAddQuestions />} />
         </Routes>
       </Router>
     </ThemeProvider>
