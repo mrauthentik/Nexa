@@ -17,7 +17,7 @@ const AdminDashboard = () => {
       avgScore: '82%',
       date: 'JAN 15, 2025',
       status: 'Active',
-      icon: '📊'
+      icon: 'chart'
     },
     { 
       id: 2, 
@@ -27,7 +27,7 @@ const AdminDashboard = () => {
       avgScore: '75%',
       date: 'JAN 12, 2025',
       status: 'Completed',
-      icon: '🔍'
+      icon: 'search'
     },
     { 
       id: 3, 
@@ -37,7 +37,7 @@ const AdminDashboard = () => {
       avgScore: '88%',
       date: 'JAN 18, 2025',
       status: 'Scheduled',
-      icon: '💾'
+      icon: 'database'
     },
     { 
       id: 4, 
@@ -47,7 +47,7 @@ const AdminDashboard = () => {
       avgScore: '79%',
       date: 'JAN 20, 2025',
       status: 'Scheduled',
-      icon: '🌐'
+      icon: 'globe'
     },
   ];
 
@@ -294,8 +294,27 @@ const AdminDashboard = () => {
             <div className="space-y-4">
               {recentTests.map((test) => (
                 <div key={test.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-2xl">
-                    {test.icon}
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    {test.icon === 'chart' && (
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    )}
+                    {test.icon === 'search' && (
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    )}
+                    {test.icon === 'database' && (
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                      </svg>
+                    )}
+                    {test.icon === 'globe' && (
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                    )}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900">{test.title}</h4>

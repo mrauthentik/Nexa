@@ -23,7 +23,7 @@ const Dashboard = () => {
       time: 'At 08:00 PM',
       marks: '20 Marks',
       status: 'Pending',
-      icon: '📊',
+      icon: 'chart',
       color: 'bg-orange-100'
     },
     { 
@@ -34,7 +34,7 @@ const Dashboard = () => {
       time: 'At 08:00 PM',
       marks: '10 Marks',
       status: 'Submitted',
-      icon: '🔍',
+      icon: 'search',
       color: 'bg-green-100'
     },
     { 
@@ -45,7 +45,7 @@ const Dashboard = () => {
       time: 'At 08:00 PM',
       marks: '20 Marks',
       status: 'Pending',
-      icon: '💡',
+      icon: 'lightbulb',
       color: 'bg-purple-100'
     },
     { 
@@ -56,7 +56,7 @@ const Dashboard = () => {
       time: 'At 08:00 PM',
       marks: '55 Marks',
       status: 'Pending',
-      icon: '💼',
+      icon: 'briefcase',
       color: 'bg-blue-100'
     },
   ];
@@ -122,7 +122,7 @@ const Dashboard = () => {
             </svg>
             <span>CBT Practice</span>
           </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors">
+          <a href="/schedule" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -415,8 +415,27 @@ const Dashboard = () => {
                   <div key={assignment.id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg transition-colors ${
                     isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                   }`}>
-                    <div className={`w-12 h-12 ${assignment.color} rounded-lg flex items-center justify-center text-2xl`}>
-                      {assignment.icon}
+                    <div className={`w-12 h-12 ${assignment.color} rounded-lg flex items-center justify-center`}>
+                      {assignment.icon === 'chart' && (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      )}
+                      {assignment.icon === 'search' && (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      )}
+                      {assignment.icon === 'lightbulb' && (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      )}
+                      {assignment.icon === 'briefcase' && (
+                        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{assignment.title}</h4>

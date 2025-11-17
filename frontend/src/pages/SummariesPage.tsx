@@ -75,7 +75,7 @@ const SummariesPage = () => {
       totalLessons: 50,
       completedLessons: 12,
       bgColor: 'bg-gradient-to-br from-purple-200 to-purple-300',
-      instructors: ['👨‍🎨', '👩‍🎨', '👨‍💻'],
+      instructors: ['A', 'B', 'C'],
     },
     {
       id: 3,
@@ -113,7 +113,7 @@ const SummariesPage = () => {
       totalLessons: 15,
       completedLessons: 0,
       bgColor: 'bg-gradient-to-br from-green-200 to-green-300',
-      instructors: ['👨‍💻', '👩‍💻'],
+      instructors: ['D', 'E'],
     },
     {
       id: 5,
@@ -474,10 +474,10 @@ const SummariesPage = () => {
               {/* Students Avatars */}
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex -space-x-2">
-                  {['👨‍💻', '👩‍💻', '👨‍🎓', '👩‍🎓'].map((avatar, idx) => (
+                  {['JD', 'SM', 'AK', 'LM'].map((avatar, idx) => (
                     <div
                       key={idx}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 border-2 border-gray-900 flex items-center justify-center text-lg"
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 border-2 border-gray-900 flex items-center justify-center text-sm font-semibold text-white"
                     >
                       {avatar}
                     </div>

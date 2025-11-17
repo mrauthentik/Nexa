@@ -255,7 +255,9 @@ const SummaryDetailPage = () => {
                 {/* Completion Message */}
                 {readingProgress >= 95 && (
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 text-center">
-                    <div className="text-4xl mb-3">🎉</div>
+                    <svg className="w-16 h-16 mx-auto mb-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">Great Job!</h3>
                     <p className="text-gray-600 mb-4">You've completed this summary. Ready to test your knowledge?</p>
                     <a
