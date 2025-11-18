@@ -1,0 +1,38 @@
+{
+  "name": "nexa-backend",
+  "version": "1.0.0",
+  "description": "Backend infrastructure for NEXA - NOUN Exam Experience Assistant",
+  "scripts": {
+    "deploy": "powershell -ExecutionPolicy Bypass -File ./deploy.ps1",
+    "deploy:unix": "bash ./deploy.sh",
+    "link": "supabase link",
+    "migrate": "supabase db push",
+    "reset": "supabase db reset",
+    "functions:list": "supabase functions list",
+    "functions:logs": "supabase functions logs",
+    "db:diff": "supabase db diff",
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "status": "supabase status"
+  },
+  "keywords": [
+    "supabase",
+    "edge-functions",
+    "postgresql",
+    "education",
+    "cbt",
+    "exam-platform"
+  ],
+  "author": "NEXA Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "your-repository-url"
+  },
+  "dependencies": {
+    "supabase": "^2.58.5"
+  }
+}

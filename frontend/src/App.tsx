@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { AuthProvider } from './context/AuthContext'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
@@ -16,22 +17,24 @@ import AdminAddQuestions from './pages/AdminAddQuestions'
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/summaries" element={<SummariesPage />} />
-          <Route path="/summaries/:id" element={<SummaryDetailPage />} />
-          <Route path="/schedule" element={<SchedulePage />} />
-          <Route path="/cbt-practice" element={<CBTPracticePage />} />
-          <Route path="/admin/add-summary" element={<AdminAddSummary />} />
-          <Route path="/admin/add-questions" element={<AdminAddQuestions />} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/summaries" element={<SummariesPage />} />
+            <Route path="/summaries/:id" element={<SummaryDetailPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/cbt-practice" element={<CBTPracticePage />} />
+            <Route path="/admin/add-summary" element={<AdminAddSummary />} />
+            <Route path="/admin/add-questions" element={<AdminAddQuestions />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   )
 }
