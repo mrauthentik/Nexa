@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2023, 0, 1)); // January 2023
-  const [selectedDate, setSelectedDate] = useState(7);
+  const [currentDate, setCurrentDate] = useState(new Date()); // Current date
+  const [selectedDate, setSelectedDate] = useState(new Date().getDate());
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { user, profile, signOut, isAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -194,11 +196,18 @@ const Dashboard = () => {
             </svg>
             <span>Settings</span>
           </a>
+          {isAdmin && (
+            <a href="/admin" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span>Admin Panel</span>
+            </a>
+          )}
           <button 
-            onClick={() => {
-              // TODO: Implement logout logic with backend
+            onClick={async () => {
               if (confirm('Are you sure you want to logout?')) {
-                alert('Logout functionality will be implemented with backend');
+                await signOut();
                 window.location.href = '/';
               }
             }}
@@ -376,7 +385,7 @@ const Dashboard = () => {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base hover:bg-primary-700 transition-colors"
               >
-                U
+                {profile?.full_name ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
               </button>
               {showProfileMenu && (
                 <>
@@ -386,8 +395,8 @@ const Dashboard = () => {
                   ></div>
                   <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-20 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
                     <div className={`px-4 py-3 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>User Name</p>
-                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>user@example.com</p>
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{profile?.full_name || 'User'}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{profile?.email || user?.email || ''}</p>
                     </div>
                     <div className="py-1">
                       <a 
@@ -401,10 +410,11 @@ const Dashboard = () => {
                         Settings
                       </a>
                       <button 
-                        onClick={() => {
-                          // TODO: Implement logout logic
-                          alert('Logout functionality will be implemented with backend');
-                          window.location.href = '/';
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to logout?')) {
+                            await signOut();
+                            window.location.href = '/';
+                          }
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}
                       >

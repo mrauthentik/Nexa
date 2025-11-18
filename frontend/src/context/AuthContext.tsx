@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signUp = async (email: string, password: string, fullName: string) => {
+        // Sign up with autoConfirm disabled (requires Supabase dashboard config)
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -99,6 +100,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (error) throw error;
+        
+        // Create profile in profiles table
+        if (data.user) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: data.user.id,
+                    email: data.user.email,
+                    full_name: fullName,
+                    role: 'student',
+                });
+            
+            if (profileError) {
+                console.error('Error creating profile:', profileError);
+                // Don't throw error here as auth user is already created
+            }
+        }
+        
         return data;
     };
 

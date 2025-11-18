@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
@@ -22,16 +23,20 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/summaries" element={<SummariesPage />} />
-            <Route path="/summaries/:id" element={<SummaryDetailPage />} />
-            <Route path="/schedule" element={<SchedulePage />} />
-            <Route path="/cbt-practice" element={<CBTPracticePage />} />
-            <Route path="/admin/add-summary" element={<AdminAddSummary />} />
-            <Route path="/admin/add-questions" element={<AdminAddQuestions />} />
+            
+            {/* Protected Student Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/summaries" element={<ProtectedRoute><SummariesPage /></ProtectedRoute>} />
+            <Route path="/summaries/:id" element={<ProtectedRoute><SummaryDetailPage /></ProtectedRoute>} />
+            <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
+            <Route path="/cbt-practice" element={<ProtectedRoute><CBTPracticePage /></ProtectedRoute>} />
+            
+            {/* Admin Only Routes */}
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/add-summary" element={<ProtectedRoute requireAdmin><AdminAddSummary /></ProtectedRoute>} />
+            <Route path="/admin/add-questions" element={<ProtectedRoute requireAdmin><AdminAddQuestions /></ProtectedRoute>} />
           </Routes>
         </Router>
       </AuthProvider>

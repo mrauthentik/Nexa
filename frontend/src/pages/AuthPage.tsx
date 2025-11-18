@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import toast, { Toaster } from 'react-hot-toast';
 
 const AuthPage = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -18,29 +20,35 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       if (isLogin) {
         await signIn(formData.email, formData.password);
+        toast.success('Welcome back!');
         navigate('/dashboard');
       } else {
         if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
+          toast.error('Passwords do not match');
           setLoading(false);
           return;
         }
         if (!formData.fullName.trim()) {
-          setError('Full name is required');
+          toast.error('Full name is required');
+          setLoading(false);
+          return;
+        }
+        if (formData.password.length < 6) {
+          toast.error('Password must be at least 6 characters');
           setLoading(false);
           return;
         }
         await signUp(formData.email, formData.password, formData.fullName);
+        toast.success('Account created successfully!');
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please try again.');
+      toast.error(err.message || 'Authentication failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -54,9 +62,11 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Left Side - Auth Form */}
-      <div className="flex items-center justify-center p-4 sm:p-6 md:p-8 bg-white relative">
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="min-h-screen grid md:grid-cols-2">
+        {/* Left Side - Auth Form */}
+        <div className="flex items-center justify-center p-4 sm:p-6 md:p-8 bg-white relative">
         {/* Back Button */}
         <Link
           to="/"
@@ -107,38 +117,45 @@ const AuthPage = () => {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 text-sm sm:text-base text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 required
-                minLength={8}
+                minLength={isLogin ? undefined : 6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             {!isLogin && (
-              <div>
+              <div className="relative">
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   placeholder="Confirm password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 text-sm sm:text-base text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   required
-                  minLength={8}
+                  minLength={6}
                 />
-              </div>
-            )}
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             )}
 
@@ -202,6 +219,7 @@ const AuthPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

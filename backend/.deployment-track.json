@@ -1,3 +1,20 @@
 {
-  "lastDeployed": {}
+  "lastDeployed": {
+    "create-schedule-item": "{\"index.ts\":\"7a50059a0092bd4d0e5115faa328ce4b\"}",
+    "create-summary": "{\"index.ts\":\"1b95c08e840d662b2ceec9e710bf5fb2\"}",
+    "create-test": "{\"index.ts\":\"604b05599f7d0fc0cc3c61f4ffb80091\"}",
+    "get-admin-dashboard": "{\"index.ts\":\"e939b6895f8d5f6f4a3deea9297ca3ec\"}",
+    "get-notifications": "{\"index.ts\":\"d64f8d5cfd9c4116f9b8602ef988635d\"}",
+    "get-schedule": "{\"index.ts\":\"db5fb8068a513bac2541cea5e039aa95\"}",
+    "get-summaries": "{\"index.ts\":\"47e7969258b20157b675d364d08b11f7\"}",
+    "get-summary-detail": "{\"index.ts\":\"a518211258db49ec5c01c8d37824c25f\"}",
+    "get-test-questions": "{\"index.ts\":\"c2581e3c9d3c5a443566c999cc3bbc18\"}",
+    "get-tests": "{\"index.ts\":\"9e505c234515d76cf8bb4ea5f2de9161\"}",
+    "get-user-stats": "{\"index.ts\":\"ba422e159be7f9ca56ec451a123ca0fb\"}",
+    "mark-notification-read": "{\"index.ts\":\"1d9b291875553504253ce4446e9e4153\"}",
+    "signin": "{\"index.ts\":\"37170edeb9d74c8223ad2ad13e36079a\"}",
+    "signup": "{\"index.ts\":\"770a55bf35ea29d8359ef0f8cced9368\"}",
+    "submit-test": "{\"index.ts\":\"528533ef95a7e1ecc4e78a4d18a30af1\"}",
+    "update-user-profile": "{\"index.ts\":\"98c49e77781f5f37d27e392edc300506\"}"
+  }
 }
