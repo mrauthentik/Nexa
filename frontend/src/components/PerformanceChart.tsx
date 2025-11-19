@@ -32,88 +32,40 @@ const PerformanceChart = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('🔄 PerformanceChart useEffect triggered');
-    console.log('🔄 User exists:', !!user);
-    console.log('🔄 User object:', user);
-    console.log('🔄 Period:', period);
-    
     if (user) {
-      console.log('✅ User found, calling fetchChartData...');
       fetchChartData();
       
       // Refresh every 30 seconds
-      const interval = setInterval(() => {
-        console.log('⏰ 30-second interval refresh');
-        fetchChartData();
-      }, 30000);
+      const interval = setInterval(fetchChartData, 30000);
       
       // Listen for test submission events to refresh immediately
       const handleTestSubmitted = () => {
-        console.log('📊 Test submitted - refreshing performance chart');
         fetchChartData();
       };
       
       window.addEventListener('testSubmitted', handleTestSubmitted);
       
       return () => {
-        console.log('🧹 Cleaning up PerformanceChart listeners');
         clearInterval(interval);
         window.removeEventListener('testSubmitted', handleTestSubmitted);
       };
-    } else {
-      console.warn('⚠️ No user found, cannot fetch chart data');
     }
   }, [period, user]);
 
   const fetchChartData = async () => {
-    if (!user) {
-      console.warn('⚠️ No user found, cannot fetch chart data');
-      return;
-    }
-    
-    console.log('📊 ========== FETCHING PERFORMANCE CHART ==========');
-    console.log('📊 User ID:', user.id);
-    console.log('📊 Period:', period);
-    console.log('📊 API URL:', `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-performance-chart?user_id=${user.id}&period=${period}`);
+    if (!user) return;
     
     try {
       const response = await dashboardAPI.getPerformanceChart(user.id, period);
-      console.log('📊 Raw API response:', response);
-      console.log('📊 Response type:', typeof response);
-      console.log('📊 Response keys:', Object.keys(response || {}));
-      console.log('📊 Full response JSON:', JSON.stringify(response, null, 2));
       
-      // Check if response has error (401, etc)
-      if (response.error) {
-        console.error('❌ ========== API ERROR ==========');
-        console.error('❌ Error:', response.error);
-        console.error('❌ Message:', response.message);
-        console.error('❌ Status:', response.status);
-        console.error('❌ ===================================');
+      if (response.error || !response.chartData || !response.stats) {
         setLoading(false);
         return;
       }
       
-      // Validate response structure
-      if (!response.chartData || !response.stats) {
-        console.error('❌ Invalid response structure:', response);
-        setLoading(false);
-        return;
-      }
-      
-      console.log('✅ ========== CHART DATA LOADED ==========');
-      console.log('✅ Total Tests:', response.totalTests);
-      console.log('✅ Stats:', response.stats);
-      console.log('✅ Chart Data Points:', response.chartData?.length);
-      console.log('✅ Chart Data:', response.chartData);
-      console.log('✅ ==========================================');
       setData(response);
     } catch (error) {
-      console.error('❌ ========== FETCH ERROR ==========');
-      console.error('❌ Error:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
-      console.error('❌ ==================================');
+      console.error('Error fetching chart data:', error);
     } finally {
       setLoading(false);
     }
@@ -168,22 +120,7 @@ const PerformanceChart = () => {
     );
   }
 
-  console.log('🎨 RENDER: Current data state:', {
-    hasData: !!data,
-    totalTests: data?.totalTests,
-    highest: data?.stats?.highest,
-    average: data?.stats?.average,
-    improvement: data?.stats?.improvement,
-    chartDataLength: data?.chartData?.length
-  });
-
   if (!data || data.totalTests === 0) {
-    console.log('⚠️ Chart showing NO DATA state:', {
-      hasData: !!data,
-      totalTests: data?.totalTests,
-      stats: data?.stats,
-      chartDataLength: data?.chartData?.length
-    });
     
     return (
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
@@ -219,9 +156,6 @@ const PerformanceChart = () => {
             </p>
             <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
               Take your first test to see your performance chart!
-            </p>
-            <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
-              Debug: totalTests = {data?.totalTests ?? 'null'}
             </p>
           </div>
         </div>
