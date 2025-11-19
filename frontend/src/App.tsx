@@ -14,6 +14,7 @@ import SchedulePage from './pages/SchedulePage'
 import CBTPracticePage from './pages/CBTPracticePage'
 import CBTInstructionPage from './pages/CBTInstructionPage'
 import CBTTestPage from './pages/CBTTestPage'
+import CBTResultsPage from './pages/CBTResultsPage'
 import AdminAddSummary from './pages/AdminAddSummary'
 import AdminAddQuestions from './pages/AdminAddQuestions'
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="/cbt-practice" element={<Navigate to="/cbt" replace />} />
             <Route path="/cbt/instruction/:courseId" element={<ProtectedRoute><CBTInstructionPage /></ProtectedRoute>} />
             <Route path="/cbt/test/:courseId" element={<ProtectedRoute><CBTTestPage /></ProtectedRoute>} />
+            <Route path="/cbt/results" element={<ProtectedRoute><CBTResultsPage /></ProtectedRoute>} />
             
             {/* Admin Only Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />

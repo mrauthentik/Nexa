@@ -105,6 +105,109 @@ export const testsAPI = {
     },
 };
 
+// Course Questions APIs
+export const courseQuestionsAPI = {
+    getQuestions: async (courseId: string, limit?: number) => {
+        const params = new URLSearchParams({ courseId });
+        if (limit) params.append('limit', limit.toString());
+        
+        const response = await fetch(`${FUNCTIONS_URL}/get-course-questions?${params}`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    getQuestionCount: async (courseId: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/get-course-question-count?courseId=${courseId}`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+};
+
+// Courses APIs
+export const coursesAPI = {
+    getAll: async (filters?: { isActive?: boolean; level?: string; department?: string; semester?: number }) => {
+        try {
+            const params = new URLSearchParams();
+            if (filters?.isActive !== undefined) params.append('isActive', filters.isActive.toString());
+            if (filters?.level) params.append('level', filters.level);
+            if (filters?.department) params.append('department', filters.department);
+            if (filters?.semester) params.append('semester', filters.semester.toString());
+            
+            const response = await fetch(`${FUNCTIONS_URL}/get-courses?${params}`, {
+                headers: await getAuthHeaders(),
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('get-courses error:', response.status, errorText);
+                throw new Error(`Failed to fetch courses: ${response.status}`);
+            }
+            
+            return response.json();
+        } catch (error) {
+            console.error('coursesAPI.getAll error:', error);
+            throw error;
+        }
+    },
+
+    getById: async (courseId: string) => {
+        const { data, error } = await supabase
+            .from('courses')
+            .select('*')
+            .eq('id', courseId)
+            .single();
+        
+        if (error) throw error;
+        return data;
+    },
+};
+
+// Calendar APIs
+export const calendarAPI = {
+    getEvents: async (startDate?: string, endDate?: string) => {
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        
+        const response = await fetch(`${FUNCTIONS_URL}/get-calendar-events?${params}`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    createEvent: async (eventData: { title: string; description?: string; date: string; type: string; color?: string }) => {
+        const response = await fetch(`${FUNCTIONS_URL}/create-calendar-event`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(eventData),
+        });
+        return response.json();
+    },
+
+    deleteEvent: async (eventId: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/delete-calendar-event`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({ eventId }),
+        });
+        return response.json();
+    },
+};
+
+// CBT Test Submission API
+export const cbtAPI = {
+    submitTest: async (submissionData: { courseId: string; score: number; percentage: number; timeTaken: number; answers: any }) => {
+        const response = await fetch(`${FUNCTIONS_URL}/submit-cbt-test`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(submissionData),
+        });
+        return response.json();
+    },
+};
+
 // Notifications APIs
 export const notificationsAPI = {
     getAll: async () => {
@@ -116,6 +219,23 @@ export const notificationsAPI = {
 
     markAsRead: async (notificationId: string) => {
         const response = await fetch(`${FUNCTIONS_URL}/mark-notification-read`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({ notificationId }),
+        });
+        return response.json();
+    },
+
+    markAllAsRead: async () => {
+        const response = await fetch(`${FUNCTIONS_URL}/mark-all-notifications-read`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    delete: async (notificationId: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/delete-notification`, {
             method: 'POST',
             headers: await getAuthHeaders(),
             body: JSON.stringify({ notificationId }),
@@ -224,12 +344,47 @@ export const adminAPI = {
     },
 };
 
+// Dashboard Stats API
+export const dashboardAPI = {
+    getStats: async () => {
+        const response = await fetch(`${FUNCTIONS_URL}/get-user-stats`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+};
+
+// Settings API
+export const settingsAPI = {
+    getSettings: async () => {
+        const response = await fetch(`${FUNCTIONS_URL}/get-user-settings`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    updateSettings: async (settingType: 'notifications' | 'preferences', settings: any) => {
+        const response = await fetch(`${FUNCTIONS_URL}/update-user-settings`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({ settingType, settings }),
+        });
+        return response.json();
+    },
+};
+
 export default {
     auth: authAPI,
     summaries: summariesAPI,
     tests: testsAPI,
+    courseQuestions: courseQuestionsAPI,
+    courses: coursesAPI,
+    calendar: calendarAPI,
+    cbt: cbtAPI,
     notifications: notificationsAPI,
     schedule: scheduleAPI,
     user: userAPI,
     admin: adminAPI,
+    dashboard: dashboardAPI,
+    settings: settingsAPI,
 };

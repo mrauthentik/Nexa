@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
+import { dashboardAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
 const Dashboard = () => {
@@ -13,11 +14,18 @@ const Dashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch notifications from database
+  // Fetch notifications and stats from database
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchDashboardStats();
+      
+      // Refresh stats every 30 seconds
+      const interval = setInterval(fetchDashboardStats, 30000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -36,6 +44,30 @@ const Dashboard = () => {
       setNotifications(data || []);
     } catch (error: any) {
       console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const data = await dashboardAPI.getStats();
+      if (data.error) {
+        console.error('API Error:', data.error);
+        return;
+      }
+      setDashboardStats(data);
+    } catch (error: any) {
+      console.error('Error fetching dashboard stats:', error);
+      // Don't show error toast for 401 - user might not be fully logged in yet
+      if (error.status !== 401) {
+        toast.error('Failed to load dashboard stats');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,11 +102,33 @@ const Dashboard = () => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Mock data
-  const stats = [
-    { label: 'Course Progress', value: '48%', change: '15% this week', trend: 'up', color: 'bg-orange-200' },
-    { label: 'Attendance', value: '97%', change: '30.10 this week', trend: 'up', color: 'bg-green-200' },
-    { label: 'Avg Score', value: '86%', change: '30-70% this week', trend: 'down', color: 'bg-blue-200' },
+  // Real-time stats from API
+  const stats = dashboardStats?.stats ? [
+    { 
+      label: 'Course Progress', 
+      value: `${dashboardStats.stats.courseProgress}%`, 
+      change: `${dashboardStats.stats.totalTests} tests taken`, 
+      trend: 'up', 
+      color: 'bg-orange-200' 
+    },
+    { 
+      label: 'Attendance', 
+      value: `${dashboardStats.stats.attendance}%`, 
+      change: 'Based on weekly activity', 
+      trend: dashboardStats.stats.attendance >= 70 ? 'up' : 'down', 
+      color: 'bg-green-200' 
+    },
+    { 
+      label: 'Avg Score', 
+      value: `${dashboardStats.stats.averageScore}%`, 
+      change: `${dashboardStats.stats.totalTests} tests completed`, 
+      trend: dashboardStats.stats.averageScore >= 70 ? 'up' : 'down', 
+      color: 'bg-blue-200' 
+    },
+  ] : [
+    { label: 'Course Progress', value: '0%', change: 'No tests yet', trend: 'up', color: 'bg-orange-200' },
+    { label: 'Attendance', value: '0%', change: 'No tests yet', trend: 'up', color: 'bg-green-200' },
+    { label: 'Avg Score', value: '0%', change: 'No tests yet', trend: 'up', color: 'bg-blue-200' },
   ];
 
   const assignments = [

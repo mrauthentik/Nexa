@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import supabase from '../supabaseClient';
+import { courseQuestionsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { Clock, FileText, AlertCircle, Play, ArrowLeft } from 'lucide-react';
 
@@ -53,15 +54,19 @@ const CBTInstructionPage = () => {
 
   const fetchAvailableQuestions = async () => {
     try {
-      const { count, error } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('course_id', courseId);
-
-      if (error) throw error;
-      setAvailableQuestions(count || 0);
+      // Use the API endpoint to get question count
+      const response = await courseQuestionsAPI.getQuestionCount(courseId!);
+      
+      if (response.error) {
+        console.error('Error fetching question count:', response.error);
+        setAvailableQuestions(0);
+        return;
+      }
+      
+      setAvailableQuestions(response.count || 0);
     } catch (error: any) {
       console.error('Error fetching question count:', error);
+      setAvailableQuestions(0);
     }
   };
 

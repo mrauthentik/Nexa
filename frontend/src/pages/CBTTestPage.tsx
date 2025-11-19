@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
+import { courseQuestionsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -62,20 +63,24 @@ const CBTTestPage = () => {
 
   const fetchQuestions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('course_id', courseId)
-        .limit(questionCount);
-
-      if (error) throw error;
+      // Use the API endpoint to fetch questions
+      const response = await courseQuestionsAPI.getQuestions(courseId!, questionCount);
       
-      // Shuffle questions
-      const shuffled = data.sort(() => Math.random() - 0.5);
-      setQuestions(shuffled);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      if (!response.questions || response.questions.length === 0) {
+        toast.error('No questions available for this course');
+        navigate('/cbt');
+        return;
+      }
+      
+      // Questions are already shuffled by the API
+      setQuestions(response.questions);
     } catch (error: any) {
       toast.error('Failed to load questions');
-      console.error(error);
+      console.error('Error fetching questions:', error);
       navigate('/cbt');
     } finally {
       setLoading(false);
@@ -108,12 +113,39 @@ const CBTTestPage = () => {
     // Calculate score
     let correctCount = 0;
     questions.forEach((question, index) => {
-      if (answers[index] === question.correct_answer) {
-        correctCount++;
+      const userAnswer = answers[index];
+      const correctAnswer = question.correct_answer;
+      
+      console.log('Question:', question.question_text);
+      console.log('User Answer:', userAnswer);
+      console.log('Correct Answer:', correctAnswer);
+      console.log('Question Type:', question.question_type);
+      
+      // For fill-in-blank, do exact match (case-sensitive, trimmed)
+      if (question.question_type === 'fill_in_blank') {
+        // Trim whitespace and compare
+        const trimmedUserAnswer = (userAnswer || '').trim();
+        const trimmedCorrectAnswer = (correctAnswer || '').toString().trim();
+        
+        if (trimmedUserAnswer === trimmedCorrectAnswer) {
+          correctCount++;
+          console.log('✓ Correct!');
+        } else {
+          console.log('✗ Incorrect');
+        }
+      } else {
+        // For multiple choice, compare answer letters
+        if (userAnswer === correctAnswer) {
+          correctCount++;
+          console.log('✓ Correct!');
+        } else {
+          console.log('✗ Incorrect');
+        }
       }
     });
 
     const finalScore = Math.round((correctCount / questions.length) * 100);
+    const timeTaken = (timeLimit * 60) - timeLeft;
     setScore(finalScore);
 
     // Save test result to database
@@ -124,11 +156,24 @@ const CBTTestPage = () => {
         score: finalScore,
         total_questions: questions.length,
         correct_answers: correctCount,
-        time_taken: (timeLimit * 60) - timeLeft,
+        time_taken: timeTaken,
         answers: answers
       });
 
       toast.success('Test submitted successfully!');
+      
+      // Navigate to results page
+      navigate('/cbt/results', {
+        state: {
+          score: finalScore,
+          correctCount,
+          totalQuestions: questions.length,
+          timeTaken,
+          questions,
+          userAnswers: answers,
+          course
+        }
+      });
     } catch (error: any) {
       console.error('Error saving test result:', error);
       toast.error('Test completed but failed to save results');
@@ -275,42 +320,68 @@ const CBTTestPage = () => {
                   </h2>
                 </div>
 
-                {/* Options */}
-                <div className="space-y-3">
-                  {['A', 'B', 'C', 'D'].map((option) => {
-                    const optionText = currentQuestion?.[`option_${option.toLowerCase()}` as keyof Question] as string;
-                    const isSelected = answers[currentQuestionIndex] === option;
-                    
-                    return (
-                      <button
-                        key={option}
-                        onClick={() => handleAnswerSelect(option)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-primary-600 bg-primary-50'
-                            : isDarkMode
-                            ? 'border-gray-700 bg-gray-700 hover:border-gray-600'
-                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                {/* Options or Input Field */}
+                {currentQuestion?.question_type === 'fill_in_blank' ? (
+                  <div className="space-y-4">
+                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Your Answer:
+                    </label>
+                    <input
+                      type="text"
+                      value={answers[currentQuestionIndex] || ''}
+                      onChange={(e) => handleAnswerSelect(e.target.value)}
+                      placeholder="Type your answer here..."
+                      className={`w-full px-4 py-3 rounded-lg border-2 text-lg ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      } focus:border-primary-600 focus:outline-none`}
+                    />
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      💡 Tip: Answer is case-sensitive and must be word-for-word
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {['A', 'B', 'C', 'D'].map((option) => {
+                      const optionText = currentQuestion?.[`option_${option.toLowerCase()}` as keyof Question] as string;
+                      
+                      // Skip if option doesn't exist (for true/false questions)
+                      if (!optionText) return null;
+                      
+                      const isSelected = answers[currentQuestionIndex] === option;
+                      
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => handleAnswerSelect(option)}
+                          className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                             isSelected
-                              ? 'bg-primary-600 text-white'
+                              ? 'border-primary-600 bg-primary-50'
                               : isDarkMode
-                              ? 'bg-gray-600 text-gray-300'
-                              : 'bg-gray-200 text-gray-700'
-                          }`}>
-                            {option}
+                              ? 'border-gray-700 bg-gray-700 hover:border-gray-600'
+                              : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                              isSelected
+                                ? 'bg-primary-600 text-white'
+                                : isDarkMode
+                                ? 'bg-gray-600 text-gray-300'
+                                : 'bg-gray-200 text-gray-700'
+                            }`}>
+                              {option}
+                            </div>
+                            <span className={isDarkMode ? 'text-gray-200' : 'text-gray-800'}>
+                              {optionText}
+                            </span>
                           </div>
-                          <span className={isDarkMode ? 'text-gray-200' : 'text-gray-800'}>
-                            {optionText}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Navigation Buttons */}
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">

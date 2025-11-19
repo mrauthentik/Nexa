@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import supabase from '../supabaseClient';
+import { courseQuestionsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import { BookOpen, Clock, FileText, Search, Filter } from 'lucide-react';
@@ -39,6 +40,7 @@ const CBTPracticePage = () => {
 
   const fetchCourses = async () => {
     try {
+      // Fetch courses directly from Supabase (public data)
       const { data, error } = await supabase
         .from('courses')
         .select('*')
@@ -48,18 +50,22 @@ const CBTPracticePage = () => {
 
       if (error) throw error;
 
-      // Fetch question counts for each course
+      // Fetch question counts for each course using the API
       const coursesWithCounts = await Promise.all(
         (data || []).map(async (course) => {
-          const { count } = await supabase
-            .from('questions')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', course.id);
-          
-          return {
-            ...course,
-            question_count: count || 0
-          };
+          try {
+            const response = await courseQuestionsAPI.getQuestionCount(course.id);
+            return {
+              ...course,
+              question_count: response.count || 0
+            };
+          } catch (error) {
+            console.error(`Error fetching count for ${course.code}:`, error);
+            return {
+              ...course,
+              question_count: 0
+            };
+          }
         })
       );
 

@@ -99,12 +99,19 @@ export interface Test {
 
 export interface Question {
     id: string;
-    test_id: string;
-    question: string;
-    options: string[];
-    correct_answer: number;
+    test_id?: string | null;  // For old test-based questions
+    course_id?: string | null;  // For new course-based questions
+    question?: string;  // Old format (for test-based questions)
+    question_text?: string;  // New format (for course-based questions)
+    question_type?: 'multiple_choice' | 'fill_in_blank' | 'true_false';
+    options?: string[];  // Old format (JSONB array)
+    option_a?: string | null;  // New format
+    option_b?: string | null;  // New format
+    option_c?: string | null;  // New format
+    option_d?: string | null;  // New format
+    correct_answer: number | string;  // number for old format, string (A/B/C/D or text) for new format
     explanation?: string;
-    order_index: number;
+    order_index?: number;
     created_at: string;
 }
 
