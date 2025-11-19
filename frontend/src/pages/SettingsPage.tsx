@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
+import { settingsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import { 
@@ -11,7 +12,9 @@ import {
   Globe, 
   Camera,
   Save,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -32,6 +35,12 @@ const SettingsPage = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
+  });
+
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
   });
 
   const [notifications, setNotifications] = useState({
@@ -59,7 +68,39 @@ const SettingsPage = () => {
         level: profile.level || ''
       });
     }
+    
+    // Load user settings
+    loadUserSettings();
   }, [profile, user]);
+
+  const loadUserSettings = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data && !error) {
+        setNotifications({
+          emailNotifications: data.email_notifications ?? true,
+          testReminders: data.test_reminders ?? true,
+          scoreUpdates: data.score_updates ?? true,
+          systemUpdates: data.system_updates ?? false
+        });
+        
+        setPreferences({
+          language: data.language || 'en',
+          timezone: data.timezone || 'Africa/Lagos',
+          theme: data.theme || localStorage.getItem('theme') || 'light'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
@@ -82,19 +123,15 @@ const SettingsPage = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileData.fullName,
-          phone: profileData.phone,
-          student_id: profileData.studentId,
-          department: profileData.department,
-          level: profileData.level
-        })
-        .eq('id', user.id);
+      const result = await settingsAPI.updateProfile({
+        fullName: profileData.fullName,
+        phone: profileData.phone,
+        department: profileData.department,
+        level: profileData.level
+      });
 
-      if (error) throw error;
-      toast.success('Profile updated successfully!');
+      if (result.error) throw new Error(result.error);
+      toast.success('✅ Profile updated successfully!');
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile: ' + error.message);
@@ -116,12 +153,8 @@ const SettingsPage = () => {
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-
-      if (error) throw error;
-      toast.success('Password updated successfully!');
+      await settingsAPI.updatePassword(passwordData.newPassword);
+      toast.success('✅ Password updated successfully!');
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
       console.error('Error updating password:', error);
@@ -131,18 +164,82 @@ const SettingsPage = () => {
     }
   };
 
-  const handleSaveNotifications = () => {
-    console.log('Saving notifications:', notifications);
-    toast.success('Notification preferences updated!');
+  const handleSaveNotifications = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // Use upsert to handle both insert and update
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          email_notifications: notifications.emailNotifications,
+          test_reminders: notifications.testReminders,
+          score_updates: notifications.scoreUpdates,
+          system_updates: notifications.systemUpdates,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      toast.success('✅ Notification preferences saved!');
+    } catch (error: any) {
+      console.error('Error saving notifications:', error);
+      toast.error('Failed to save preferences: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSavePreferences = () => {
-    console.log('Saving preferences:', preferences);
-    // Save theme to localStorage
-    localStorage.setItem('theme', preferences.theme);
-    // Dispatch event to notify other components
-    window.dispatchEvent(new Event('themeChange'));
-    toast.success('Preferences updated!');
+  const handleSavePreferences = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data: existing } = await supabase
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('user_settings')
+          .update({
+            language: preferences.language,
+            timezone: preferences.timezone,
+            theme: preferences.theme
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            language: preferences.language,
+            timezone: preferences.timezone,
+            theme: preferences.theme
+          });
+
+        if (error) throw error;
+      }
+
+      // Save theme to localStorage
+      localStorage.setItem('theme', preferences.theme);
+      window.dispatchEvent(new Event('themeChange'));
+      
+      toast.success('✅ Preferences saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving preferences:', error);
+      toast.error('Failed to save preferences: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -208,7 +305,7 @@ const SettingsPage = () => {
 
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl p-8 max-w-3xl">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-3xl shadow-lg`}>
               <div className="flex items-center gap-6 mb-8">
                 <div className="relative">
                   <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
@@ -219,60 +316,60 @@ const SettingsPage = () => {
                   </button>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">{profileData.fullName || 'User'}</h2>
-                  <p className="text-gray-600">{profileData.email}</p>
+                  <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{profileData.fullName || 'User'}</h2>
+                  <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{profileData.email}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Full Name</label>
                   <input
                     type="text"
                     name="fullName"
                     value={profileData.fullName}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Email</label>
                   <input
                     type="email"
                     name="email"
                     value={profileData.email}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Phone</label>
                   <input
                     type="tel"
                     name="phone"
                     value={profileData.phone}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Student ID</label>
                   <input
                     type="text"
                     name="studentId"
                     value={profileData.studentId}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    className={`w-full px-4 py-3 rounded-lg ${isDarkMode ? 'bg-gray-900 border-2 border-gray-700 text-gray-500' : 'bg-gray-50 border-2 border-gray-300 text-gray-500'}`}
                     disabled
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Department</label>
                   <select
                     name="department"
                     value={profileData.department}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   >
                     <option>Computer Science</option>
                     <option>Business Administration</option>
@@ -280,12 +377,12 @@ const SettingsPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Level</label>
                   <select
                     name="level"
                     value={profileData.level}
                     onChange={handleProfileChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   >
                     <option>100 Level</option>
                     <option>200 Level</option>
@@ -295,18 +392,18 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
+              <div className={`flex gap-4 mt-8 pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <button
                   onClick={handleSaveProfile}
                   disabled={loading}
-                  className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md"
+                  className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg"
                 >
                   <Save size={20} />
-                  {loading ? 'Saving...' : 'Save Profile Changes'}
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button 
                   onClick={() => window.location.reload()}
-                  className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 font-semibold"
+                  className={`px-8 py-3 rounded-lg transition-all flex items-center gap-2 font-semibold ${isDarkMode ? 'border-2 border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-2 border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                 >
                   <X size={20} />
                   Cancel
@@ -317,45 +414,75 @@ const SettingsPage = () => {
 
           {/* Security Tab */}
           {activeTab === 'security' && (
-            <div className="bg-white rounded-2xl p-8 max-w-2xl">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Change Password</h2>
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-2xl shadow-lg`}>
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6`}>Change Password</h2>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Current Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword.current ? 'text' : 'password'}
+                      name="currentPassword"
+                      value={passwordData.currentPassword}
+                      onChange={handlePasswordChange}
+                      className={`w-full px-4 py-3 pr-12 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword({ ...showPassword, current: !showPassword.current })}
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                    >
+                      {showPassword.current ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword.new ? 'text' : 'password'}
+                      name="newPassword"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      className={`w-full px-4 py-3 pr-12 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
+                      placeholder="Enter new password (min. 6 characters)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword({ ...showPassword, new: !showPassword.new })}
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                    >
+                      {showPassword.new ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Confirm New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword.confirm ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      className={`w-full px-4 py-3 pr-12 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword({ ...showPassword, confirm: !showPassword.confirm })}
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
+                    >
+                      {showPassword.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className={`mt-8 pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <button
                   onClick={handleSavePassword}
                   disabled={loading}
-                  className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg flex items-center gap-2"
                 >
                   <Save size={20} />
                   {loading ? 'Updating...' : 'Update Password'}
@@ -366,41 +493,47 @@ const SettingsPage = () => {
 
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
-            <div className="bg-white rounded-2xl p-8 max-w-2xl">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Notification Preferences</h2>
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-2xl shadow-lg`}>
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6`}>Notification Preferences</h2>
               <div className="space-y-4">
                 {Object.entries(notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={key} className={`flex items-center justify-between p-5 rounded-xl transition-all ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-650' 
+                      : 'bg-gray-50 hover:bg-gray-100 border-2 border-gray-200'
+                  }`}>
                     <div>
-                      <h3 className="font-medium text-gray-900 capitalize">
+                      <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} capitalize`}>
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
                         Receive notifications about {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
                       </p>
                     </div>
                     <button
                       onClick={() => handleNotificationChange(key)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        value ? 'bg-primary-600' : 'bg-gray-300'
+                      className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all shadow-inner ${
+                        value 
+                          ? 'bg-gradient-to-r from-primary-500 to-primary-600' 
+                          : isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          value ? 'translate-x-6' : 'translate-x-1'
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                          value ? 'translate-x-8' : 'translate-x-1'
                         }`}
                       />
                     </button>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className={`mt-8 pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <button
                   onClick={handleSaveNotifications}
-                  className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold shadow-md flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all font-semibold shadow-lg flex items-center gap-2"
                 >
                   <Save size={20} />
-                  Save Notification Preferences
+                  Save Preferences
                 </button>
               </div>
             </div>
@@ -408,16 +541,16 @@ const SettingsPage = () => {
 
           {/* Preferences Tab */}
           {activeTab === 'preferences' && (
-            <div className="bg-white rounded-2xl p-8 max-w-2xl">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">General Preferences</h2>
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-2xl shadow-lg`}>
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6`}>General Preferences</h2>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                  <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Language</label>
                   <select
                     name="language"
                     value={preferences.language}
                     onChange={handlePreferenceChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   >
                     <option value="en">English</option>
                     <option value="fr">French</option>
@@ -427,40 +560,40 @@ const SettingsPage = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                  <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Timezone</label>
                   <select
                     name="timezone"
                     value={preferences.timezone}
                     onChange={handlePreferenceChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   >
                     <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
                     <option value="UTC">UTC</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                  <label className={`block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Theme</label>
                   <select
                     name="theme"
                     value={preferences.theme}
                     onChange={handleThemeChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-2 border-gray-600 text-white' : 'bg-white border-2 border-gray-300 text-gray-900'}`}
                   >
                     <option value="light">Light Mode</option>
                     <option value="dark">Dark Mode</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
                     Choose your preferred color scheme. Changes apply immediately.
                   </p>
                 </div>
               </div>
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className={`mt-8 pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <button
                   onClick={handleSavePreferences}
-                  className="px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold shadow-md flex items-center gap-2"
+                  className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all font-semibold shadow-lg flex items-center gap-2"
                 >
                   <Save size={20} />
-                  Save General Preferences
+                  Save Preferences
                 </button>
               </div>
             </div>

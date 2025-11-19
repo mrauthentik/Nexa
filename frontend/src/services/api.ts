@@ -378,6 +378,7 @@ export const dashboardAPI = {
 
 // Settings API
 export const settingsAPI = {
+    // Get all user settings
     getSettings: async () => {
         const response = await fetch(`${FUNCTIONS_URL}/get-user-settings`, {
             headers: await getAuthHeaders(),
@@ -385,6 +386,7 @@ export const settingsAPI = {
         return response.json();
     },
 
+    // Update notification or preference settings
     updateSettings: async (settingType: 'notifications' | 'preferences', settings: any) => {
         const response = await fetch(`${FUNCTIONS_URL}/update-user-settings`, {
             method: 'POST',
@@ -392,6 +394,25 @@ export const settingsAPI = {
             body: JSON.stringify({ settingType, settings }),
         });
         return response.json();
+    },
+
+    // Update user profile
+    updateProfile: async (profileData: { fullName: string; phone: string; department: string; level: string }) => {
+        const response = await fetch(`${FUNCTIONS_URL}/update-profile`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(profileData),
+        });
+        return response.json();
+    },
+
+    // Update password (uses Supabase auth directly)
+    updatePassword: async (newPassword: string) => {
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+        if (error) throw error;
+        return { success: true };
     },
 };
 

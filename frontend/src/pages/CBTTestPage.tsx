@@ -161,6 +161,18 @@ const CBTTestPage = () => {
         answers: answers
       });
 
+      // Create notification for test completion
+      const passStatus = finalScore >= 70 ? 'passed' : 'failed';
+      const emoji = finalScore >= 70 ? '🎉' : '📚';
+      
+      await supabase.from('notifications').insert({
+        user_id: user?.id,
+        type: 'test_result',
+        title: `${emoji} Test ${passStatus === 'passed' ? 'Passed' : 'Completed'}!`,
+        message: `You scored ${finalScore}% on ${course?.code} - ${course?.title}. ${correctCount} out of ${questions.length} questions correct.`,
+        read: false
+      });
+
       toast.success('Test submitted successfully!');
       
       // Navigate to results page
