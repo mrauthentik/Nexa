@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, Bell, BellOff, CheckCircle2, Circle, Filter, Calendar as CalendarIcon, Repeat, Star, AlertCircle, List, Grid3x3 } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -14,8 +14,14 @@ interface Event {
   start_time: string;
   end_time: string;
   location?: string;
-  type: 'class' | 'assignment' | 'exam' | 'study';
+  type: 'class' | 'assignment' | 'exam' | 'study' | 'personal' | 'meeting';
   color: string;
+  priority?: 'low' | 'medium' | 'high';
+  reminder_minutes?: number;
+  is_recurring?: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly';
+  completed?: boolean;
+  created_at?: string;
 }
 
 const SchedulePage = () => {
@@ -26,6 +32,9 @@ const SchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [showCompleted, setShowCompleted] = useState(true);
   
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -34,8 +43,12 @@ const SchedulePage = () => {
     start_time: '',
     end_time: '',
     location: '',
-    type: 'class' as 'class' | 'assignment' | 'exam' | 'study',
-    color: '#3B82F6'
+    type: 'class' as 'class' | 'assignment' | 'exam' | 'study' | 'personal' | 'meeting',
+    color: '#3B82F6',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    reminder_minutes: 30,
+    is_recurring: false,
+    recurrence_pattern: 'weekly' as 'daily' | 'weekly' | 'monthly'
   });
 
   useEffect(() => {
@@ -137,8 +150,16 @@ const SchedulePage = () => {
         end_time: '',
         location: '',
         type: 'class',
-        color: '#3B82F6'
+        color: '#3B82F6',
+        priority: 'medium',
+        reminder_minutes: 30,
+        is_recurring: false,
+        recurrence_pattern: 'weekly'
       });
+      
+      // Dispatch event to refresh dashboard calendar
+      window.dispatchEvent(new Event('calendarUpdated'));
+      
       toast.success('Event added successfully!');
     } catch (error: any) {
       toast.error('Failed to add event');
@@ -156,10 +177,79 @@ const SchedulePage = () => {
       if (error) throw error;
 
       setEvents(events.filter(e => e.id !== eventId));
+      window.dispatchEvent(new Event('calendarUpdated'));
       toast.success('Event deleted');
     } catch (error: any) {
       toast.error('Failed to delete event');
       console.error(error);
+    }
+  };
+
+  const handleToggleComplete = async (eventId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({ completed: !currentStatus })
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      setEvents(events.map(e => 
+        e.id === eventId ? { ...e, completed: !currentStatus } : e
+      ));
+      toast.success(currentStatus ? 'Task marked as incomplete' : 'Task completed! 🎉');
+    } catch (error: any) {
+      toast.error('Failed to update task');
+      console.error(error);
+    }
+  };
+
+  const getFilteredEvents = () => {
+    let filtered = events;
+    
+    if (filterType !== 'all') {
+      filtered = filtered.filter(e => e.type === filterType);
+    }
+    
+    if (!showCompleted) {
+      filtered = filtered.filter(e => !e.completed);
+    }
+    
+    return filtered;
+  };
+
+  const getUpcomingEvents = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return getFilteredEvents()
+      .filter(e => {
+        const eventDate = new Date(e.date);
+        return eventDate >= today && !e.completed;
+      })
+      .sort((a, b) => {
+        const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+        if (dateCompare !== 0) return dateCompare;
+        return (a.start_time || '').localeCompare(b.start_time || '');
+      })
+      .slice(0, 5);
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'high': return 'text-red-600 bg-red-100 dark:bg-red-900/30';
+      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30';
+      case 'low': return 'text-green-600 bg-green-100 dark:bg-green-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-700';
+    }
+  };
+
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case 'high': return <AlertCircle size={14} />;
+      case 'medium': return <Star size={14} />;
+      case 'low': return <Circle size={14} />;
+      default: return null;
     }
   };
 
@@ -313,24 +403,50 @@ const SchedulePage = () => {
                 {getEventsForDate(selectedDate).map(event => (
                   <div
                     key={event.id}
-                    className={`p-4 rounded-lg border-l-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
+                    className={`p-4 rounded-lg border-l-4 ${
+                      isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                    } ${event.completed ? 'opacity-60' : ''}`}
                     style={{ borderLeftColor: event.color }}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {event.title}
-                        </h4>
+                        {/* Title and Type Badge */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className={`font-semibold ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          } ${event.completed ? 'line-through' : ''}`}>
+                            {event.title}
+                          </h4>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getEventColor(event.type)} text-white`}>
+                            {event.type}
+                          </span>
+                          {event.priority && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${getPriorityColor(event.priority)}`}>
+                              {getPriorityIcon(event.priority)}
+                              {event.priority}
+                            </span>
+                          )}
+                          {event.completed && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                              <CheckCircle2 size={12} />
+                              Completed
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Description */}
                         {event.description && (
-                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <p className={`text-sm mt-1 mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             {event.description}
                           </p>
                         )}
-                        <div className={`flex flex-wrap gap-4 mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+
+                        {/* Event Details */}
+                        <div className={`flex flex-wrap gap-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           {event.start_time && (
                             <div className="flex items-center gap-1">
                               <Clock size={14} />
-                              <span>{event.start_time} - {event.end_time}</span>
+                              <span>{event.start_time} {event.end_time && `- ${event.end_time}`}</span>
                             </div>
                           )}
                           {event.location && (
@@ -339,14 +455,51 @@ const SchedulePage = () => {
                               <span>{event.location}</span>
                             </div>
                           )}
+                          {event.reminder_minutes && event.reminder_minutes > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Bell size={14} />
+                              <span>
+                                {event.reminder_minutes >= 1440 
+                                  ? `${Math.floor(event.reminder_minutes / 1440)} day${Math.floor(event.reminder_minutes / 1440) > 1 ? 's' : ''} before`
+                                  : event.reminder_minutes >= 60
+                                  ? `${Math.floor(event.reminder_minutes / 60)} hour${Math.floor(event.reminder_minutes / 60) > 1 ? 's' : ''} before`
+                                  : `${event.reminder_minutes} min before`
+                                }
+                              </span>
+                            </div>
+                          )}
+                          {event.is_recurring && (
+                            <div className="flex items-center gap-1">
+                              <Repeat size={14} />
+                              <span className="capitalize">{event.recurrence_pattern}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X size={20} />
-                      </button>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-start gap-2">
+                        <button
+                          onClick={() => handleToggleComplete(event.id, event.completed || false)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            event.completed
+                              ? 'text-green-600 bg-green-100 dark:bg-green-900/30 hover:bg-green-200'
+                              : isDarkMode 
+                              ? 'text-gray-400 hover:bg-gray-600' 
+                              : 'text-gray-500 hover:bg-gray-200'
+                          }`}
+                          title={event.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                        >
+                          {event.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="p-2 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          title="Delete event"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
