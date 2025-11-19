@@ -28,9 +28,19 @@ const Dashboard = () => {
       // Refresh stats every 30 seconds
       const interval = setInterval(fetchDashboardStats, 30000);
       
+      // Listen for test submission events to refresh immediately
+      const handleTestSubmitted = () => {
+        console.log('📊 Test submitted - refreshing dashboard stats');
+        fetchDashboardStats();
+        fetchNotifications();
+      };
+      
+      window.addEventListener('testSubmitted', handleTestSubmitted);
+      
       return () => {
         clearTimeout(timer);
         clearInterval(interval);
+        window.removeEventListener('testSubmitted', handleTestSubmitted);
       };
     }
   }, [user]);

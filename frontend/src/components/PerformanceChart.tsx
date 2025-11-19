@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { dashboardAPI } from '../services/api';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -24,25 +25,54 @@ interface PerformanceData {
 
 const PerformanceChart = () => {
   const { isDarkMode } = useTheme();
+  const { user } = useAuth();
   const [data, setData] = useState<PerformanceData | null>(null);
   const [period, setPeriod] = useState('7');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchChartData();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchChartData, 30000);
-    return () => clearInterval(interval);
-  }, [period]);
+    if (user) {
+      fetchChartData();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchChartData, 30000);
+      
+      // Listen for test submission events to refresh immediately
+      const handleTestSubmitted = () => {
+        console.log('📊 Test submitted - refreshing performance chart');
+        fetchChartData();
+      };
+      
+      window.addEventListener('testSubmitted', handleTestSubmitted);
+      
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('testSubmitted', handleTestSubmitted);
+      };
+    }
+  }, [period, user]);
 
   const fetchChartData = async () => {
+    if (!user) return;
+    
+    console.log('📊 Fetching performance chart for user:', user.id, 'period:', period);
+    
     try {
-      const response = await dashboardAPI.getPerformanceChart(period);
+      const response = await dashboardAPI.getPerformanceChart(user.id, period);
+      console.log('📊 Performance chart response:', response);
+      
       if (!response.error) {
+        console.log('✅ Chart data loaded:', {
+          totalTests: response.totalTests,
+          highest: response.stats?.highest,
+          average: response.stats?.average,
+          chartPoints: response.chartData?.length
+        });
         setData(response);
+      } else {
+        console.error('❌ Chart error:', response.error);
       }
     } catch (error) {
-      console.error('Error fetching performance chart:', error);
+      console.error('❌ Error fetching performance chart:', error);
     } finally {
       setLoading(false);
     }
@@ -146,6 +176,21 @@ const PerformanceChart = () => {
               Score Trend
             </span>
           </div>
+          
+          <button
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              setLoading(true);
+              fetchChartData();
+            }}
+            className={`px-3 py-1 border rounded-lg text-sm ${
+              isDarkMode 
+                ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            } transition-colors`}
+          >
+            🔄 Refresh
+          </button>
           
           <select 
             value={period}

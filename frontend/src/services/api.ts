@@ -363,14 +363,20 @@ export const adminAPI = {
 export const dashboardAPI = {
     getStats: async (userId: string) => {
         const response = await fetch(`${FUNCTIONS_URL}/get-user-stats?user_id=${userId}`, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            },
         });
         return response.json();
     },
 
     getPerformanceChart: async (userId: string, period: string = '7') => {
         const response = await fetch(`${FUNCTIONS_URL}/get-performance-chart?user_id=${userId}&period=${period}`, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            },
         });
         return response.json();
     },

@@ -12,12 +12,19 @@ serve(async (req) => {
     }
 
     try {
+        console.log('🚀 get-performance-chart endpoint called');
+        console.log('📋 Request URL:', req.url);
+        console.log('📋 Request method:', req.method);
+        
         const url = new URL(req.url);
         const userId = url.searchParams.get('user_id');
         const period = url.searchParams.get('period') || '7'; // Default 7 days
         const days = parseInt(period);
 
+        console.log('📊 Parameters received - userId:', userId, 'period:', period);
+
         if (!userId) {
+            console.error('❌ Missing user_id parameter');
             return new Response(
                 JSON.stringify({ error: 'user_id parameter is required' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -31,6 +38,8 @@ serve(async (req) => {
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '',
         );
 
+        console.log('🔍 Querying test_submissions table...');
+
         // Get all test submissions
         const { data: submissions, error: submissionsError } = await supabase
             .from('test_submissions')
@@ -38,7 +47,12 @@ serve(async (req) => {
             .eq('user_id', userId)
             .order('submitted_at', { ascending: true });
 
-        if (submissionsError) throw submissionsError;
+        if (submissionsError) {
+            console.error('❌ Database error:', submissionsError);
+            throw submissionsError;
+        }
+
+        console.log('✅ Query successful! Found', submissions?.length || 0, 'test submissions');
 
         // Calculate stats
         const scores = submissions?.map(s => s.score || 0) || [];
@@ -106,21 +120,35 @@ serve(async (req) => {
             });
         }
 
+        const responseData = {
+            stats: {
+                highest: highestScore,
+                average: averageScore,
+                improvement: improvement,
+                bestScoreDate: bestScoreDate
+            },
+            chartData: chartData,
+            totalTests: submissions?.length || 0
+        };
+
+        console.log('📊 Calculated stats:', {
+            highest: highestScore,
+            average: averageScore,
+            improvement: improvement,
+            totalTests: submissions?.length || 0,
+            chartDataPoints: chartData.length
+        });
+
+        console.log('✅ Returning response with', chartData.length, 'chart data points');
+
         return new Response(
-            JSON.stringify({
-                stats: {
-                    highest: highestScore,
-                    average: averageScore,
-                    improvement: improvement,
-                    bestScoreDate: bestScoreDate
-                },
-                chartData: chartData,
-                totalTests: submissions?.length || 0
-            }),
+            JSON.stringify(responseData),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     } catch (error) {
-        console.error('Error fetching performance chart:', error);
+        console.error('❌ ERROR in get-performance-chart:', error);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error stack:', error.stack);
         return new Response(
             JSON.stringify({ error: error.message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

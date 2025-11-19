@@ -151,15 +151,31 @@ const CBTTestPage = () => {
 
     // Save test result to database
     try {
-      await supabase.from('test_submissions').insert({
+      const submissionData = {
         user_id: user?.id,
         course_id: courseId,
         score: finalScore,
         total_questions: questions.length,
         correct_answers: correctCount,
         time_taken: timeTaken,
-        answers: answers
-      });
+        answers: answers,
+        submitted_at: new Date().toISOString(), // CRITICAL: Backend needs this!
+        status: 'submitted' // Valid enum: 'in_progress', 'submitted', 'graded'
+      };
+      
+      console.log('💾 Saving test submission:', submissionData);
+      
+      const { data, error } = await supabase
+        .from('test_submissions')
+        .insert(submissionData)
+        .select();
+      
+      if (error) {
+        console.error('❌ Error saving test:', error);
+        throw error;
+      }
+      
+      console.log('✅ Test saved successfully:', data);
 
       // Create notification for test completion
       const passStatus = finalScore >= 70 ? 'passed' : 'failed';
@@ -172,6 +188,10 @@ const CBTTestPage = () => {
         message: `You scored ${finalScore}% on ${course?.code} - ${course?.title}. ${correctCount} out of ${questions.length} questions correct.`,
         read: false
       });
+
+      // Dispatch event to refresh dashboard stats and charts
+      window.dispatchEvent(new Event('testSubmitted'));
+      console.log('📊 Test submitted event dispatched');
 
       toast.success('Test submitted successfully!');
       
