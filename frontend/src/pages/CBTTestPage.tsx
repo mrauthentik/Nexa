@@ -151,6 +151,10 @@ const CBTTestPage = () => {
 
     // Save test result to database
     try {
+      console.log('🔍 Current user:', user);
+      console.log('🔍 User ID:', user?.id);
+      console.log('🔍 Course ID:', courseId);
+      
       const submissionData = {
         user_id: user?.id,
         course_id: courseId,
@@ -163,7 +167,8 @@ const CBTTestPage = () => {
         status: 'submitted' // Valid enum: 'in_progress', 'submitted', 'graded'
       };
       
-      console.log('💾 Saving test submission:', submissionData);
+      console.log('💾 Attempting to save test submission...');
+      console.log('📋 Submission data:', JSON.stringify(submissionData, null, 2));
       
       const { data, error } = await supabase
         .from('test_submissions')
@@ -171,11 +176,17 @@ const CBTTestPage = () => {
         .select();
       
       if (error) {
-        console.error('❌ Error saving test:', error);
+        console.error('❌ ERROR saving test to database!');
+        console.error('❌ Error details:', error);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error code:', error.code);
+        toast.error(`Failed to save test: ${error.message}`);
         throw error;
       }
       
-      console.log('✅ Test saved successfully:', data);
+      console.log('✅ Test saved successfully to database!');
+      console.log('✅ Saved data:', data);
+      console.log('✅ Inserted record ID:', data?.[0]?.id);
 
       // Create notification for test completion
       const passStatus = finalScore >= 70 ? 'passed' : 'failed';
@@ -183,7 +194,7 @@ const CBTTestPage = () => {
       
       await supabase.from('notifications').insert({
         user_id: user?.id,
-        type: 'test_result',
+        type: 'grade', // Valid enum: 'assignment', 'exam', 'grade', 'announcement', 'system'
         title: `${emoji} Test ${passStatus === 'passed' ? 'Passed' : 'Completed'}!`,
         message: `You scored ${finalScore}% on ${course?.code} - ${course?.title}. ${correctCount} out of ${questions.length} questions correct.`,
         read: false

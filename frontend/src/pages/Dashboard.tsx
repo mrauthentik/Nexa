@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
 import { dashboardAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
+import PerformanceChart from '../components/PerformanceChart';
 
 const Dashboard = () => {
   const [currentDate] = useState(new Date()); // Current date
@@ -556,127 +557,9 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Performance Chart */}
-            <div className={`lg:col-span-2 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 sm:p-6`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                <div>
-                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Performance Overview</h3>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Your test scores over time</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                    <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Score Trend</span>
-                  </div>
-                  <select className={`px-3 py-1 border rounded-lg text-sm ${isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'border-gray-300'}`}>
-                    <option>Last 7 Days</option>
-                    <option>Last 30 Days</option>
-                    <option>Last 3 Months</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Chart Container */}
-              <div className="relative h-64">
-                {/* Y-axis labels */}
-                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400 pr-2">
-                  <span>100%</span>
-                  <span>75%</span>
-                  <span>50%</span>
-                  <span>25%</span>
-                  <span>0%</span>
-                </div>
-                
-                {/* Chart area */}
-                <div className="ml-8 h-full relative">
-                  {/* Grid lines */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <div key={i} className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
-                    ))}
-                  </div>
-                  
-                  {/* SVG Chart */}
-                  <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.4 }} />
-                        <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
-                        <stop offset="100%" style={{ stopColor: '#ec4899', stopOpacity: 0.1 }} />
-                      </linearGradient>
-                      <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style={{ stopColor: '#3b82f6' }} />
-                        <stop offset="50%" style={{ stopColor: '#8b5cf6' }} />
-                        <stop offset="100%" style={{ stopColor: '#ec4899' }} />
-                      </linearGradient>
-                    </defs>
-                    
-                    {/* Area fill */}
-                    <path
-                      d="M 0,160 L 0,120 Q 14,100 28,110 T 56,95 T 84,105 T 112,80 T 140,90 T 168,70 T 196,85 L 196,160 Z"
-                      fill="url(#chartGradient)"
-                      className="transition-all duration-500"
-                    />
-                    
-                    {/* Line */}
-                    <path
-                      d="M 0,120 Q 14,100 28,110 T 56,95 T 84,105 T 112,80 T 140,90 T 168,70 T 196,85"
-                      fill="none"
-                      stroke="url(#lineGradient)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      className="transition-all duration-500"
-                    />
-                    
-                    {/* Data points */}
-                    <circle cx="0" cy="120" r="4" fill="#3b82f6" className="animate-pulse" />
-                    <circle cx="28" cy="110" r="4" fill="#3b82f6" />
-                    <circle cx="56" cy="95" r="4" fill="#6366f1" />
-                    <circle cx="84" cy="105" r="4" fill="#8b5cf6" />
-                    <circle cx="112" cy="80" r="5" fill="#a855f7" stroke="#fff" strokeWidth="2">
-                      <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                    <circle cx="140" cy="90" r="4" fill="#c026d3" />
-                    <circle cx="168" cy="70" r="4" fill="#ec4899" />
-                    <circle cx="196" cy="85" r="4" fill="#ec4899" className="animate-pulse" />
-                  </svg>
-                  
-                  {/* Highlight tooltip */}
-                  <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-semibold">
-                    <div className="text-center">
-                      <div className="text-xs opacity-80">Best Score</div>
-                      <div className="text-lg">92%</div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* X-axis labels */}
-                <div className="absolute bottom-0 left-8 right-0 flex justify-between text-xs text-gray-400 mt-2">
-                  <span>Mon</span>
-                  <span>Tue</span>
-                  <span>Wed</span>
-                  <span>Thu</span>
-                  <span>Fri</span>
-                  <span>Sat</span>
-                  <span>Sun</span>
-                </div>
-              </div>
-              
-              {/* Stats below chart */}
-              <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-center">
-                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>92%</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Highest</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>78%</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Average</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-2xl font-bold text-green-500`}>+14%</p>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Improvement</p>
-                </div>
-              </div>
+            {/* Performance Chart - Using Real Data Component */}
+            <div className="lg:col-span-2">
+              <PerformanceChart />
             </div>
 
             {/* Calendar */}

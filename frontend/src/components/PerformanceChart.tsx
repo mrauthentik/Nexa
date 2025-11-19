@@ -24,17 +24,35 @@ interface PerformanceData {
 }
 
 const PerformanceChart = () => {
+  console.log('🎨 PerformanceChart component rendering...');
+  
   const { isDarkMode } = useTheme();
   const { user } = useAuth();
+  
+  console.log('🎨 Theme:', isDarkMode ? 'dark' : 'light');
+  console.log('🎨 User from context:', user);
+  
   const [data, setData] = useState<PerformanceData | null>(null);
   const [period, setPeriod] = useState('7');
   const [loading, setLoading] = useState(true);
+  
+  console.log('🎨 Component state:', { hasData: !!data, period, loading });
 
   useEffect(() => {
+    console.log('🔄 PerformanceChart useEffect triggered');
+    console.log('🔄 User exists:', !!user);
+    console.log('🔄 User object:', user);
+    console.log('🔄 Period:', period);
+    
     if (user) {
+      console.log('✅ User found, calling fetchChartData...');
       fetchChartData();
+      
       // Refresh every 30 seconds
-      const interval = setInterval(fetchChartData, 30000);
+      const interval = setInterval(() => {
+        console.log('⏰ 30-second interval refresh');
+        fetchChartData();
+      }, 30000);
       
       // Listen for test submission events to refresh immediately
       const handleTestSubmitted = () => {
@@ -45,34 +63,64 @@ const PerformanceChart = () => {
       window.addEventListener('testSubmitted', handleTestSubmitted);
       
       return () => {
+        console.log('🧹 Cleaning up PerformanceChart listeners');
         clearInterval(interval);
         window.removeEventListener('testSubmitted', handleTestSubmitted);
       };
+    } else {
+      console.warn('⚠️ No user found, cannot fetch chart data');
     }
   }, [period, user]);
 
   const fetchChartData = async () => {
-    if (!user) return;
+    if (!user) {
+      console.warn('⚠️ No user found, cannot fetch chart data');
+      return;
+    }
     
-    console.log('📊 Fetching performance chart for user:', user.id, 'period:', period);
+    console.log('📊 ========== FETCHING PERFORMANCE CHART ==========');
+    console.log('📊 User ID:', user.id);
+    console.log('📊 Period:', period);
+    console.log('📊 API URL:', `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-performance-chart?user_id=${user.id}&period=${period}`);
     
     try {
       const response = await dashboardAPI.getPerformanceChart(user.id, period);
-      console.log('📊 Performance chart response:', response);
+      console.log('📊 Raw API response:', response);
+      console.log('📊 Response type:', typeof response);
+      console.log('📊 Response keys:', Object.keys(response || {}));
+      console.log('📊 Full response JSON:', JSON.stringify(response, null, 2));
       
-      if (!response.error) {
-        console.log('✅ Chart data loaded:', {
-          totalTests: response.totalTests,
-          highest: response.stats?.highest,
-          average: response.stats?.average,
-          chartPoints: response.chartData?.length
-        });
-        setData(response);
-      } else {
-        console.error('❌ Chart error:', response.error);
+      // Check if response has error (401, etc)
+      if (response.error) {
+        console.error('❌ ========== API ERROR ==========');
+        console.error('❌ Error:', response.error);
+        console.error('❌ Message:', response.message);
+        console.error('❌ Status:', response.status);
+        console.error('❌ ===================================');
+        setLoading(false);
+        return;
       }
+      
+      // Validate response structure
+      if (!response.chartData || !response.stats) {
+        console.error('❌ Invalid response structure:', response);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('✅ ========== CHART DATA LOADED ==========');
+      console.log('✅ Total Tests:', response.totalTests);
+      console.log('✅ Stats:', response.stats);
+      console.log('✅ Chart Data Points:', response.chartData?.length);
+      console.log('✅ Chart Data:', response.chartData);
+      console.log('✅ ==========================================');
+      setData(response);
     } catch (error) {
-      console.error('❌ Error fetching performance chart:', error);
+      console.error('❌ ========== FETCH ERROR ==========');
+      console.error('❌ Error:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      console.error('❌ ==================================');
     } finally {
       setLoading(false);
     }
@@ -127,7 +175,23 @@ const PerformanceChart = () => {
     );
   }
 
+  console.log('🎨 RENDER: Current data state:', {
+    hasData: !!data,
+    totalTests: data?.totalTests,
+    highest: data?.stats?.highest,
+    average: data?.stats?.average,
+    improvement: data?.stats?.improvement,
+    chartDataLength: data?.chartData?.length
+  });
+
   if (!data || data.totalTests === 0) {
+    console.log('⚠️ Chart showing NO DATA state:', {
+      hasData: !!data,
+      totalTests: data?.totalTests,
+      stats: data?.stats,
+      chartDataLength: data?.chartData?.length
+    });
+    
     return (
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6`}>
         <div className="flex items-center justify-between mb-6">
@@ -139,6 +203,21 @@ const PerformanceChart = () => {
               Your test scores over time
             </p>
           </div>
+          
+          <button
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              setLoading(true);
+              fetchChartData();
+            }}
+            className={`px-3 py-1 border rounded-lg text-sm ${
+              isDarkMode 
+                ? 'bg-gray-700 text-white border-gray-600 hover:bg-gray-600' 
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            } transition-colors`}
+          >
+            🔄 Refresh
+          </button>
         </div>
         <div className="h-64 flex items-center justify-center">
           <div className="text-center">
@@ -147,6 +226,9 @@ const PerformanceChart = () => {
             </p>
             <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
               Take your first test to see your performance chart!
+            </p>
+            <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+              Debug: totalTests = {data?.totalTests ?? 'null'}
             </p>
           </div>
         </div>
