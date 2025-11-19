@@ -12,34 +12,31 @@ serve(async (req) => {
     }
 
     try {
-        const supabase = createClient(
-            Deno.env.get("SUPABASE_URL") ?? '',
-            Deno.env.get("SUPABASE_ANON_KEY") ?? '',
-            {
-                global: {
-                    headers: { Authorization: req.headers.get('Authorization')! },
-                },
-            }
-        );
+        const url = new URL(req.url);
+        const userId = url.searchParams.get('user_id');
+        const period = url.searchParams.get('period') || '7'; // Default 7 days
+        const days = parseInt(period);
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
+        if (!userId) {
             return new Response(
-                JSON.stringify({ error: 'Unauthorized' }),
-                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                JSON.stringify({ error: 'user_id parameter is required' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
 
-        const url = new URL(req.url);
-        const period = url.searchParams.get('period') || '7'; // Default 7 days
-        const days = parseInt(period);
+        console.log('📊 Fetching performance chart for user:', userId, 'period:', days);
+
+        const supabase = createClient(
+            Deno.env.get("SUPABASE_URL") ?? '',
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? '',
+        );
 
         // Get all test submissions
         const { data: submissions, error: submissionsError } = await supabase
             .from('test_submissions')
-            .select('score, created_at')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: true });
+            .select('score, submitted_at')
+            .eq('user_id', userId)
+            .order('submitted_at', { ascending: true });
 
         if (submissionsError) throw submissionsError;
 
@@ -80,7 +77,7 @@ serve(async (req) => {
             
             // Find tests for this day
             const dayTests = submissions?.filter(s => {
-                const testDate = new Date(s.created_at);
+                const testDate = new Date(s.submitted_at);
                 return testDate >= date && testDate < nextDate;
             }) || [];
             
@@ -103,7 +100,7 @@ serve(async (req) => {
             const bestSubmission = submissions.reduce((best, current) => 
                 (current.score || 0) > (best.score || 0) ? current : best
             );
-            bestScoreDate = new Date(bestSubmission.created_at).toLocaleDateString('en-US', { 
+            bestScoreDate = new Date(bestSubmission.submitted_at).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric' 
             });

@@ -96,30 +96,44 @@ serve(async (req) => {
             });
         }
 
-        // Get recent test submissions with course info
+        // Get recent test submissions
         const { data: recentTests, error: testsError } = await supabase
             .from('test_submissions')
             .select(`
                 id,
                 score,
-                total_questions,
-                correct_answers,
-                created_at,
-                course_id
+                submitted_at,
+                test_id
             `)
             .eq('user_id', userId)
-            .order('created_at', { ascending: false })
+            .order('submitted_at', { ascending: false })
             .limit(5);
 
         if (testsError) throw testsError;
 
-        // Enrich with course names
+        // Enrich with test and course names
         const enrichedTests = await Promise.all(
             (recentTests || []).map(async (test) => {
+                // Get test details to find course_id
+                const { data: testData } = await supabase
+                    .from('tests')
+                    .select('course_id')
+                    .eq('id', test.test_id)
+                    .single();
+                
+                if (!testData?.course_id) {
+                    return {
+                        ...test,
+                        course_code: 'Unknown',
+                        course_title: 'Unknown Course'
+                    };
+                }
+                
+                // Get course details
                 const { data: course } = await supabase
                     .from('courses')
                     .select('code, title')
-                    .eq('id', test.course_id)
+                    .eq('id', testData.course_id)
                     .single();
                 
                 return {

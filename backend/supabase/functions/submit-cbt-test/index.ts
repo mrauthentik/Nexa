@@ -31,7 +31,7 @@ serve(async (req) => {
             );
         }
 
-        const { courseId, score, percentage, timeTaken, answers } = await req.json();
+        const { courseId, score, percentage, timeTaken, answers, totalQuestions, correctAnswers } = await req.json();
 
         if (!courseId || score === undefined) {
             return new Response(
@@ -40,7 +40,15 @@ serve(async (req) => {
             );
         }
 
-        // Save test submission
+        console.log('📝 Submitting test:', {
+            userId: user.id,
+            courseId,
+            score,
+            totalQuestions,
+            correctAnswers
+        });
+
+        // Save test submission with all analytics fields
         const { data: submission, error } = await supabase
             .from('test_submissions')
             .insert({
@@ -50,11 +58,15 @@ serve(async (req) => {
                 percentage,
                 time_taken: timeTaken,
                 answers,
+                total_questions: totalQuestions,
+                correct_answers: correctAnswers,
                 status: 'completed',
                 submitted_at: new Date().toISOString()
             })
             .select()
             .single();
+
+        console.log('✅ Test submission saved:', submission?.id);
 
         if (error) throw error;
 

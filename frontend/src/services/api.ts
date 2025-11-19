@@ -205,7 +205,15 @@ export const calendarAPI = {
 
 // CBT Test Submission API
 export const cbtAPI = {
-    submitTest: async (submissionData: { courseId: string; score: number; percentage: number; timeTaken: number; answers: any }) => {
+    submitTest: async (submissionData: { 
+        courseId: string; 
+        score: number; 
+        percentage: number; 
+        timeTaken: number; 
+        answers: any;
+        totalQuestions: number;
+        correctAnswers: number;
+    }) => {
         const response = await fetch(`${FUNCTIONS_URL}/submit-cbt-test`, {
             method: 'POST',
             headers: await getAuthHeaders(),
