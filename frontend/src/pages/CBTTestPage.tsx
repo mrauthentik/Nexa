@@ -192,13 +192,29 @@ const CBTTestPage = () => {
       const passStatus = finalScore >= 70 ? 'passed' : 'failed';
       const emoji = finalScore >= 70 ? '🎉' : '📚';
       
-      await supabase.from('notifications').insert({
+      console.log('🔔 Creating notification...');
+      const notificationData = {
         user_id: user?.id,
         type: 'grade', // Valid enum: 'assignment', 'exam', 'grade', 'announcement', 'system'
         title: `${emoji} Test ${passStatus === 'passed' ? 'Passed' : 'Completed'}!`,
         message: `You scored ${finalScore}% on ${course?.code} - ${course?.title}. ${correctCount} out of ${questions.length} questions correct.`,
         read: false
-      });
+      };
+      
+      console.log('🔔 Notification data:', notificationData);
+      
+      const { data: notifData, error: notifError } = await supabase
+        .from('notifications')
+        .insert(notificationData)
+        .select();
+      
+      if (notifError) {
+        console.error('❌ Error creating notification:', notifError);
+        console.error('❌ Notification error message:', notifError.message);
+        console.error('❌ Notification error code:', notifError.code);
+      } else {
+        console.log('✅ Notification created successfully:', notifData);
+      }
 
       // Dispatch event to refresh dashboard stats and charts
       window.dispatchEvent(new Event('testSubmitted'));
