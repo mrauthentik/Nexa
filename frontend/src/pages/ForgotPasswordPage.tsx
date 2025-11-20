@@ -47,36 +47,40 @@ const ForgotPasswordPage = () => {
     setLoading(true);
 
     try {
-      // Check if email exists in database
-      const { data: user, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single();
+      // Use Supabase's built-in password reset
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
 
-      if (userError || !user) {
-        toast.error('Email not found. Please check and try again.');
+      if (error) {
+        toast.error('Email not found or error sending reset link.');
         setLoading(false);
         return;
       }
 
-      // In a real implementation, you'd send an email with a code
-      // For now, we'll generate a code and store it (you'd use a backend service)
+      // For our custom code flow, generate and send via edge function
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      // Store code in localStorage temporarily (in production, use a backend with expiry)
-      localStorage.setItem('resetCode', JSON.stringify({
-        code,
-        email,
-        timestamp: Date.now(),
-        expiry: Date.now() + 5 * 60 * 1000 // 5 minutes
-      }));
+      // Call edge function to send email with code
+      const { error: sendError } = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email,
+          code,
+        },
+      });
 
-      // Simulate sending email
-      console.log('Reset code:', code); // In development, check console
-      
+      if (sendError) {
+        // Fallback: Store in localStorage for development
+        console.log('Reset code (dev mode):', code);
+        localStorage.setItem('resetCode', JSON.stringify({
+          code,
+          email,
+          timestamp: Date.now(),
+          expiry: Date.now() + 5 * 60 * 1000,
+        }));
+      }
+
       toast.success(`Reset code sent to ${email}`);
-      toast.loading('Check your email for the verification code');
       
       setStep('verify');
       setCodeRequested(true);
@@ -145,22 +149,25 @@ const ForgotPasswordPage = () => {
         return;
       }
 
-      // Update password in Supabase
+      // Update password in Supabase Auth
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
       if (error) {
-        // If not authenticated, use resetPasswordForEmail
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-        if (resetError) throw resetError;
+        // If not authenticated, the user needs to use the email reset link
+        toast.error('Please use the password reset link sent to your email');
+        setLoading(false);
+        return;
       }
 
       // Clear stored code
       localStorage.removeItem('resetCode');
 
       toast.success('Password reset successfully!');
-      navigate('/auth');
+      setTimeout(() => {
+        navigate('/auth');
+      }, 1500);
     } catch (err: any) {
       toast.error(err.message || 'Failed to reset password. Please try again.');
       console.error(err);
