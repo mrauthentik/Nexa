@@ -4,17 +4,31 @@ import FeaturesSection from '../components/FeaturesSection'
 import AboutSection from '../components/AboutSection'
 import Review from '../components/Review'
 import FAQ from '../components/Faq'
+import Contact from '../components/Contact'
 import Footer from '../components/Footer'
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <HeroSection />
-      <FeaturesSection />
-      <AboutSection />
-      <Review />
-      <FAQ />
+      <section id="home">
+        <HeroSection />
+      </section>
+      <section id="features">
+        <FeaturesSection />
+      </section>
+      <section id="about">
+        <AboutSection />
+      </section>
+      <section id="reviews">
+        <Review />
+      </section>
+      <section id="faq">
+        <FAQ />
+      </section>
+      <section id="contact">
+        <Contact />
+      </section>
       <Footer />
     </div>
   );

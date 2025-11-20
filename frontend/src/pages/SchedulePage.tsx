@@ -4,7 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
+
 import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, Bell, CheckCircle2, Circle, Repeat, Star, AlertCircle } from 'lucide-react';
+
 
 interface Event {
   id: string;
@@ -32,7 +34,6 @@ const SchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
-  // View mode and filters removed - not currently used in UI
   
   const [newEvent, setNewEvent] = useState({
     title: '',
