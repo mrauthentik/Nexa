@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, Bell, BellOff, CheckCircle2, Circle, Filter, Calendar as CalendarIcon, Repeat, Star, AlertCircle, List, Grid3x3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, X, Bell, CheckCircle2, Circle, Repeat, Star, AlertCircle } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -32,9 +32,7 @@ const SchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [showCompleted, setShowCompleted] = useState(true);
+  // View mode and filters removed - not currently used in UI
   
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -202,37 +200,6 @@ const SchedulePage = () => {
       toast.error('Failed to update task');
       console.error(error);
     }
-  };
-
-  const getFilteredEvents = () => {
-    let filtered = events;
-    
-    if (filterType !== 'all') {
-      filtered = filtered.filter(e => e.type === filterType);
-    }
-    
-    if (!showCompleted) {
-      filtered = filtered.filter(e => !e.completed);
-    }
-    
-    return filtered;
-  };
-
-  const getUpcomingEvents = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return getFilteredEvents()
-      .filter(e => {
-        const eventDate = new Date(e.date);
-        return eventDate >= today && !e.completed;
-      })
-      .sort((a, b) => {
-        const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (dateCompare !== 0) return dateCompare;
-        return (a.start_time || '').localeCompare(b.start_time || '');
-      })
-      .slice(0, 5);
   };
 
   const getPriorityColor = (priority?: string) => {
