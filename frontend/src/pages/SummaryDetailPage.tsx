@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { ChevronLeft, ChevronRight, BookOpen, FileText } from 'lucide-react';
+import RichNoteEditor from '../components/RichNoteEditor';
 
 const SummaryDetailPage = () => {
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState<'summary' | 'notes'>('summary');
+  const [currentSection, setCurrentSection] = useState(0);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [completedSections, setCompletedSections] = useState<number[]>([]);
 
   // Mock data - will come from API later
   const summary = {
@@ -71,24 +75,34 @@ const SummaryDetailPage = () => {
     ],
   };
 
-  // Track reading progress based on scroll position
+  // Calculate reading progress based on completed sections
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollableElement = document.getElementById('content-area');
-      if (scrollableElement) {
-        const scrollTop = scrollableElement.scrollTop;
-        const scrollHeight = scrollableElement.scrollHeight - scrollableElement.clientHeight;
-        const progress = (scrollTop / scrollHeight) * 100;
-        setReadingProgress(Math.min(progress, 100));
-      }
-    };
+    const progress = (completedSections.length / summary.content.length) * 100;
+    setReadingProgress(progress);
+  }, [completedSections]);
 
-    const scrollableElement = document.getElementById('content-area');
-    if (scrollableElement) {
-      scrollableElement.addEventListener('scroll', handleScroll);
-      return () => scrollableElement.removeEventListener('scroll', handleScroll);
+  const handleNextSection = () => {
+    if (currentSection < summary.content.length - 1) {
+      if (!completedSections.includes(currentSection)) {
+        setCompletedSections([...completedSections, currentSection]);
+      }
+      setCurrentSection(currentSection + 1);
     }
-  }, []);
+  };
+
+  const handlePrevSection = () => {
+    if (currentSection > 0) {
+      setCurrentSection(currentSection - 1);
+    }
+  };
+
+  const markSectionComplete = () => {
+    if (!completedSections.includes(currentSection)) {
+      setCompletedSections([...completedSections, currentSection]);
+    }
+  };
+
+  const currentSectionData = summary.content[currentSection];
 
   return (
     <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -237,48 +251,142 @@ const SummaryDetailPage = () => {
 
             {/* Content */}
             {activeTab === 'summary' ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 space-y-8">
-                {summary.content.map((section, idx) => (
-                  <div key={idx}>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">{section.section}</h2>
-                    <div className="space-y-6">
-                      {section.topics.map((topic, topicIdx) => (
-                        <div key={topicIdx} className="pl-4 border-l-4 border-primary-200">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-2">{topic.title}</h3>
-                          <p className="text-gray-700 leading-relaxed">{topic.content}</p>
-                        </div>
-                      ))}
-                    </div>
+              <div className="space-y-6">
+                {/* Progress Indicator */}
+                <div className={`flex items-center justify-between p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
+                  <div className="flex items-center gap-3">
+                    <BookOpen className={`w-5 h-5 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
+                    <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      Section {currentSection + 1} of {summary.content.length}
+                    </span>
                   </div>
-                ))}
+                  <div className="flex items-center gap-2">
+                    {summary.content.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSection(idx)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          idx === currentSection
+                            ? 'w-8 bg-primary-600'
+                            : completedSections.includes(idx)
+                            ? 'bg-green-500'
+                            : isDarkMode
+                            ? 'bg-gray-600'
+                            : 'bg-gray-300'
+                        }`}
+                        title={`Section ${idx + 1}${completedSections.includes(idx) ? ' (Completed)' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Progressive Card */}
+                <div className={`rounded-xl shadow-lg overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-primary-600 to-purple-600 p-6 text-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold opacity-90">
+                        SECTION {currentSection + 1}
+                      </span>
+                      {completedSections.includes(currentSection) && (
+                        <span className="flex items-center gap-1 text-sm bg-white/20 px-3 py-1 rounded-full">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-3xl font-bold">{currentSectionData.section}</h2>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-8 space-y-6">
+                    {currentSectionData.topics.map((topic, topicIdx) => (
+                      <div
+                        key={topicIdx}
+                        className={`p-6 rounded-lg border-l-4 border-primary-500 ${isDarkMode ? 'bg-gray-700/50' : 'bg-primary-50'}`}
+                        style={{
+                          animation: `fadeInUp 0.5s ease-out ${topicIdx * 0.1}s both`,
+                        }}
+                      >
+                        <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {topic.title}
+                        </h3>
+                        <p className={`leading-relaxed text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {topic.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Card Footer - Navigation */}
+                  <div className={`flex items-center justify-between p-6 border-t ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'}`}>
+                    <button
+                      onClick={handlePrevSection}
+                      disabled={currentSection === 0}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        currentSection === 0
+                          ? 'opacity-50 cursor-not-allowed'
+                          : isDarkMode
+                          ? 'bg-gray-700 text-white hover:bg-gray-600'
+                          : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                      }`}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                      Previous
+                    </button>
+
+                    {!completedSections.includes(currentSection) && (
+                      <button
+                        onClick={markSectionComplete}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                      >
+                        Mark as Complete
+                      </button>
+                    )}
+
+                    {currentSection < summary.content.length - 1 ? (
+                      <button
+                        onClick={handleNextSection}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                      >
+                        Next
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    ) : (
+                      <a
+                        href="/cbt"
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all font-semibold"
+                      >
+                        <FileText className="w-5 h-5" />
+                        Take CBT Test
+                      </a>
+                    )}
+                  </div>
+                </div>
 
                 {/* Completion Message */}
-                {readingProgress >= 95 && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 text-center">
+                {readingProgress >= 100 && (
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-500 rounded-xl p-6 text-center">
                     <svg className="w-16 h-16 mx-auto mb-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Great Job!</h3>
-                    <p className="text-gray-600 mb-4">You've completed this summary. Ready to test your knowledge?</p>
+                    <h3 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>🎉 Congratulations!</h3>
+                    <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      You've completed all sections. Ready to test your knowledge?
+                    </p>
                     <a
                       href="/cbt"
-                      className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+                      className="inline-block px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-lg"
                     >
-                      Take CBT Practice Test
+                      Take CBT Practice Test →
                     </a>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-sm p-8">
-                <textarea
-                  className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Take notes while studying..."
-                />
-                <button className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                  Save Notes
-                </button>
-              </div>
+              <RichNoteEditor summaryId={summary.id.toString()} />
             )}
           </div>
         </div>

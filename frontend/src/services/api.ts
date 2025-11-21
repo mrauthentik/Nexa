@@ -416,6 +416,76 @@ export const settingsAPI = {
     },
 };
 
+// Billing API
+export const billingAPI = {
+    // Get user subscription details
+    getSubscription: async () => {
+        const response = await fetch(`${FUNCTIONS_URL}/get-user-subscription`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    // Create checkout session
+    createCheckoutSession: async (tier: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/create-checkout-session`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({
+                tier,
+                successUrl: `${window.location.origin}/billing?success=true`,
+                cancelUrl: `${window.location.origin}/billing?cancelled=true`,
+            }),
+        });
+        return response.json();
+    },
+
+    // Manage subscription (cancel, resume, update_payment)
+    manageSubscription: async (action: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/manage-subscription`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({ action }),
+        });
+        return response.json();
+    },
+};
+
+// Notes API
+export const notesAPI = {
+    // Get note for a summary
+    getNote: async (summaryId: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/manage-notes?summary_id=${summaryId}`, {
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+
+    // Save or update note
+    saveNote: async (summaryId: string, content: string, highlights: any[], formatting: any) => {
+        const response = await fetch(`${FUNCTIONS_URL}/manage-notes`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({
+                summary_id: summaryId,
+                content,
+                highlights,
+                formatting,
+            }),
+        });
+        return response.json();
+    },
+
+    // Delete note
+    deleteNote: async (summaryId: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/manage-notes?summary_id=${summaryId}`, {
+            method: 'DELETE',
+            headers: await getAuthHeaders(),
+        });
+        return response.json();
+    },
+};
+
 export default {
     auth: authAPI,
     summaries: summariesAPI,
@@ -430,4 +500,6 @@ export default {
     admin: adminAPI,
     dashboard: dashboardAPI,
     settings: settingsAPI,
+    billing: billingAPI,
+    notes: notesAPI,
 };

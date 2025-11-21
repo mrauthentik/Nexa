@@ -19,6 +19,7 @@ import CBTTestPage from './pages/CBTTestPage'
 import CBTResultsPage from './pages/CBTResultsPage'
 import AdminAddSummary from './pages/AdminAddSummary'
 import AdminAddQuestions from './pages/AdminAddQuestions'
+import BillingPage from './pages/BillingPage'
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             {/* Protected Student Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
             <Route path="/summaries" element={<ProtectedRoute><SummariesPage /></ProtectedRoute>} />
             <Route path="/summaries/:id" element={<ProtectedRoute><SummaryDetailPage /></ProtectedRoute>} />
             <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />

@@ -38,38 +38,74 @@ serve(async (req) => {
 
     // SEND RESET CODE
     if (method === 'POST' && action === 'send') {
+      console.log('=== FORGOT PASSWORD: SEND ACTION STARTED ===');
       const { email } = await req.json();
+      console.log('Received email:', email);
 
       if (!email) {
+        console.error('No email provided');
         return new Response(
           JSON.stringify({ error: 'Email is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Check if user exists
-      const { data: profile, error: profileError } = await supabaseClient
-        .from('profiles')
-        .select('id, email, full_name')
-        .eq('email', email)
-        .single();
+      // Check if user exists in auth.users using service role
+      console.log('Creating admin client...');
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
 
-      if (profileError || !profile) {
+      console.log('Fetching users from auth.users...');
+      const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify user', details: usersError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Found ${users?.length || 0} total users`);
+      const user = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+      if (!user) {
+        console.log('User not found for email:', email);
         return new Response(
           JSON.stringify({ error: 'Email not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('User found:', user.id);
+
+      // Get profile for user's name
+      console.log('Fetching profile for user:', user.id);
+      const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.warn('Profile fetch error (non-critical):', profileError.message);
+      } else {
+        console.log('Profile found:', profile?.full_name || 'No name');
+      }
+
       // Generate 6-digit code
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+      console.log('Generated code:', code, 'Expiry:', new Date(expiry).toISOString());
 
-      // Store reset code in database
-      const { error: insertError } = await supabaseClient
+      // Store reset code in database using admin client (bypasses RLS)
+      console.log('Storing reset code in database...');
+      const { error: insertError } = await supabaseAdmin
         .from('password_reset_codes')
         .insert({
-          user_id: profile.id,
+          user_id: user.id,
           email: email,
           code: code,
           expiry: new Date(expiry).toISOString(),
@@ -77,14 +113,22 @@ serve(async (req) => {
         });
 
       if (insertError) {
-        console.error('Error storing reset code:', insertError);
+        console.error('Error storing reset code:', JSON.stringify(insertError, null, 2));
         return new Response(
-          JSON.stringify({ error: 'Failed to generate reset code' }),
+          JSON.stringify({ 
+            error: 'Failed to generate reset code', 
+            details: insertError.message,
+            hint: insertError.hint,
+            code: insertError.code
+          }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('Reset code stored successfully');
+
       // Send email via Resend
+      console.log('Sending email via Resend...');
       try {
         const resendResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -93,7 +137,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: 'NEXA <onboarding@resend.dev>',
+            from: 'NEXA <noreply@nexaedu.ng>',
             to: [email],
             subject: 'Password Reset Code - NEXA',
             html: `
@@ -122,7 +166,7 @@ serve(async (req) => {
                             <td style="padding: 40px 30px;">
                               <h2 style="margin: 0 0 20px; color: #111827; font-size: 24px; font-weight: 600;">Password Reset Request</h2>
                               <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                                Hello ${profile.full_name || 'there'},
+                                Hello ${profile?.full_name || user.email?.split('@')[0] || 'there'},
                               </p>
                               <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
                                 We received a request to reset your password. Use the verification code below to proceed:
@@ -176,11 +220,16 @@ serve(async (req) => {
           }),
         });
 
+        const resendData = await resendResponse.json();
+        
         if (!resendResponse.ok) {
-          const errorData = await resendResponse.text();
-          console.error('Resend API error:', errorData);
-          throw new Error('Failed to send email');
+          console.error('Resend API error:', JSON.stringify(resendData, null, 2));
+          console.error('Status:', resendResponse.status);
+          throw new Error(`Failed to send email: ${resendData.message || 'Unknown error'}`);
         }
+
+        console.log('Email sent successfully via Resend:', resendData.id);
+        console.log('=== FORGOT PASSWORD: SEND ACTION COMPLETED ===');
 
         return new Response(
           JSON.stringify({ 
@@ -190,10 +239,15 @@ serve(async (req) => {
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error('Email sending error:', emailError);
+        console.error('Error message:', emailError.message);
+        console.error('Error stack:', emailError.stack);
         return new Response(
-          JSON.stringify({ error: 'Failed to send email. Please try again.' }),
+          JSON.stringify({ 
+            error: 'Failed to send email. Please try again.',
+            details: emailError.message 
+          }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -201,17 +255,27 @@ serve(async (req) => {
 
     // VERIFY CODE
     if (method === 'POST' && action === 'verify') {
+      console.log('=== FORGOT PASSWORD: VERIFY ACTION STARTED ===');
       const { email, code } = await req.json();
+      console.log('Verifying code for email:', email);
 
       if (!email || !code) {
+        console.error('Missing email or code');
         return new Response(
           JSON.stringify({ error: 'Email and code are required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // Create admin client for database operations
+      const supabaseAdmin = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
       // Get the most recent unused code for this email
-      const { data: resetCode, error: codeError } = await supabaseClient
+      console.log('Looking up reset code...');
+      const { data: resetCode, error: codeError } = await supabaseAdmin
         .from('password_reset_codes')
         .select('*')
         .eq('email', email)
@@ -222,15 +286,20 @@ serve(async (req) => {
         .single();
 
       if (codeError || !resetCode) {
+        console.error('Code lookup error:', codeError);
         return new Response(
           JSON.stringify({ error: 'Invalid verification code' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('Reset code found:', resetCode.id);
+
       // Check if code is expired
       const expiryTime = new Date(resetCode.expiry).getTime();
+      console.log('Checking expiry. Now:', Date.now(), 'Expiry:', expiryTime);
       if (Date.now() > expiryTime) {
+        console.log('Code expired');
         return new Response(
           JSON.stringify({ error: 'Verification code has expired' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -238,11 +307,13 @@ serve(async (req) => {
       }
 
       // Mark code as used
-      await supabaseClient
+      console.log('Marking code as used...');
+      await supabaseAdmin
         .from('password_reset_codes')
         .update({ used: true })
         .eq('id', resetCode.id);
 
+      console.log('=== FORGOT PASSWORD: VERIFY ACTION COMPLETED ===');
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -255,9 +326,12 @@ serve(async (req) => {
 
     // RESET PASSWORD
     if (method === 'POST' && action === 'reset') {
+      console.log('=== FORGOT PASSWORD: RESET ACTION STARTED ===');
       const { email, code, newPassword } = await req.json();
+      console.log('Resetting password for email:', email);
 
       if (!email || !code || !newPassword) {
+        console.error('Missing required fields');
         return new Response(
           JSON.stringify({ error: 'Email, code, and new password are required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -265,14 +339,22 @@ serve(async (req) => {
       }
 
       if (newPassword.length < 6) {
+        console.error('Password too short');
         return new Response(
           JSON.stringify({ error: 'Password must be at least 6 characters' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      // Create admin client for database operations
+      const supabaseAdminReset = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
       // Verify code one more time
-      const { data: resetCode, error: codeError } = await supabaseClient
+      console.log('Verifying reset code...');
+      const { data: resetCode, error: codeError } = await supabaseAdminReset
         .from('password_reset_codes')
         .select('*')
         .eq('email', email)
@@ -283,36 +365,43 @@ serve(async (req) => {
         .single();
 
       if (codeError || !resetCode) {
+        console.error('Reset code verification failed:', codeError);
         return new Response(
           JSON.stringify({ error: 'Invalid or expired reset code' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Update password using Supabase Admin API
-      const supabaseAdmin = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
+      console.log('Reset code verified for user:', resetCode.user_id);
 
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      // Update password using Supabase Admin API
+      console.log('Updating password for user:', resetCode.user_id);
+      const { error: updateError } = await supabaseAdminReset.auth.admin.updateUserById(
         resetCode.user_id,
         { password: newPassword }
       );
 
       if (updateError) {
-        console.error('Password update error:', updateError);
+        console.error('Password update error:', JSON.stringify(updateError, null, 2));
         return new Response(
-          JSON.stringify({ error: 'Failed to reset password' }),
+          JSON.stringify({ 
+            error: 'Failed to reset password',
+            details: updateError.message 
+          }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('Password updated successfully');
+
       // Delete all reset codes for this user
-      await supabaseClient
+      console.log('Cleaning up reset codes...');
+      await supabaseAdminReset
         .from('password_reset_codes')
         .delete()
         .eq('user_id', resetCode.user_id);
+
+      console.log('=== FORGOT PASSWORD: RESET ACTION COMPLETED ===');
 
       return new Response(
         JSON.stringify({ 
@@ -329,9 +418,16 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error('=== GLOBAL ERROR HANDLER ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', JSON.stringify(error, null, 2));
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        type: error.constructor.name 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -33,57 +33,54 @@ serve(async (req) => {
 
         const url = new URL(req.url);
         const method = req.method;
-        const noteId = url.searchParams.get('note_id');
-        const courseId = url.searchParams.get('course_id');
+        const summaryId = url.searchParams.get('summary_id');
 
-        // GET - Fetch notes
+        // GET - Fetch note for a summary
         if (method === 'GET') {
-            let query = supabase
-                .from('notes')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('updated_at', { ascending: false });
-
-            if (courseId) {
-                query = query.eq('course_id', courseId);
-            }
-
-            if (noteId) {
-                query = query.eq('id', noteId).single();
-            }
-
-            const { data, error } = await query;
-
-            if (error) throw error;
-
-            return new Response(
-                JSON.stringify({ notes: data }),
-                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-        }
-
-        // POST - Create new note
-        if (method === 'POST') {
-            const body = await req.json();
-            const { course_id, title, content, highlights, tags, is_favorite } = body;
-
-            if (!title || !content) {
+            if (!summaryId) {
                 return new Response(
-                    JSON.stringify({ error: 'Title and content are required' }),
+                    JSON.stringify({ error: 'Summary ID is required' }),
                     { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 );
             }
 
             const { data, error } = await supabase
-                .from('notes')
-                .insert({
+                .from('user_notes')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('summary_id', summaryId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+
+            return new Response(
+                JSON.stringify({ note: data || null }),
+                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // POST - Create or update note
+        if (method === 'POST') {
+            const body = await req.json();
+            const { summary_id, content, highlights, formatting } = body;
+
+            if (!summary_id || !content) {
+                return new Response(
+                    JSON.stringify({ error: 'Summary ID and content are required' }),
+                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+            }
+
+            const { data, error } = await supabase
+                .from('user_notes')
+                .upsert({
                     user_id: user.id,
-                    course_id: course_id || null,
-                    title,
+                    summary_id,
                     content,
                     highlights: highlights || [],
-                    tags: tags || [],
-                    is_favorite: is_favorite || false
+                    formatting: formatting || {}
+                }, {
+                    onConflict: 'user_id,summary_id'
                 })
                 .select()
                 .single();
@@ -91,60 +88,25 @@ serve(async (req) => {
             if (error) throw error;
 
             return new Response(
-                JSON.stringify({ note: data, message: 'Note created successfully' }),
-                { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-        }
-
-        // PUT - Update note
-        if (method === 'PUT') {
-            if (!noteId) {
-                return new Response(
-                    JSON.stringify({ error: 'Note ID is required' }),
-                    { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                );
-            }
-
-            const body = await req.json();
-            const { title, content, highlights, tags, is_favorite } = body;
-
-            const updateData: any = {};
-            if (title !== undefined) updateData.title = title;
-            if (content !== undefined) updateData.content = content;
-            if (highlights !== undefined) updateData.highlights = highlights;
-            if (tags !== undefined) updateData.tags = tags;
-            if (is_favorite !== undefined) updateData.is_favorite = is_favorite;
-
-            const { data, error } = await supabase
-                .from('notes')
-                .update(updateData)
-                .eq('id', noteId)
-                .eq('user_id', user.id)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            return new Response(
-                JSON.stringify({ note: data, message: 'Note updated successfully' }),
+                JSON.stringify({ note: data, message: 'Note saved successfully' }),
                 { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
 
         // DELETE - Delete note
         if (method === 'DELETE') {
-            if (!noteId) {
+            if (!summaryId) {
                 return new Response(
-                    JSON.stringify({ error: 'Note ID is required' }),
+                    JSON.stringify({ error: 'Summary ID is required' }),
                     { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 );
             }
 
             const { error } = await supabase
-                .from('notes')
+                .from('user_notes')
                 .delete()
-                .eq('id', noteId)
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .eq('summary_id', summaryId);
 
             if (error) throw error;
 
