@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }
 
 serve(async (req) => {
@@ -28,26 +29,43 @@ serve(async (req) => {
 
     // GET - Fetch announcements
     if (req.method === 'GET') {
+      console.log('📢 GET announcements request')
+      console.log('Target filter:', target)
+      
       let query = supabaseClient
         .from('announcements')
         .select('*')
         .eq('active', true)
 
       if (target) {
+        console.log('Applying target filter:', `target.eq.${target},target.eq.both`)
         query = query.or(`target.eq.${target},target.eq.both`)
       }
 
       if (announcementId) {
         query = query.eq('id', announcementId).single()
         const { data: announcement, error } = await query
-        if (error) throw error
+        if (error) {
+          console.error('❌ Error fetching single announcement:', error)
+          throw error
+        }
+        console.log('✅ Single announcement fetched:', announcement?.id)
         return new Response(JSON.stringify({ announcement }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
 
       const { data: announcements, error } = await query.order('created_at', { ascending: false })
-      if (error) throw error
+      
+      if (error) {
+        console.error('❌ Error fetching announcements:', error)
+        throw error
+      }
+
+      console.log(`✅ Fetched ${announcements?.length || 0} announcements`)
+      if (announcements && announcements.length > 0) {
+        console.log('First announcement:', JSON.stringify(announcements[0], null, 2))
+      }
 
       return new Response(JSON.stringify({ announcements }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

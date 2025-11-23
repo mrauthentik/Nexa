@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import AdminLayout from '../components/AdminLayout';
 import {
   MessageSquare,
   Search,
@@ -172,38 +173,22 @@ const AdminMessages = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className={`h-12 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded`}></div>
-            <div className={`h-96 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-xl`}></div>
-          </div>
+      <AdminLayout title="Support Messages" subtitle="Manage support requests from users">
+        <div className="animate-pulse space-y-4">
+          <div className={`h-12 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded`}></div>
+          <div className={`h-96 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-xl`}></div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Toaster position="top-center" />
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <MessageSquare className={`w-8 h-8 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Support Messages
-            </h1>
-            {unreadCount > 0 && (
-              <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-semibold">
-                {unreadCount} new
-              </span>
-            )}
-          </div>
-          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-            Manage support requests from users
-          </p>
+    <AdminLayout title="Support Messages" subtitle="Manage support requests from users">
+      {unreadCount > 0 && (
+        <div className="mb-4 px-3 py-2 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+          <span className="font-semibold">{unreadCount} new message{unreadCount !== 1 ? 's' : ''}</span>
         </div>
+      )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="relative">
@@ -335,7 +320,6 @@ const AdminMessages = () => {
             </div>
           )}
         </div>
-      </div>
 
       {selectedMessage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -435,7 +419,7 @@ const AdminMessages = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

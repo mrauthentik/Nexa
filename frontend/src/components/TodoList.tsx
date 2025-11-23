@@ -126,14 +126,17 @@ const TodoList = () => {
         
         // Create notification if notify is enabled
         if (formData.notify && formData.due_date) {
-          await supabase.from('notifications').insert({
+          const { error: notifError } = await supabase.from('notifications').insert({
             user_id: user?.id,
             type: 'task',
             title: 'New Task Created',
             message: `Don't forget: ${formData.title}`,
-            priority: formData.priority,
             read: false,
           });
+          
+          if (notifError) {
+            console.error('Error creating task notification:', notifError);
+          }
         }
       }
 

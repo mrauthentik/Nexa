@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { adminExtendedAPI } from '../services/api';
 import { Award, TrendingUp, BookOpen, Eye } from 'lucide-react';
+import AdminNotificationDropdown from '../components/AdminNotificationDropdown';
+import { Toaster } from 'react-hot-toast';
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -75,6 +77,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -214,6 +217,7 @@ const AdminDashboard = () => {
               <a href="/admin/add-questions" className="hidden md:flex px-3 sm:px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm">
                 + Add Questions
               </a>
+              <AdminNotificationDropdown />
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 A
               </div>

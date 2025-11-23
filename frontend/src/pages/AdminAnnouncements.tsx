@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import AdminLayout from '../components/AdminLayout';
 import {
   Megaphone,
   Plus,
@@ -181,49 +182,36 @@ const AdminAnnouncements = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className={`h-12 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded`}></div>
-            <div className="grid grid-cols-1 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className={`h-48 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-xl`}></div>
-              ))}
-            </div>
+      <AdminLayout title="Announcements" subtitle="Create and manage platform announcements">
+        <div className="animate-pulse space-y-4">
+          <div className={`h-12 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded`}></div>
+          <div className="grid grid-cols-1 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className={`h-48 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded-xl`}></div>
+            ))}
           </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Toaster position="top-center" />
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Megaphone className={`w-8 h-8 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
-              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Announcements
-              </h1>
-            </div>
-            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-              Create and manage platform announcements
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowModal(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            New Announcement
-          </button>
+    <AdminLayout title="Announcements" subtitle="Create and manage platform announcements">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Megaphone className={`w-8 h-8 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
         </div>
+        <button
+          onClick={() => {
+            resetForm();
+            setShowModal(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          New Announcement
+        </button>
+      </div>
 
         <div className="space-y-4">
           {announcements.length === 0 ? (
@@ -366,7 +354,6 @@ const AdminAnnouncements = () => {
             ))
           )}
         </div>
-      </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -600,7 +587,7 @@ const AdminAnnouncements = () => {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 

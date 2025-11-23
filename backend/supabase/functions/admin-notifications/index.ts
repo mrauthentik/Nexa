@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }
 
 serve(async (req) => {
@@ -49,14 +50,21 @@ serve(async (req) => {
 
     // GET - Fetch admin notifications
     if (req.method === 'GET') {
+      console.log('📢 Fetching admin notifications for user:', user.id)
+      
       const { data: notifications, error } = await supabaseClient
-        .from('admin_notifications')
+        .from('notifications')
         .select('*')
-        .eq('admin_id', user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error fetching admin notifications:', error)
+        throw error
+      }
+
+      console.log(`✅ Fetched ${notifications?.length || 0} admin notifications`)
 
       return new Response(JSON.stringify({ notifications }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -72,13 +80,20 @@ serve(async (req) => {
         })
       }
 
+      console.log('✅ Marking notification as read:', notificationId)
+
       const { error } = await supabaseClient
-        .from('admin_notifications')
+        .from('notifications')
         .update({ read: true })
         .eq('id', notificationId)
-        .eq('admin_id', user.id)
+        .eq('user_id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error marking notification as read:', error)
+        throw error
+      }
+
+      console.log('✅ Notification marked as read')
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,13 +109,20 @@ serve(async (req) => {
         })
       }
 
+      console.log('🗑️ Deleting notification:', notificationId)
+
       const { error } = await supabaseClient
-        .from('admin_notifications')
+        .from('notifications')
         .delete()
         .eq('id', notificationId)
-        .eq('admin_id', user.id)
+        .eq('user_id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error deleting notification:', error)
+        throw error
+      }
+
+      console.log('✅ Notification deleted')
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
