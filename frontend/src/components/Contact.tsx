@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Twitter, Linkedin, Instagram, Facebook } from 'lucide-react';
 import { useState } from 'react';
 import { supportAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -236,17 +236,26 @@ const Contact = () => {
             <div className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-md transition-all duration-300">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Follow Us</h3>
               <div className="flex gap-4">
-                {['Twitter', 'LinkedIn', 'Instagram', 'Facebook'].map((social) => (
-                  <a
-                    key={social}
-                    href="#"
-                    className="w-12 h-12 rounded-lg bg-gray-100 hover:bg-teal-100 flex items-center justify-center transition-all duration-200 group"
-                  >
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-teal-600 transition-colors duration-200">
-                      {social[0]}
-                    </span>
-                  </a>
-                ))}
+                {[
+                  { icon: Twitter, label: 'Twitter', href: 'https://twitter.com/NexaPlatform' },
+                  { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/company/nexaplatform' },
+                  { icon: Instagram, label: 'Instagram', href: 'https://instagram.com/NexaPlatform' },
+                  { icon: Facebook, label: 'Facebook', href: 'https://facebook.com/NexaPlatform' },
+                ].map((social) => {
+                  const Icon = social.icon;
+                  return (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={social.label}
+                      className="w-12 h-12 rounded-lg bg-gray-100 hover:bg-teal-100 flex items-center justify-center transition-all duration-200 group"
+                    >
+                      <Icon className="w-5 h-5 text-gray-700 group-hover:text-teal-600 transition-colors duration-200" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>

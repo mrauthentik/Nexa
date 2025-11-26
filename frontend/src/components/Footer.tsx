@@ -1,4 +1,6 @@
- const Footer = () => {
+import { Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+
+const Footer = () => {
   const quickLinks = [
     {
       title: 'Platform',
@@ -39,10 +41,10 @@
   ];
 
   const socialLinks = [
-    { icon: 'f', label: 'Facebook', href: '#' },
-    { icon: 'tw', label: 'Twitter', href: '#' },
-    { icon: 'in', label: 'LinkedIn', href: '#' },
-    { icon: 'ig', label: 'Instagram', href: '#' },
+    { icon: Facebook, label: 'Facebook', href: 'https://facebook.com/NexaPlatform' },
+    { icon: Twitter, label: 'Twitter', href: 'https://twitter.com/NexaPlatform' },
+    { icon: Linkedin, label: 'LinkedIn', href: 'https://linkedin.com/company/nexaplatform' },
+    { icon: Instagram, label: 'Instagram', href: 'https://instagram.com/NexaPlatform' },
   ];
 
   return (
@@ -63,16 +65,21 @@
               Your computer-based training platform for NOUN exam success. Practice, Track, Excel.
             </p>
             <div className="flex gap-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  title={social.label}
-                  className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-teal-600 flex items-center justify-center transition-colors duration-200"
-                >
-                  <span className="text-xs font-bold">{social.icon}</span>
-                </a>
-              ))}
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={social.label}
+                    className="w-10 h-10 rounded-lg bg-gray-800 hover:bg-teal-600 flex items-center justify-center transition-colors duration-200 group"
+                  >
+                    <Icon className="w-5 h-5 text-gray-300 group-hover:text-white transition-colors" />
+                  </a>
+                );
+              })}
             </div>
           </div>
 
