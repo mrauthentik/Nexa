@@ -188,7 +188,7 @@ const CBTPracticePage = () => {
       <OnboardingTutorial
         steps={tutorialSteps}
         onComplete={() => toast.success('Welcome to NEXA CBT Practice! 🎉')}
-        onSkip={() => toast('You can restart the tutorial anytime from settings', { icon: 'ℹ️' })}
+        onSkip={() => toast('You can restart the tutorial anytime by clicking Tutorial on the CBT Page', { icon: 'ℹ️' })}
         storageKey="cbt-tutorial-completed"
       />
       <DashboardLayout currentPage="/cbt">

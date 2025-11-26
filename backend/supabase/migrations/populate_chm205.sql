@@ -4,6 +4,10 @@ v_course_id UUID;
 BEGIN
 SELECT id INTO v_course_id FROM courses WHERE code = 'CHM205' LIMIT 1;
 
+IF v_course_id IS NULL THEN
+    RAISE EXCEPTION 'Course CHM205 not found. Please run course population migration first.';
+END IF;
+
 -- Q1 - Multiple choice
 INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
 VALUES (v_course_id, 'Amongst all elements of Group 4, _______ is the only one to occur in the elemental state as diamond and graphite.', 'multiple_choice',
@@ -383,4 +387,371 @@ INSERT INTO questions (course_id, question_text, question_type, option_a, option
 VALUES (v_course_id, 'In the gaseous state phosphorus exists as ____________.', 'multiple_choice',
 'Monoatomic molecule', 'Diatomic molecule', 'Triatomic molecule', 'Tetra-atomic molecule', 'D',
 'Gaseous phosphorus exists as P4 (tetra-atomic) molecule.');
+
+-- Q70 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The tendency of ________ to form multiple bonds easily is due to its high bond energy and small atomic radius.', 'fill_in_blank', 'Carbon', 'Carbon forms strong multiple bonds due to small size and high bond energies.');
+-- Q71 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Silica gel is _____________ form of Silicon dioxide.', 'multiple_choice',
+'Crystalline', 'Amorphous', 'Metallic', 'Ionic', 'B',
+'Silica gel is an amorphous (non-crystalline) form of SiO2 with porous structure.');
+-- Q72 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Lightning discharge in the atmosphere converts nitrogen to _________.', 'multiple_choice',
+'Ammonia', 'Nitric oxide', 'Nitrogen dioxide', 'Nitrous oxide', 'B',
+'Lightning provides energy to convert N2 to nitric oxide (NO).');
+-- Q73 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Multiple bonds between its atoms make _________ inert at room temperature.', 'multiple_choice',
+'Oxygen', 'Nitrogen', 'Hydrogen', 'Chlorine', 'B',
+'The strong triple bond in N2 makes nitrogen very unreactive at room temperature.');
+-- Q74 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, '_________ occurs in the elemental state as diamond and graphite.', 'fill_in_blank', 'Carbon', 'Carbon naturally occurs in elemental form as diamond and graphite allotropes.');
+-- Q75 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The principal constituents of all rocks, clays and soils are ___________.', 'multiple_choice',
+'Carbonates', 'Silicates', 'Sulfates', 'Nitrates', 'B',
+'Silicates are the main components of rocks, clays, and soils.');
+-- Q76 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The purest and most stable form of silica is _____________.', 'multiple_choice',
+'Flint', 'Tridymite', 'Quartz', 'Cristobalite', 'C',
+'Quartz is the purest and most thermodynamically stable form of silica.');
+-- Q77 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The most stable hydride of phosphorus is _________.', 'multiple_choice',
+'P2H4', 'Phosphine', 'P2H6', 'Diphosphine', 'B',
+'Phosphine (PH3) is the most stable hydride of phosphorus.');
+-- Q78 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Pure phosphine ignites in air at about _______.', 'fill_in_blank', '435 K', 'Pure phosphine spontaneously ignites at approximately 435 K.');
+-- Q79 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'All the elements of Group 5 form ________.', 'multiple_choice',
+'Dihalides', 'Trihalides', 'Tetrahalides', 'Hexahalides', 'B',
+'All Group 5 elements form trihalides with halogens.');
+-- Q80 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The ________ can be oxidised to pentahalides.', 'multiple_choice',
+'Monohalides', 'Dihalides', 'Trihalides', 'Tetrahalides', 'C',
+'Trihalides of Group 5 elements can be oxidized to pentahalides.');
+-- Q81 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Which element does not form any pentahalides?', 'multiple_choice',
+'Phosphorus', 'Nitrogen', 'Arsenic', 'Antimony', 'B',
+'Nitrogen lacks d-orbitals and cannot form pentahalides.');
+-- Q82 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, '________ is used for conversion of alcohols to alkyl halides and acids to acylchlorides.', 'fill_in_blank', 'PCl5', 'Phosphorus pentachloride is used to convert alcohols to alkyl halides.');
+-- Q83 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'N2O is also known as _______.', 'multiple_choice',
+'Nitric oxide', 'Laughing gas', 'Nitrogen dioxide', 'Nitrous acid', 'B',
+'N2O (nitrous oxide) is commonly called laughing gas.');
+-- Q84 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'NO has a total of ________electrons.', 'multiple_choice',
+'10', '13', '15', '16', 'C',
+'Nitric oxide has 15 total electrons (7 from N, 8 from O).');
+-- Q85 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'An _______ is the acid in which ionisable hydrogen atoms are attached to the central atom through oxygen atoms.', 'multiple_choice',
+'Organic acid', 'Oxoacid', 'Binary acid', 'Haloacid', 'B',
+'Oxoacids have hydrogen atoms bonded to oxygen which is bonded to central atom.');
+-- Q86 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The prefixes _______, meta and pyro are used to distinguish acids differing in the content of water.', 'fill_in_blank', 'ortho', 'Ortho, meta, and pyro prefixes indicate different water content in oxoacids.');
+-- Q87 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The acid which has one water molecule less than the ortho acid is called ________.', 'multiple_choice',
+'pyro acid', 'meta acid', 'per acid', 'hypo acid', 'B',
+'Meta acids have one H2O less than the corresponding ortho acid.');
+-- Q88 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Pure nitric acid is a colourless liquid with boiling point of _______.', 'multiple_choice',
+'273 K', '300 K', '359 K', '373 K', 'C',
+'Pure HNO3 has a boiling point of 359 K.');
+-- Q89 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Nitric acid converts a mixture of cyclohexanol and cyclohexanone to _______.', 'multiple_choice',
+'benzoic acid', 'adipic acid', 'acetic acid', 'oxalic acid', 'B',
+'Nitric acid oxidizes cyclohexanol and cyclohexanone to adipic acid for nylon production.');
+-- Q90 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The oxidation state of phosphorus is _______ in phosphoric acids.', 'fill_in_blank', '+5', 'Phosphorus has +5 oxidation state in phosphoric acid (H3PO4).');
+-- Q91 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '________ is the continuous exchange of nitrogen between the atmosphere and the biosphere.', 'multiple_choice',
+'Carbon cycle', 'Nitrogen cycle', 'Oxygen cycle', 'Phosphorus cycle', 'B',
+'The nitrogen cycle describes nitrogen movement between atmosphere and living organisms.');
+-- Q92 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Calcium cyanamide is obtained by passing atmospheric N2 over calcium carbide at _______.', 'multiple_choice',
+'800 K', '1000 K', '1400 K', '1800 K', 'C',
+'CaCN2 is produced by reacting N2 with CaC2 at 1400 K.');
+-- Q93 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Nitric acid is manufactured by _______ process.', 'multiple_choice',
+'Haber', 'Ostwald', 'Contact', 'Solvay', 'B',
+'The Ostwald process produces nitric acid from ammonia oxidation.');
+-- Q94 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The first element of group 7 is _______.', 'fill_in_blank', 'Fluorine', 'Fluorine is the first and lightest halogen in Group 7.');
+-- Q95 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Fluorine constitutes nearly _______% of earth''s crust.', 'multiple_choice',
+'0.013', '0.054', '0.1', '0.5', 'B',
+'Fluorine makes up approximately 0.054% of Earth''s crust.');
+-- Q96 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The rarest of all the halogens is _______.', 'multiple_choice',
+'Fluorine', 'Chlorine', 'Bromine', 'Iodine', 'D',
+'Iodine is the rarest naturally occurring halogen.');
+-- Q97 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Astatine is a _______ element.', 'multiple_choice',
+'Stable', 'Radioactive', 'Noble', 'Transition', 'B',
+'Astatine is radioactive with very short-lived isotopes.');
+-- Q98 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '________is made on an industrial scale by reaction of bromides with chlorine.', 'multiple_choice',
+'Fluorine', 'Chlorine', 'Bromine', 'Iodine', 'C',
+'Bromine is commercially produced by oxidizing bromides with chlorine.');
+-- Q99 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The existence of fluorine was first shown by ______.', 'fill_in_blank', 'Davy', 'Sir Humphry Davy first demonstrated the existence of fluorine in 1813.');
+-- Q100 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '_______ is present in the thyroid hormone.', 'multiple_choice',
+'Fluorine', 'Chlorine', 'Bromine', 'Iodine', 'D',
+'Iodine is an essential component of thyroid hormones.');
+-- Q101 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'A deficiency of _______ causes goitre and leads to stunted growth.', 'multiple_choice',
+'Iron', 'Calcium', 'Iodine', 'Zinc', 'C',
+'Iodine deficiency causes goitre and developmental problems.');
+-- Q102 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '_______ is used for the production of uranium hexafluoride.', 'multiple_choice',
+'Chlorine', 'Fluorine', 'Bromine', 'Iodine', 'B',
+'Fluorine is used to produce UF6 for uranium enrichment.');
+-- Q103 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, '_______ was used in the chemical warfare in World War I.', 'fill_in_blank', 'Chlorine', 'Chlorine gas was used as a chemical weapon in WWI.');
+-- Q104 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'All elements of Group ______ have seven electrons in their outermost shells.', 'multiple_choice',
+'5', '6', '7', '8', 'C',
+'Group 7 elements (halogens) have seven valence electrons.');
+-- Q105 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Fluorine is _______ in colour.', 'multiple_choice',
+'Pale yellow', 'Yellowish green', 'Brown', 'Violet', 'A',
+'Fluorine gas is pale yellow.');
+-- Q106 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Bromine is ______ in colour.', 'multiple_choice',
+'Yellow', 'Green', 'Brown', 'Violet', 'C',
+'Bromine is a brown liquid at room temperature.');
+-- Q107 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Iodine is ______ in the gaseous state.', 'multiple_choice',
+'Yellow', 'Green', 'Brown', 'Violet', 'D',
+'Iodine vapor is violet in color.');
+-- Q108 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Solid iodine is almost _______ with a shiny metallic lustre.', 'fill_in_blank', 'Black', 'Solid iodine appears almost black with metallic luster.');
+-- Q109 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Fluorine and chlorine are _______ at ordinary temperatures.', 'multiple_choice',
+'Solids', 'Liquids', 'Gases', 'Plasmas', 'C',
+'F2 and Cl2 are gases at room temperature.');
+-- Q110 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Bromine is a _______ at ordinary temperatures.', 'multiple_choice',
+'Solid', 'Liquid', 'Gas', 'Plasma', 'B',
+'Bromine is the only liquid halogen at room temperature.');
+-- Q111 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The thermal stability of hydrogen halides _______ from HF to HI.', 'multiple_choice',
+'Increases', 'Decreases', 'Remains constant', 'Fluctuates', 'B',
+'Thermal stability decreases from HF to HI due to decreasing bond strength.');
+-- Q112 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Aqueous solutions of hydrogen halides are called ________.', 'fill_in_blank', 'hydrohalic acids', 'HCl, HBr, HI solutions are called hydrohalic acids.');
+-- Q113 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The only halogen oxide which is stable with respect to dissociation into elements is _______.', 'multiple_choice',
+'Cl2O', 'Br2O', 'I2O5', 'F2O', 'C',
+'I2O5 (iodine pentoxide) is the most stable halogen oxide.');
+-- Q114 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '________ is used in the estimation of CO.', 'multiple_choice',
+'Cl2O', 'I2O5', 'Br2O', 'F2O', 'B',
+'I2O5 is used to estimate carbon monoxide concentration.');
+-- Q115 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Oxygen difluoride is prepared by passing ______ into a 2% NaOH solution.', 'multiple_choice',
+'Chlorine', 'Bromine', 'Fluorine', 'Iodine', 'C',
+'OF2 is prepared by passing fluorine through dilute NaOH solution.');
+-- Q116 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Chlorine dioxide is a gas at normal temperature having b.p. of _______.', 'fill_in_blank', '284 K', 'ClO2 has a boiling point of 284 K (11°C).');
+-- Q117 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '________ is the most stable among the hypohalous acids.', 'multiple_choice',
+'HOF', 'HOCl', 'HOBr', 'HOI', 'B',
+'Hypochlorous acid (HOCl) is the most stable hypohalous acid.');
+-- Q118 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Compounds formed by the interaction of one halogen with other halogens are called _______.', 'multiple_choice',
+'Halides', 'Interhalogen compounds', 'Halogens', 'Polyhalides', 'B',
+'Compounds like ClF3, BrF5 are called interhalogen compounds.');
+-- Q119 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Among the halogens _________ can oxidise all the other halide ions to their respective elements.', 'multiple_choice',
+'Chlorine', 'Bromine', 'Fluorine', 'Iodine', 'C',
+'Fluorine is the strongest oxidizing agent and can oxidize all other halide ions.');
+-- Q120 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The number of covalent bonds formed by the halogens is _________.', 'fill_in_blank', '1', 'Halogens typically form one covalent bond to complete their octet.');
+-- Q121 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Hydrolysis of silicon tetrachloride gives ___________.', 'multiple_choice',
+'Silicon dioxide', 'Silicic acid', 'Silane', 'Silicate', 'B',
+'SiCl4 hydrolyzes to form silicic acid (H4SiO4 or Si(OH)4).');
+-- Q122 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '_________ are fibrous silicates.', 'multiple_choice',
+'Zeolites', 'Mica', 'Asbestos', 'Clays', 'C',
+'Asbestos minerals are fibrous silicates with high tensile strength.');
+-- Q123 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The simplest fluorocarbon obtained by the reaction of carbon tetrachloride with silver fluoride at 575K is ___________.', 'multiple_choice',
+'CF3', 'C2F6', 'Carbon tetrafluoride', 'C3F8', 'C',
+'CCl4 reacts with AgF at 575K to produce CF4 (carbon tetrafluoride).');
+-- Q124 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Tetravalent compounds of heavier Group 4 elements function as Lewis acids because of the availability of __________.', 'fill_in_blank', 'D orbitals', 'Heavier Group 4 elements can use vacant d-orbitals to act as Lewis acids.');
+-- Q125 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '___________ is formed when silica is fused with sodium carbonate.', 'multiple_choice',
+'Sodium silicate', 'Water glass', 'Glass', 'Zeolite', 'B',
+'Fusing silica with Na2CO3 produces sodium silicate (water glass).');
+-- Q126 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The compound with the least bond energy is ___________.', 'multiple_choice',
+'NH3', 'PH3', 'AsH3', 'BiH3', 'D',
+'BiH3 has the weakest bonds due to large atomic size and poor overlap.');
+-- Q127 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Carbon dioxide is used in fire extinguishers because ________.', 'multiple_choice',
+'It is heavy', 'It does not support combustion', 'It is cheap', 'It is liquid', 'B',
+'CO2 does not support combustion and is denser than air.');
+-- Q128 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Graphite is the ________.', 'fill_in_blank', 'Softest of the allotropes of carbon', 'Graphite''s layered structure makes it soft and slippery.');
+-- Q129 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Nitrogen is not able to form coordination number beyond four because ____________.', 'multiple_choice',
+'It is too small', 'It lacks d-orbitals', 'It is too electronegative', 'It has high ionization energy', 'B',
+'Nitrogen cannot expand its octet as it has no available d-orbitals.');
+-- Q130 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The difference between silica and silicate is ________.', 'multiple_choice',
+'Chemical formula only', 'Silica is made of SiO2 units whereas silicate is made of SiO4 unit', 'Physical state', 'Color', 'B',
+'Silica consists of SiO2 units while silicates contain SiO4 tetrahedra.');
+-- Q131 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'All the elements of Group 5 can expand their octet except _____________.', 'multiple_choice',
+'Phosphorus', 'Nitrogen', 'Arsenic', 'Antimony', 'B',
+'Nitrogen cannot expand its octet due to absence of d-orbitals.');
+-- Q132 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Most Group 4 elements form mostly covalent compounds because very large amount of energy is required to form ____________.', 'fill_in_blank', 'M4+ ion', 'The high ionization energy prevents formation of M4+ ions, favoring covalent bonding.');
+-- Q133 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Diamond is not a conductor of electricity because ____________.', 'multiple_choice',
+'It is too hard', 'It does not have delocalised electrons', 'It is transparent', 'It has high melting point', 'B',
+'All electrons in diamond are localized in covalent bonds, preventing conductivity.');
+-- Q134 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Tin exhibits polymorphism because __________.', 'multiple_choice',
+'It has many isotopes', 'It exists in two crystalline forms', 'It is metallic', 'It forms alloys', 'B',
+'Tin exists as gray tin (diamond structure) and white tin (tetragonal structure).');
+-- Q135 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, '_______ are formed when vapourised carbon condenses in an atmosphere of inert gas.', 'multiple_choice',
+'Graphite', 'Diamond', 'Fullerenes', 'Carbon black', 'C',
+'Fullerenes (C60, C70) form when carbon vapor condenses in inert atmosphere.');
+-- Q136 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, '________ is the only liquid halogen.', 'fill_in_blank', 'Bromine', 'Bromine is the only halogen that is liquid at room temperature.');
+-- Q137 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The only halogen that can oxidize chlorine is _______.', 'multiple_choice',
+'Bromine', 'Iodine', 'Fluorine', 'Astatine', 'C',
+'Only fluorine is strong enough to oxidize chlorine.');
+
+- Q138 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The element known as ''super halogen'' is _______.', 'multiple_choice',
+'Chlorine', 'Fluorine', 'Bromine', 'Iodine', 'B',
+'Fluorine is called the super halogen due to its extreme reactivity.');
+-- Q139 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The halogen called _______ is solid at room temperature.', 'multiple_choice',
+'Fluorine', 'Chlorine', 'Bromine', 'Iodine', 'D',
+'Iodine is a solid at room temperature with a metallic luster.');
+-- Q140 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'Nitriles are oxidized to nitrates by _______ bacteria.', 'fill_in_blank', 'Nitrifying', 'Nitrifying bacteria convert nitrites to nitrates in the nitrogen cycle.');
+-- Q141 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Bacteria which convert nitrogen compounds into free nitrogen are known as _______ bacteria.', 'multiple_choice',
+'Nitrogen-fixing', 'Nitrifying', 'Denitrifying', 'Decomposer', 'C',
+'Denitrifying bacteria convert nitrogen compounds back to N2 gas.');
+-- Q142 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The molecular formula of hydrazine is _______.', 'multiple_choice',
+'NH3', 'N2H2', 'N2H4', 'NH2OH', 'C',
+'Hydrazine has the molecular formula N2H4.');
+-- Q143 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The hybridization of nitrogen in ammonia is _______.', 'multiple_choice',
+'sp', 'sp2', 'sp3', 'sp3d', 'C',
+'Nitrogen in NH3 is sp3 hybridized with tetrahedral geometry.');
+-- Q144 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'All group V elements except ______ react with sulphur to form sulphides.', 'fill_in_blank', 'Nitrogen', 'Nitrogen does not react directly with sulfur to form sulfides.');
+-- Q145 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The allotrope of phosphorus used in matches and fireworks is ________.', 'multiple_choice',
+'White phosphorus', 'Red phosphorus', 'Black phosphorus', 'Violet phosphorus', 'B',
+'Red phosphorus is used in safety matches and fireworks.');
+-- Q146 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Of the group IV elements, the one that exhibits anomalous behaviour is ________.', 'multiple_choice',
+'Silicon', 'Germanium', 'Carbon', 'Tin', 'C',
+'Carbon shows anomalous behavior due to small size and ability to form multiple bonds.');
+-- Q147 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The form of carbon that conducts electricity is _______.', 'multiple_choice',
+'Diamond', 'Graphite', 'Fullerene', 'Carbon black', 'B',
+'Graphite conducts electricity due to delocalized electrons.');
+-- Q148 - Fill in the blank
+INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+VALUES (v_course_id, 'The most metallic element in group IV is ________.', 'fill_in_blank', 'Lead', 'Lead is the most metallic of the Group 4 elements.');
+-- Q149 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'The strongest acid among the hydrogen halides is ________.', 'multiple_choice',
+'HF', 'HCl', 'HBr', 'Hydroiodic acid', 'D',
+'HI (hydroiodic acid) is the strongest acid among hydrogen halides.');
+-- Q150 - Multiple choice
+INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+VALUES (v_course_id, 'Solid carbon dioxide is known as _______.', 'multiple_choice',
+'Dry water', 'Dry ice', 'Frozen CO2', 'Carbon snow', 'B',
+'Solid CO2 is commonly called dry ice as it sublimates without melting.');
 END $$;

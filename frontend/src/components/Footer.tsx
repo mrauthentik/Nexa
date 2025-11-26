@@ -3,37 +3,37 @@
     {
       title: 'Platform',
       items: [
-        { label: 'Home', href: '#home' },
-        { label: 'Features', href: '#features' },
-        { label: 'About Us', href: '#about' },
-        { label: 'Reviews', href: '#reviews' },
+        { label: 'Home', href: '/' },
+        { label: 'Features', href: '/features' },
+        { label: 'Pricing', href: '/pricing' },
+        { label: 'Dashboard', href: '/dashboard' },
       ],
     },
     {
       title: 'Resources',
       items: [
-        { label: 'FAQ', href: '#faq' },
-        { label: 'Pricing', href: '/pricing' },
-        { label: 'Blog', href: '#' },
-        { label: 'Documentation', href: '#' },
+        { label: 'Blog', href: '/blog' },
+        { label: 'Documentation', href: '/docs' },
+        { label: 'FAQ', href: '/#faq' },
+        { label: 'Help Center', href: '/help' },
       ],
     },
     {
       title: 'Company',
       items: [
-        { label: 'About', href: '#about' },
-        { label: 'Contact', href: '#contact' },
-        { label: 'Careers', href: '#' },
-        { label: 'Partners', href: '#' },
+        { label: 'About', href: '/#about' },
+        { label: 'Contact', href: '/contact' },
+        { label: 'Reviews', href: '/#reviews' },
+        { label: 'Sitemap', href: '/sitemap' },
       ],
     },
     {
       title: 'Legal',
       items: [
-        { label: 'Privacy Policy', href: '#' },
-        { label: 'Terms of Service', href: '#' },
-        { label: 'Cookie Policy', href: '#' },
-        { label: 'Sitemap', href: '#' },
+        { label: 'Privacy Policy', href: '/privacy' },
+        { label: 'Terms of Service', href: '/terms' },
+        { label: 'Cookie Policy', href: '/cookie-policy' },
+        { label: 'Sitemap', href: '/sitemap' },
       ],
     },
   ];
@@ -104,11 +104,11 @@
             <p>© 2025 NEXA - All rights reserved. Building Leaders, One Exam at a Time.</p>
           </div>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-teal-400 transition-colors">Privacy</a>
+            <a href="/privacy" className="hover:text-teal-400 transition-colors">Privacy</a>
             <span className="text-gray-700">•</span>
-            <a href="#" className="hover:text-teal-400 transition-colors">Terms</a>
+            <a href="/terms" className="hover:text-teal-400 transition-colors">Terms</a>
             <span className="text-gray-700">•</span>
-            <span>Updated {new Date().toLocaleDateString()}</span>
+            <a href="/cookie-policy" className="hover:text-teal-400 transition-colors">Cookies</a>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
+import supabase from '../supabaseClient';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import {
@@ -53,8 +54,29 @@ const AdminMessages = () => {
 
   const fetchMessages = async () => {
     try {
-      const { messages: data } = await adminExtendedAPI.getMessages();
-      setMessages(data || []);
+      // Fetch from contact_messages table
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data to match Message interface
+      const transformedMessages = (data || []).map((msg: any) => ({
+        id: msg.id,
+        name: msg.name,
+        email: msg.email,
+        subject: msg.subject,
+        message: msg.message,
+        status: msg.status || 'unread',
+        priority: 'normal' as const, // Default priority since contact form doesn't have it
+        reply_message: msg.admin_notes,
+        replied_at: msg.replied_at,
+        created_at: msg.created_at,
+      }));
+
+      setMessages(transformedMessages);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast.error('Failed to load messages');
@@ -128,7 +150,13 @@ const AdminMessages = () => {
     if (!confirm('Are you sure you want to delete this message?')) return;
 
     try {
-      await adminExtendedAPI.deleteMessage(messageId);
+      const { error } = await supabase
+        .from('contact_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
       setMessages(messages.filter((msg) => msg.id !== messageId));
       toast.success('Message deleted');
       if (selectedMessage?.id === messageId) {

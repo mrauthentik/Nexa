@@ -91,12 +91,13 @@ const Navbar = () => {
               >
                 Sign In
               </Link>
-              <button 
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+              <Link
+                to="/auth"
+                className="block w-full px-4 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg text-center"
                 onClick={() => setIsOpen(false)}
               >
                 Get Started
-              </button>
+              </Link>
             </div>
           </div>
         </div>
