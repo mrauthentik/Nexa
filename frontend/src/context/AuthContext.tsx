@@ -184,6 +184,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signUp = async (email: string, password: string, fullName: string) => {
+        // Check if email exists with unverified status
+        const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id, email_verified')
+            .eq('email', email)
+            .single();
+
+        // If email exists but not verified, allow re-signup by treating it as new
+        if (existingProfile && !existingProfile.email_verified) {
+            console.log('Email exists but not verified, allowing re-signup');
+            // The user can sign up again - Supabase will handle the existing account
+        }
+
         // Sign up with autoConfirm disabled (requires Supabase dashboard config)
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -196,7 +209,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
         });
 
-        if (error) throw error;
+        // If error is "User already registered" but email not verified, provide helpful message
+        if (error) {
+            if (error.message.includes('already registered') && existingProfile && !existingProfile.email_verified) {
+                throw new Error('This email is registered but not verified. Please check your email for the verification code, or use the "Resend Code" option.');
+            }
+            throw error;
+        }
         
         // Create profile in profiles table
         if (data.user) {

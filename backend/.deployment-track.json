@@ -15,7 +15,7 @@
     "signin": "{\"index.ts\":\"3fb79bb15ad1add68bf6af060083ae0f\"}",
     "signup": "{\"index.ts\":\"770a55bf35ea29d8359ef0f8cced9368\"}",
     "submit-test": "{\"index.ts\":\"528533ef95a7e1ecc4e78a4d18a30af1\"}",
-    "update-user-profile": "{\"index.ts\":\"98c49e77781f5f37d27e392edc300506\"}",
+    "update-user-profile": "{\"index.ts\":\"9535068869384549c9c05dd5b8f411c8\"}",
     "get-course-question-count": "{\"index.ts\":\"1dc6b42a56d4ad7184e1b09f2ee72693\"}",
     "get-course-questions": "{\"index.ts\":\"3ef0197afedfcd20bb1eb757596554fe\"}",
     "create-calendar-event": "{\"index.ts\":\"907fcc3ab8eaae75266536e212555a75\"}",
@@ -51,6 +51,7 @@
     "paystack-webhook": "{\"index.ts\":\"b6eb4b5e20243d0f8faaa9c354394b1f\"}",
     "verify-payment": "{\"index.ts\":\"97cd98e173be4be16a69e0c397eb08a4\"}",
     "send-password-reset": "{\"index.ts\":\"b33d92cd4ca0fadb5fc48c016751b54f\"}",
-    "verify-email": "{\"index.ts\":\"8059953ab22e32d72e90e85c98662eed\"}"
+    "verify-email": "{\"index.ts\":\"8059953ab22e32d72e90e85c98662eed\"}",
+    "send-admin-reply": "{\"index.ts\":\"fed4e192d1fd24d122d397f8c13c5816\"}"
   }
 }

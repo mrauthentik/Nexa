@@ -287,9 +287,17 @@ const EmailVerification = ({ email, onVerified, onSkip }: EmailVerificationProps
         </div>
 
         {/* Help Text */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Check your spam folder if you don't see the email
-        </p>
+        <div className="mt-6 text-center space-y-2">
+          <p className="text-sm text-gray-600 font-medium">
+            📬 Check your inbox for the verification code
+          </p>
+          <p className="text-sm text-amber-600 font-semibold bg-amber-50 px-4 py-2 rounded-lg inline-block">
+            ⚠️ Also check your SPAM/JUNK folder!
+          </p>
+          <p className="text-xs text-gray-500">
+            Sometimes emails end up in spam. If you find it there, mark it as "Not Spam"
+          </p>
+        </div>
       </div>
     </div>
   );

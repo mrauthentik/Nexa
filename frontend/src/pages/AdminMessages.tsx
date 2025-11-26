@@ -128,7 +128,36 @@ const AdminMessages = () => {
 
     setSending(true);
     try {
-      await adminExtendedAPI.updateMessageStatus(selectedMessage.id, 'replied', replyText);
+      // Get session for authorization
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      // Call Edge Function to send email and update status
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-admin-reply`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            messageId: selectedMessage.id,
+            replyMessage: replyText,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send reply');
+      }
+
       setMessages(
         messages.map((msg) =>
           msg.id === selectedMessage.id
@@ -136,11 +165,12 @@ const AdminMessages = () => {
             : msg
         )
       );
-      toast.success('Reply sent successfully!');
+      toast.success('Reply sent to user email successfully! 📧');
       setSelectedMessage(null);
       setReplyText('');
-    } catch (error) {
-      toast.error('Failed to send reply');
+    } catch (error: any) {
+      console.error('Reply error:', error);
+      toast.error(error.message || 'Failed to send reply');
     } finally {
       setSending(false);
     }
