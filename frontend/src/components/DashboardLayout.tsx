@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import ProfileAvatar from './ProfileAvatar';
-import toast from 'react-hot-toast';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -177,12 +176,11 @@ const DashboardLayout = ({ children, currentPage }: DashboardLayoutProps) => {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className={`flex items-center gap-2 p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
-                <ProfileAvatar 
-                  avatarUrl={profile?.avatar_url}
-                  fullName={profile?.full_name || user?.email?.split('@')[0]}
-                  size="sm"
-                  isDarkMode={isDarkMode} // <-- ADDED PROP HERE
-                />
+                 <ProfileAvatar 
+                  avatarUrl={profile?.avatar_url}
+                  fullName={profile?.full_name || user?.email?.split('@')[0]}
+                  size="sm"
+                />
                 <span className={`hidden sm:block text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {profile?.full_name || user?.email?.split('@')[0] || 'User'}
                 </span>

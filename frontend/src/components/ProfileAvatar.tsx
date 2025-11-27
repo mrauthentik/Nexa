@@ -6,10 +6,9 @@ interface ProfileAvatarProps {
   fullName?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  isDarkMode?: boolean;
 }
 
-const ProfileAvatar = ({ avatarUrl, fullName, size = 'md', className = '', isDarkMode = false }: ProfileAvatarProps) => {
+const ProfileAvatar = ({ avatarUrl, fullName, size = 'md', className = '' }: ProfileAvatarProps) => {
   const [imageError, setImageError] = useState(false);
 
   // Get first letter of name for fallback

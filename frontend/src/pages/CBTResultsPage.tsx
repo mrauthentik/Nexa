@@ -309,9 +309,9 @@ const CBTResultsPage = () => {
                           </button>
 
                           {showingExplanation && aiExplanation[index] && (
-                            <div className="relative overflow-hidden rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-blue-50 shadow-lg">
+                            <div className="relative overflow-hidden rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-blue-50 shadow-lg w-full">
                               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200 rounded-full blur-3xl opacity-20"></div>
-                              <div className="relative p-6">
+                              <div className="relative px-3 py-4 sm:p-6">
                                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-purple-200">
                                   <Brain className="w-5 h-5 text-purple-600" />
                                   <h4 className="font-semibold text-purple-900">Nexa AI Explanation</h4>

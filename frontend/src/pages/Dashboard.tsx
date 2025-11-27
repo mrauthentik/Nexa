@@ -501,7 +501,6 @@ const Dashboard = () => {
     avatarUrl={profile?.avatar_url}
     fullName={profile?.full_name || user?.email?.split('@')[0]}
     size="sm"
-    isDarkMode={isDarkMode}
   />
 </button>
               {showProfileMenu && (
