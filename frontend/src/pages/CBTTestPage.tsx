@@ -36,6 +36,7 @@ const CBTTestPage = () => {
   const [testSubmitted, setTestSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
+  const [showCancelWarning, setShowCancelWarning] = useState(false);
 
   useEffect(() => {
     if (!questionCount || !timeLimit || !course) {
@@ -45,6 +46,37 @@ const CBTTestPage = () => {
     }
     fetchQuestions();
   }, []);
+
+  // Prevent back navigation during test
+  useEffect(() => {
+    if (testSubmitted) return; // Don't block if test is already submitted
+
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      // Show warning modal
+      setShowCancelWarning(true);
+      // Push state back to keep user on page
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    // Prevent browser back button
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    // Warn before page unload/refresh
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Your test will be submitted if you leave. Are you sure?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [testSubmitted]);
 
   // Timer countdown
   useEffect(() => {
@@ -526,6 +558,43 @@ const CBTTestPage = () => {
                   className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700"
                 >
                   Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel Test Warning Modal */}
+        {showCancelWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-md w-full`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Cancel Test?
+                </h3>
+              </div>
+              <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+                If you leave this page, your test will be automatically submitted with your current answers. 
+                Are you sure you want to cancel?
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowCancelWarning(false)}
+                  className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700"
+                >
+                  Continue Test
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCancelWarning(false);
+                    handleSubmitTest();
+                  }}
+                  className={`flex-1 px-6 py-3 rounded-lg font-semibold ${isDarkMode ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}`}
+                >
+                  Submit & Leave
                 </button>
               </div>
             </div>

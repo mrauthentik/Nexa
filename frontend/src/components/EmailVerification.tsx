@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import supabase from '../supabaseClient';
@@ -9,12 +10,32 @@ interface EmailVerificationProps {
   onSkip?: () => void;
 }
 
-const EmailVerification = ({ email, onVerified, onSkip }: EmailVerificationProps) => {
+const EmailVerification = ({ email, onVerified }: EmailVerificationProps) => {
+  const navigate = useNavigate();
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState('');
+
+  // Prevent back navigation - sign out user if they try to go back
+  useEffect(() => {
+    const handlePopState = async (e: PopStateEvent) => {
+      e.preventDefault();
+      // Sign out user and redirect to auth
+      await supabase.auth.signOut();
+      navigate('/auth', { replace: true });
+      toast.error('Please verify your email to continue');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    // Push a new state to prevent immediate back navigation
+    window.history.pushState(null, '', window.location.href);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
 
   // Handle countdown timer
   useEffect(() => {
@@ -274,7 +295,7 @@ const EmailVerification = ({ email, onVerified, onSkip }: EmailVerificationProps
           </div>
 
           {/* Skip Option */}
-          {onSkip && (
+          {/* {onSkip && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <button
                 onClick={onSkip}
@@ -283,7 +304,7 @@ const EmailVerification = ({ email, onVerified, onSkip }: EmailVerificationProps
                 Skip for now
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Help Text */}

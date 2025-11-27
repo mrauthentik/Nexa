@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import ProfileAvatar from './ProfileAvatar';
+import toast from 'react-hot-toast';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,17 @@ const DashboardLayout = ({ children, currentPage }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Logged out successfully');
+      window.location.href = '/';
+    } catch (error) {
+      toast.error('Failed to logout');
+    }
+  };
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -124,12 +136,7 @@ const DashboardLayout = ({ children, currentPage }: DashboardLayoutProps) => {
             </a>
           )}
           <button 
-            onClick={async () => {
-              if (confirm('Are you sure you want to logout?')) {
-                await signOut();
-                window.location.href = '/';
-              }
-            }}
+            onClick={() => setShowLogoutConfirm(true)}
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 hover:bg-red-900 rounded-lg transition-colors text-red-400 hover:text-red-300 w-full text-left`}
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,9 +219,9 @@ const DashboardLayout = ({ children, currentPage }: DashboardLayoutProps) => {
                         Settings
                       </a>
                       <button
-                        onClick={async () => {
-                          await signOut();
-                          window.location.href = '/';
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          setShowLogoutConfirm(true);
                         }}
                         className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20`}
                       >
@@ -236,6 +243,41 @@ const DashboardLayout = ({ children, currentPage }: DashboardLayoutProps) => {
           {children}
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 max-w-md w-full shadow-2xl`}>
+            <h3 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
+              Logout Confirmation
+            </h3>
+            <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              Are you sure you want to logout? You'll need to sign in again to access your account.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  handleLogout();
+                }}
+                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
