@@ -36,6 +36,7 @@ import FeaturesPage from './pages/FeaturesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ContactPage from './pages/ContactPage'
 import CookieConsent from './components/CookieConsent'
+import AuthCallback from './components/AuthCallback'
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/features" element={<FeaturesPage />} />
