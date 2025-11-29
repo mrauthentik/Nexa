@@ -95,7 +95,7 @@ const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -256,7 +256,7 @@ const AuthPage = () => {
           </div>
 
           {/* Google Sign In */}
-          {/* <button
+          <button
             type="button"
             onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
@@ -280,7 +280,7 @@ const AuthPage = () => {
               />
             </svg>
             <span>Sign {isLogin ? 'in' : 'up'} with Google</span>
-          </button> */}
+          </button>
 
           {/* Footer Links */}
           {isLogin && (
