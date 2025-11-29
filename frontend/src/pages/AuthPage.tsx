@@ -95,15 +95,28 @@ const AuthPage = () => {
       // Use current origin to support both dev and production
       const redirectUrl = `${window.location.origin}/auth/callback`;
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('🔵 Google Sign-In initiated');
+      console.log('📍 Current origin:', window.location.origin);
+      console.log('🔗 Redirect URL:', redirectUrl);
+      console.log('🌐 Full current URL:', window.location.href);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
         },
       });
 
-      if (error) throw error;
+      console.log('✅ OAuth response:', { data, error });
+
+      if (error) {
+        console.error('❌ OAuth error:', error);
+        throw error;
+      }
+      
+      console.log('🚀 Redirecting to Google...');
     } catch (err: any) {
+      console.error('❌ Sign-in failed:', err);
       toast.error(err.message || 'Failed to sign in with Google');
     }
   };
@@ -262,7 +275,7 @@ const AuthPage = () => {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700 pointer"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-md transition-all duration-200 font-medium text-gray-700 cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
