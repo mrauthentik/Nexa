@@ -110,12 +110,38 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 ## Production Deployment
 
-When deploying to production:
+### ⚠️ CRITICAL: Fix "localhost:3000" Redirect in Production
 
-1. Update Supabase redirect URLs to include your production domain
-2. Update Google Console authorized redirect URIs
-3. Update the site URL in Supabase to your production domain
-4. Ensure environment variables are set in your hosting platform
+If you're getting redirected to `localhost:3000` in production, follow these steps:
+
+#### 1. Update Supabase Site URL (MOST IMPORTANT)
+Go to Supabase Dashboard → **Authentication** → **URL Configuration**:
+
+- **Site URL**: Change from `http://localhost:3000` to `https://your-production-domain.vercel.app`
+- **Redirect URLs**: Add both:
+  ```
+  http://localhost:3000/auth/callback
+  https://your-production-domain.vercel.app/auth/callback
+  ```
+
+#### 2. Update Google Console
+Add your production callback URL:
+```
+https://your-production-domain.vercel.app/auth/callback
+```
+
+#### 3. Verify Environment Variables
+Make sure your production environment has:
+```env
+VITE_SUPABASE_URL=https://pyepvpdvlwctiuw.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+#### 4. Clear Browser Cache
+After updating Supabase settings, clear your browser cache or test in incognito mode.
+
+### Why This Happens
+Supabase uses the **Site URL** setting to determine where to redirect users after OAuth. If it's still set to `localhost:3000`, all OAuth redirects will go there, even in production.
 
 ## Additional Notes
 
