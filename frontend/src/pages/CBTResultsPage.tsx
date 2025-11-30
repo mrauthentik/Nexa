@@ -317,15 +317,15 @@ const CBTResultsPage = () => {
                                   <h4 className="font-semibold text-purple-900">Nexa AI Explanation</h4>
                                 </div>
                                 
-                                 {/* *** COMBINED FIX: break-all for horizontal wrap, max-h-64 overflow-y-auto for vertical scroll *** */}
-                                <div className="prose prose-sm max-w-none w-full break-all max-h-64 overflow-y-auto">
+                                 {/* *** COMBINED FIX: break-words for horizontal wrap, max-h-64 overflow-y-auto for vertical scroll *** */}
+                                <div className="prose prose-sm max-w-none w-full break-words max-h-64 overflow-y-auto text-sm sm:text-base">
                                   {aiExplanation[index].split('\n').map((line, i) => {
                                     if (!line.trim()) return <div key={i} className="h-2"></div>;
                                     
                                     // Handle headers (##)
                                     if (line.startsWith('## ')) {
                                       return (
-                                        <h3 key={i} className="text-lg font-bold text-purple-900 mt-4 mb-2">
+                                        <h3 key={i} className="text-base sm:text-lg font-bold text-purple-900 mt-4 mb-2 break-words">
                                           {line.replace('## ', '')}
                                         </h3>
                                       );
@@ -334,7 +334,7 @@ const CBTResultsPage = () => {
                                     // Handle subheaders (###)
                                     if (line.startsWith('### ')) {
                                       return (
-                                        <h4 key={i} className="text-base font-semibold text-purple-800 mt-3 mb-2">
+                                        <h4 key={i} className="text-sm sm:text-base font-semibold text-purple-800 mt-3 mb-2 break-words">
                                           {line.replace('### ', '')}
                                         </h4>
                                       );
@@ -356,15 +356,15 @@ const CBTResultsPage = () => {
                                     if (line.trim().match(/^\d+\./)) {
                                       return (
                                         <div key={i} className="flex gap-2 mb-2 ml-2">
-                                          <span className="text-purple-600 font-semibold">{line.match(/^\d+\./)}</span>
-                                          <p className="text-gray-700 flex-1">{renderTextWithBold(line.replace(/^\d+\.\s*/, ''))}</p>
+                                          <span className="text-purple-600 font-semibold flex-shrink-0">{line.match(/^\d+\./)}</span>
+                                          <p className="text-gray-700 flex-1 break-words">{renderTextWithBold(line.replace(/^\d+\.\s*/, ''))}</p>
                                         </div>
                                       );
                                     }
                                     
                                     // Regular paragraphs
                                     return (
-                                      <p key={i} className="mb-3 text-gray-700 leading-relaxed">
+                                      <p key={i} className="mb-3 text-gray-700 leading-relaxed break-words">
                                         {renderTextWithBold(line)}
                                       </p>
                                     );
