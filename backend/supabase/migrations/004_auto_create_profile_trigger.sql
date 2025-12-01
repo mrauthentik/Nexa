@@ -5,12 +5,14 @@
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role)
+  INSERT INTO public.profiles (id, email, full_name, role, subscription_tier, subscription_status)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'fullName', NEW.email),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'student')
+    COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'student'::user_role),
+    'free',
+    'active'
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
@@ -24,12 +26,14 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Create profiles for any existing users that don't have one
-INSERT INTO public.profiles (id, email, full_name, role)
+INSERT INTO public.profiles (id, email, full_name, role, subscription_tier, subscription_status)
 SELECT 
   u.id,
   u.email,
   COALESCE(u.raw_user_meta_data->>'fullName', u.email, 'User'),
-  COALESCE(u.raw_user_meta_data->>'role', 'student')
+  COALESCE((u.raw_user_meta_data->>'role')::user_role, 'student'::user_role),
+  'free',
+  'active'
 FROM auth.users u
 WHERE NOT EXISTS (
   SELECT 1 FROM public.profiles p WHERE p.id = u.id

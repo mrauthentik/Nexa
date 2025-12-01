@@ -2,16 +2,43 @@ import { useState, useEffect } from 'react';
 import { adminExtendedAPI } from '../services/api';
 import { Award, TrendingUp, BookOpen, Eye } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
+import { useTheme } from '../context/ThemeContext';
+import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
+  const { isDarkMode } = useTheme();
   const [topPerformers, setTopPerformers] = useState<any[]>([]);
   const [loadingPerformers, setLoadingPerformers] = useState(true);
   const [selectedPerformer, setSelectedPerformer] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
-  const stats = [
-    { label: 'Total Students', value: '1,248', change: '+12% this month', trend: 'up', color: 'bg-blue-200' },
-    { label: 'Active Tests', value: '45', change: '+8 new this week', trend: 'up', color: 'bg-green-200' },
-    { label: 'Avg Performance', value: '78%', change: '+5% from last month', trend: 'up', color: 'bg-purple-200' },
+  const stats = analytics ? [
+    { 
+      label: 'Total Students', 
+      value: analytics.overview.totalUsers.toString(), 
+      change: `+${analytics.overview.newUsers} this month`, 
+      trend: 'up', 
+      color: isDarkMode ? 'bg-blue-900/50' : 'bg-blue-200' 
+    },
+    { 
+      label: 'Active Tests', 
+      value: analytics.overview.totalTests.toString(), 
+      change: `${analytics.overview.recentTests} taken recently`, 
+      trend: 'up', 
+      color: isDarkMode ? 'bg-green-900/50' : 'bg-green-200' 
+    },
+    { 
+      label: 'Avg Performance', 
+      value: `${Math.round(analytics.overview.averageScore)}%`, 
+      change: 'Across all tests', 
+      trend: 'up', 
+      color: isDarkMode ? 'bg-purple-900/50' : 'bg-purple-200' 
+    },
+  ] : [
+    { label: 'Total Students', value: '0', change: 'Loading...', trend: 'up', color: isDarkMode ? 'bg-blue-900/50' : 'bg-blue-200' },
+    { label: 'Active Tests', value: '0', change: 'Loading...', trend: 'up', color: isDarkMode ? 'bg-green-900/50' : 'bg-green-200' },
+    { label: 'Avg Performance', value: '0%', change: 'Loading...', trend: 'up', color: isDarkMode ? 'bg-purple-900/50' : 'bg-purple-200' },
   ];
 
   const recentTests = [
@@ -59,6 +86,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchTopPerformers();
+    fetchAnalytics();
   }, []);
 
   const fetchTopPerformers = async () => {
@@ -67,8 +95,21 @@ const AdminDashboard = () => {
       setTopPerformers(data || []);
     } catch (error) {
       console.error('Error fetching top performers:', error);
+      toast.error('Failed to load top performers');
     } finally {
       setLoadingPerformers(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const data = await adminExtendedAPI.getAnalytics();
+      setAnalytics(data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      toast.error('Failed to load analytics');
+    } finally {
+      setLoadingAnalytics(false);
     }
   };
 
@@ -101,104 +142,139 @@ const AdminDashboard = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Performance Overview */}
-            <div className="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-6">
+            <div className={`lg:col-span-2 rounded-2xl p-4 sm:p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Student Performance Overview</h3>
-                  <p className="text-sm text-gray-500">Average test scores across all courses</p>
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Student Performance Overview</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Test activity over last 30 days</p>
                 </div>
-                <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
-                  <option>This Month</option>
-                  <option>Last Month</option>
+                <select className={`px-3 py-1 border rounded-lg text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}>
+                  <option>Last 30 Days</option>
+                  <option>Last 7 Days</option>
                   <option>This Year</option>
                 </select>
               </div>
               
               {/* Chart Container */}
               <div className="relative h-64">
-                {/* Y-axis labels */}
-                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400 pr-2">
-                  <span>100%</span>
-                  <span>75%</span>
-                  <span>50%</span>
-                  <span>25%</span>
-                  <span>0%</span>
-                </div>
-                
-                {/* Chart area */}
-                <div className="ml-8 h-full relative">
-                  {/* Grid lines */}
-                  <div className="absolute inset-0 flex flex-col justify-between">
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <div key={i} className="border-t border-gray-200"></div>
-                    ))}
+                {loadingAnalytics ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
                   </div>
-                  
-                  {/* Bar Chart */}
-                  <div className="absolute inset-0 flex items-end justify-between gap-2 px-2">
-                    {[
-                      { height: 65, color: 'from-blue-400 to-blue-600', label: '65%' },
-                      { height: 78, color: 'from-indigo-400 to-indigo-600', label: '78%' },
-                      { height: 85, color: 'from-purple-400 to-purple-600', label: '85%' },
-                      { height: 72, color: 'from-pink-400 to-pink-600', label: '72%' },
-                      { height: 88, color: 'from-rose-400 to-rose-600', label: '88%' },
-                      { height: 75, color: 'from-orange-400 to-orange-600', label: '75%' },
-                      { height: 82, color: 'from-amber-400 to-amber-600', label: '82%' }
-                    ].map((bar, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center group">
-                        <div className="relative w-full">
-                          {/* Tooltip */}
-                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-2 py-1 rounded text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                            {bar.label}
-                          </div>
-                          {/* Bar */}
-                          <div 
-                            className={`w-full bg-gradient-to-t ${bar.color} rounded-t-lg transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg`}
-                            style={{ height: `${bar.height * 2.5}px` }}
-                          >
-                            {/* Shine effect */}
-                            <div className="w-full h-full bg-gradient-to-r from-white/20 to-transparent rounded-t-lg"></div>
-                          </div>
-                        </div>
+                ) : analytics?.charts?.testActivity ? (
+                  <>
+                    {/* Y-axis labels */}
+                    <div className={`absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs pr-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      <span>{Math.max(...analytics.charts.testActivity.map((d: any) => d.count))}</span>
+                      <span>{Math.round(Math.max(...analytics.charts.testActivity.map((d: any) => d.count)) * 0.75)}</span>
+                      <span>{Math.round(Math.max(...analytics.charts.testActivity.map((d: any) => d.count)) * 0.5)}</span>
+                      <span>{Math.round(Math.max(...analytics.charts.testActivity.map((d: any) => d.count)) * 0.25)}</span>
+                      <span>0</span>
+                    </div>
+                    
+                    {/* Chart area */}
+                    <div className="ml-8 h-full relative">
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 flex flex-col justify-between">
+                        {[0, 1, 2, 3, 4].map((i) => (
+                          <div key={i} className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
+                        ))}
                       </div>
-                    ))}
+                      
+                      {/* Bar Chart - Show last 7 days */}
+                      <div className="absolute inset-0 flex items-end justify-between gap-2 px-2">
+                        {analytics.charts.testActivity.slice(-7).map((day: any, i: number) => {
+                          const maxCount = Math.max(...analytics.charts.testActivity.map((d: any) => d.count)) || 1;
+                          const heightPercent = (day.count / maxCount) * 100;
+                          const colors = [
+                            'from-blue-400 to-blue-600',
+                            'from-indigo-400 to-indigo-600',
+                            'from-purple-400 to-purple-600',
+                            'from-pink-400 to-pink-600',
+                            'from-rose-400 to-rose-600',
+                            'from-orange-400 to-orange-600',
+                            'from-amber-400 to-amber-600'
+                          ];
+                          
+                          return (
+                            <div key={i} className="flex-1 flex flex-col items-center group">
+                              <div className="relative w-full">
+                                {/* Tooltip */}
+                                <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap ${
+                                  isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-900 text-white'
+                                }`}>
+                                  {day.count} tests
+                                </div>
+                                {/* Bar */}
+                                <div 
+                                  className={`w-full bg-gradient-to-t ${colors[i % colors.length]} rounded-t-lg transition-all duration-300 hover:scale-105 cursor-pointer shadow-lg`}
+                                  style={{ height: `${heightPercent * 2}px`, minHeight: day.count > 0 ? '4px' : '0px' }}
+                                >
+                                  {/* Shine effect */}
+                                  <div className="w-full h-full bg-gradient-to-r from-white/20 to-transparent rounded-t-lg"></div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* X-axis labels */}
+                    <div className={`absolute bottom-0 left-8 right-0 flex justify-between text-xs mt-2 px-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {analytics.charts.testActivity.slice(-7).map((day: any, i: number) => (
+                        <span key={i} className="truncate text-center" style={{ maxWidth: '14%' }}>
+                          {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p>No test activity data available</p>
                   </div>
-                </div>
-                
-                {/* X-axis labels */}
-                <div className="absolute bottom-0 left-8 right-0 flex justify-between text-xs text-gray-400 mt-2 px-2">
-                  <span>Week 1</span>
-                  <span>Week 2</span>
-                  <span>Week 3</span>
-                  <span>Week 4</span>
-                </div>
+                )}
               </div>
               
               {/* Stats below chart */}
-              <div className="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-gray-200">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">88%</p>
-                  <p className="text-xs text-gray-500">Peak</p>
+              {analytics && (
+                <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className="text-center">
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {Math.max(...(analytics.charts?.testActivity || []).map((d: any) => d.count))}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Peak Tests/Day</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {Math.round(analytics.overview.averageScore)}%
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg Score</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-500">
+                      {analytics.overview.activeUsers}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active Users</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-500">
+                      {analytics.overview.totalUsers}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Students</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900">77.8%</p>
-                  <p className="text-xs text-gray-500">Average</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-500">+8.5%</p>
-                  <p className="text-xs text-gray-500">Growth</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-500">1,248</p>
-                  <p className="text-xs text-gray-500">Students</p>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Top Students */}
-            <div className="bg-white rounded-2xl p-6">
+            <div className={`rounded-2xl p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Top Performers</h3>
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Top Performers</h3>
                 <a href="/admin/students" className="text-sm text-primary-600 hover:text-primary-700">
                   View all →
                 </a>
@@ -217,7 +293,7 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               ) : topPerformers.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   <Award className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No top performers yet</p>
                 </div>
@@ -227,25 +303,27 @@ const AdminDashboard = () => {
                     <div
                       key={performer.student.id}
                       onClick={() => setSelectedPerformer(performer)}
-                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer group"
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer group ${
+                        isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                      }`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${
                         index === 0 ? 'bg-yellow-400 text-yellow-900' :
                         index === 1 ? 'bg-gray-300 text-gray-700' :
                         index === 2 ? 'bg-orange-400 text-orange-900' :
-                        'bg-gray-100 text-gray-600'
+                        isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
                       }`}>
                         {index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">{performer.student.name}</h4>
-                        <p className="text-xs text-gray-500">{performer.stats.totalTests} tests • {performer.student.department || 'N/A'}</p>
+                        <h4 className={`font-medium text-sm truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{performer.student.name}</h4>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{performer.stats.totalTests} tests • {performer.student.department || 'N/A'}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-semibold text-primary-600">
                           {performer.stats.averageScore}%
                         </div>
-                        <div className="text-xs text-gray-500">avg score</div>
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>avg score</div>
                       </div>
                       <Eye className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>

@@ -586,6 +586,12 @@ export const adminExtendedAPI = {
         const response = await fetch(`${FUNCTIONS_URL}/admin-get-students`, {
             headers: await getAuthHeaders(),
         });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         return response.json();
     },
 

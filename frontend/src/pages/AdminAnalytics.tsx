@@ -3,7 +3,6 @@ import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 import {
-  BarChart3,
   Users,
   TrendingUp,
   BookOpen,
@@ -13,6 +12,7 @@ import {
   Award,
   RefreshCw,
 } from 'lucide-react';
+import AdminLayout from '../components/AdminLayout';
 
 interface Analytics {
   overview: {
@@ -156,23 +156,12 @@ const AdminAnalytics = () => {
   ];
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <AdminLayout title="Analytics Dashboard" subtitle="Comprehensive platform statistics and insights">
       <Toaster position="top-center" />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <BarChart3 className={`w-8 h-8 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
-              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Analytics Dashboard
-              </h1>
-            </div>
-            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-              Comprehensive platform statistics and insights
-            </p>
-          </div>
+      <div className="max-w-7xl mx-auto">
+        {/* Refresh Button */}
+        <div className="flex justify-end mb-6">
           <button
             onClick={() => fetchAnalytics(true)}
             disabled={refreshing}
@@ -316,7 +305,7 @@ const AdminAnalytics = () => {
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -12,6 +12,11 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔵 [admin-get-students] Request received')
+    console.log('🔵 Method:', req.method)
+    console.log('🔵 URL:', req.url)
+    
+    // Create client with anon key for auth verification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -23,35 +28,77 @@ serve(async (req) => {
     )
 
     // Verify admin user
+    console.log('🔵 Verifying user authentication...')
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    
+    if (userError) {
+      console.error('❌ Auth error:', userError)
+      return new Response(JSON.stringify({ error: 'Unauthorized', details: userError.message }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    if (!user) {
+      console.error('❌ No user found')
+      return new Response(JSON.stringify({ error: 'Unauthorized - No user' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    
+    console.log('✅ User authenticated:', user.id, user.email)
 
     // Check if user is admin
-    const { data: profile } = await supabaseClient
+    console.log('🔵 Checking admin role...')
+    const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
+    if (profileError) {
+      console.error('❌ Profile fetch error:', profileError)
+      return new Response(JSON.stringify({ error: 'Profile not found', details: profileError.message }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    
+    console.log('✅ Profile found:', profile)
+
     if (!profile || profile.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
+      console.error('❌ User is not admin. Role:', profile?.role)
+      return new Response(JSON.stringify({ error: 'Forbidden: Admin access required', userRole: profile?.role }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    console.log('✅ User is admin')
+
+    // Create service role client to bypass RLS for admin operations
+    console.log('🔵 Creating service role client to bypass RLS...')
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+    console.log('✅ Service role client created')
 
     const url = new URL(req.url)
     const studentId = url.searchParams.get('student_id')
 
     // If student_id is provided, get detailed info for that student
     if (studentId) {
-      // Get student profile
-      const { data: student, error: studentError } = await supabaseClient
+      console.log('🔵 Fetching student details for:', studentId)
+      // Get student profile using service role to bypass RLS
+      const { data: student, error: studentError } = await supabaseAdmin
         .from('profiles')
         .select('*')
         .eq('id', studentId)
@@ -65,8 +112,8 @@ serve(async (req) => {
         })
       }
 
-      // Get student's test results from test_submissions
-      const { data: testResults } = await supabaseClient
+      // Get student's test results from test_submissions using service role
+      const { data: testResults } = await supabaseAdmin
         .from('test_submissions')
         .select(`
           *,
@@ -78,8 +125,8 @@ serve(async (req) => {
         .eq('user_id', studentId)
         .order('submitted_at', { ascending: false })
 
-      // Get student's summaries viewed
-      const { data: summariesViewed } = await supabaseClient
+      // Get student's summaries viewed using service role
+      const { data: summariesViewed } = await supabaseAdmin
         .from('user_activity_log')
         .select('*')
         .eq('user_id', studentId)
@@ -87,8 +134,8 @@ serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(10)
 
-      // Get student's notes
-      const { data: notes } = await supabaseClient
+      // Get student's notes using service role
+      const { data: notes } = await supabaseAdmin
         .from('user_notes')
         .select('*')
         .eq('user_id', studentId)
@@ -162,20 +209,58 @@ serve(async (req) => {
     }
 
     // Otherwise, get list of all students with basic stats
-    // Fetch all users from profiles table (filter by role if needed)
-    const { data: students, error: studentsError } = await supabaseClient
+    console.log('🔵 Fetching all students from profiles table...')
+    console.log('🔵 Query: SELECT * FROM profiles WHERE role = \'student\' ORDER BY created_at DESC')
+    console.log('🔵 Using SERVICE ROLE to bypass RLS...')
+    
+    // First, mark inactive users as offline
+    await supabaseAdmin.rpc('mark_inactive_users_offline')
+    
+    const { data: students, error: studentsError } = await supabaseAdmin
       .from('profiles')
       .select('*')
+      .eq('role', 'student')
       .order('created_at', { ascending: false })
 
     if (studentsError) {
+      console.error('❌ Error fetching students:', studentsError)
       throw studentsError
+    }
+    
+    console.log('✅ Students fetched:', students?.length || 0)
+    console.log('📊 Students data:', JSON.stringify(students, null, 2))
+
+    if (!students || students.length === 0) {
+      console.warn('⚠️ No students found in database!')
+      console.log('🔍 Checking total profiles...')
+      
+      const { data: allProfiles, error: allError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, role')
+      
+      console.log('📊 Total profiles:', allProfiles?.length || 0)
+      console.log('📊 All profiles:', JSON.stringify(allProfiles, null, 2))
+      
+      return new Response(
+        JSON.stringify({ 
+          students: [],
+          debug: {
+            message: 'No students found',
+            totalProfiles: allProfiles?.length || 0,
+            allProfiles: allProfiles || []
+          }
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
     }
 
     // Get test counts and average scores for all students
+    console.log('🔵 Calculating stats for', students.length, 'students...')
     const studentsWithStats = await Promise.all(
       students.map(async (student) => {
-        const { data: testResults } = await supabaseClient
+        const { data: testResults } = await supabaseAdmin
           .from('test_submissions')
           .select('score')
           .eq('user_id', student.id)
@@ -193,6 +278,9 @@ serve(async (req) => {
       })
     )
 
+    console.log('✅ Stats calculated successfully')
+    console.log('📊 Returning', studentsWithStats.length, 'students with stats')
+
     return new Response(
       JSON.stringify({ students: studentsWithStats }),
       {
@@ -200,7 +288,13 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('❌ FATAL ERROR:', error)
+    console.error('❌ Error stack:', error.stack)
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      stack: error.stack,
+      type: error.constructor.name
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

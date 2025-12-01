@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { Users, Search, Eye, TrendingUp, Award, BookOpen, X, Calendar, Mail, Phone, MapPin } from 'lucide-react';
+import AdminLayout from '../components/AdminLayout';
 
 interface Student {
   id: string;
@@ -17,6 +18,8 @@ interface Student {
   totalTests: number;
   averageScore: number;
   subscription_tier?: string;
+  is_online?: boolean;
+  last_active_at?: string;
 }
 
 interface StudentDetails {
@@ -55,12 +58,31 @@ const AdminStudents = () => {
 
   const fetchStudents = async () => {
     try {
-      const { students: data } = await adminExtendedAPI.getStudents();
-      setStudents(data || []);
-      setFilteredStudents(data || []);
-    } catch (error) {
+      console.log('Fetching students...');
+      const response = await adminExtendedAPI.getStudents();
+      console.log('Students API response:', response);
+      
+      const data = response?.students || [];
+      console.log('Students data:', data);
+      console.log('Number of students:', data.length);
+      
+      setStudents(data);
+      setFilteredStudents(data);
+      
+      if (data.length === 0) {
+        console.warn('No students found in database');
+        toast('No students registered yet', { icon: 'ℹ️' });
+      } else {
+        toast.success(`Loaded ${data.length} student(s)`);
+      }
+    } catch (error: any) {
       console.error('Error fetching students:', error);
-      toast.error('Failed to load students');
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response
+      });
+      toast.error(error?.message || 'Failed to load students');
     } finally {
       setLoading(false);
     }
@@ -97,9 +119,26 @@ const AdminStudents = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
+    if (score >= 80) return 'text-green-500';
+    if (score >= 60) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  const getLastActiveText = (lastActive: string) => {
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const diffMs = now.getTime() - lastActiveDate.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 60) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return lastActiveDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const getScoreBadgeColor = (score: number) => {
@@ -126,22 +165,8 @@ const AdminStudents = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Toaster position="top-center" />
-      
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className={`w-8 h-8 ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`} />
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Students Management
-            </h1>
-          </div>
-          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-            View and manage all registered students
-          </p>
-        </div>
+    <AdminLayout title="Students Management" subtitle="View and manage all registered students">
+      <div className="max-w-7xl mx-auto">{/* Removed px-4 py-8 as AdminLayout provides padding */}
 
         {/* Search and Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -203,20 +228,34 @@ const AdminStudents = () => {
             >
               {/* Student Header */}
               <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                  {student.full_name.charAt(0).toUpperCase()}
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                    {student.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  {/* Online Status Indicator */}
+                  {student.is_online && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full" title="Online now"></div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {student.full_name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className={`font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {student.full_name}
+                    </h3>
+                    {student.subscription_tier === 'pro' && (
+                      <Award className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                    )}
+                  </div>
                   <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {student.email}
                   </p>
+                  {/* Last Active */}
+                  {student.last_active_at && (
+                    <p className={`text-xs mt-1 ${student.is_online ? 'text-green-500' : isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {student.is_online ? '🟢 Online' : `Last active: ${getLastActiveText(student.last_active_at)}`}
+                    </p>
+                  )}
                 </div>
-                {student.subscription_tier === 'pro' && (
-                  <Award className="w-5 h-5 text-yellow-500" />
-                )}
               </div>
 
               {/* Student Info */}
@@ -270,7 +309,6 @@ const AdminStudents = () => {
             <p className="text-sm">Try adjusting your search query</p>
           </div>
         )}
-      </div>
 
       {/* Student Details Modal */}
       {selectedStudent && (
@@ -465,7 +503,8 @@ const AdminStudents = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -12,6 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔵 [admin-top-performers] Request received')
+    
+    // Create client with anon key for auth verification
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -23,15 +26,21 @@ serve(async (req) => {
     )
 
     // Verify admin user
+    console.log('🔵 Verifying user authentication...')
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
+    
     if (userError || !user) {
+      console.error('❌ Auth error:', userError)
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    console.log('✅ User authenticated:', user.id, user.email)
 
     // Check if user is admin
+    console.log('🔵 Checking admin role...')
     const { data: profile } = await supabaseClient
       .from('profiles')
       .select('role')
@@ -39,17 +48,36 @@ serve(async (req) => {
       .single()
 
     if (!profile || profile.role !== 'admin') {
+      console.error('❌ User is not admin. Role:', profile?.role)
       return new Response(JSON.stringify({ error: 'Forbidden: Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    console.log('✅ User is admin')
 
-    // Get all students with their test results
-    const { data: students } = await supabaseClient
+    // Create service role client to bypass RLS for admin operations
+    console.log('🔵 Creating service role client to bypass RLS...')
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+    console.log('✅ Service role client created')
+
+    // Get all students with their test results - using service role
+    console.log('🔵 Fetching all students...')
+    const { data: students } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name, email, avatar_url, department, level')
       .eq('role', 'student')
+    console.log('✅ Students fetched:', students?.length || 0)
 
     if (!students) {
       return new Response(JSON.stringify({ topPerformers: [] }), {
@@ -57,16 +85,17 @@ serve(async (req) => {
       })
     }
 
-    // Get test results for all students
+    // Get test results for all students - using service role
+    console.log('🔵 Calculating top performers...')
     const performersData = await Promise.all(
       students.map(async (student) => {
-        const { data: testResults } = await supabaseClient
-          .from('test_results')
+        const { data: testResults } = await supabaseAdmin
+          .from('test_submissions')
           .select(`
             score,
-            created_at,
-            tests (
-              course_code,
+            submitted_at,
+            courses (
+              code,
               title
             )
           `)
@@ -87,8 +116,8 @@ serve(async (req) => {
         // Count courses taken
         const courseCounts: { [key: string]: { count: number; title: string } } = {}
         testResults.forEach((test: any) => {
-          const courseCode = test.tests?.course_code || 'Unknown'
-          const title = test.tests?.title || 'Unknown'
+          const courseCode = test.courses?.code || 'Unknown'
+          const title = test.courses?.title || 'Unknown'
           if (!courseCounts[courseCode]) {
             courseCounts[courseCode] = { count: 0, title }
           }
@@ -102,8 +131,8 @@ serve(async (req) => {
         // Calculate average score per course
         const courseScores: { [key: string]: { total: number; count: number; title: string } } = {}
         testResults.forEach((test: any) => {
-          const courseCode = test.tests?.course_code || 'Unknown'
-          const title = test.tests?.title || 'Unknown'
+          const courseCode = test.courses?.code || 'Unknown'
+          const title = test.courses?.title || 'Unknown'
           if (!courseScores[courseCode]) {
             courseScores[courseCode] = { total: 0, count: 0, title }
           }
@@ -135,8 +164,8 @@ serve(async (req) => {
             averageScore: Math.round(averageScore * 100) / 100,
             highestScore,
             highestScoringTest: highestScoringTest ? {
-              course: highestScoringTest.tests?.course_code,
-              title: highestScoringTest.tests?.title,
+              course: highestScoringTest.courses?.code,
+              title: highestScoringTest.courses?.title,
               score: highestScoringTest.score,
             } : null,
             mostTakenCourse: mostTakenCourse ? {
