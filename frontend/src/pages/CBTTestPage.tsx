@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import supabase from '../supabaseClient';
 import { courseQuestionsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
+import LatexRenderer from '../components/LatexRenderer';
 import { Clock, ChevronLeft, ChevronRight, Flag, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface Question {
@@ -385,9 +386,10 @@ const CBTTestPage = () => {
                       </span>
                     )}
                   </div>
-                  <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {currentQuestion?.question_text}
-                  </h2>
+                  <LatexRenderer 
+                    content={currentQuestion?.question_text || ''} 
+                    className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                  />
                 </div>
 
                 {/* Options or Input Field */}
@@ -447,9 +449,10 @@ const CBTTestPage = () => {
                             }`}>
                               {option}
                             </div>
-                            <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                              {optionText}
-                            </span>
+                            <LatexRenderer 
+                              content={optionText} 
+                              className={isDarkMode ? 'text-white' : 'text-gray-800'}
+                            />
                           </div>
                         </button>
                       );

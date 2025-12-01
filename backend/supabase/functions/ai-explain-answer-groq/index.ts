@@ -131,6 +131,8 @@ Please provide a comprehensive explanation that:
 3. Provides a clear breakdown of the key concepts involved
 4. Offers a study tip or mnemonic to help remember this concept
 5. If course material is provided, reference specific concepts from it
+6. Explain keywords in the questions and how they are related to the answer
+7. Explain the options one after the other and their meaning relating to the question
 
 Keep your explanation concise but thorough (100-200 words). Use a friendly, encouraging tone.`;
 

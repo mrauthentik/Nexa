@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { CheckCircle, XCircle, Clock, Award, TrendingUp, Home, RotateCcw, Sparkles, Brain } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LatexRenderer from '../components/LatexRenderer';
 
 interface Question {
   id: string;
@@ -274,10 +275,14 @@ const CBTResultsPage = () => {
                       )}
                     </div>
 
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Question {index + 1}: {question.question_text}
-                      </h3>
+                     <div className="flex-1">
+                      <div className="mb-3">
+                        <span className="text-lg font-semibold text-gray-900">Question {index + 1}: </span>
+                        <LatexRenderer 
+                          content={question.question_text} 
+                          className="inline text-lg font-semibold text-gray-900"
+                        />
+                      </div>
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center gap-2">
