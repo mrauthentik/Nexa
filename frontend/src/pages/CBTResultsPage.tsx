@@ -331,43 +331,41 @@ const CBTResultsPage = () => {
                                     if (line.startsWith('## ')) {
                                       return (
                                         <h3 key={i} className="text-base sm:text-lg font-bold text-purple-900 mt-4 mb-2 break-words">
-                                          {line.replace('## ', '')}
+                                          <LatexRenderer content={line.replace('## ', '')} className="inline" />
                                         </h3>
                                       );
                                     }
                                     
-                                    // Handle subheaders (###)
-                                    if (line.startsWith('### ')) {
-                                      return (
-                                        <h4 key={i} className="text-sm sm:text-base font-semibold text-purple-800 mt-3 mb-2 break-words">
-                                          {line.replace('### ', '')}
-                                        </h4>
-                                      );
-                                    }
-                                    
-                                    // Handle bold text (**text**)
-                                    const renderTextWithBold = (text: string) => {
-                                      const parts = text.split(/\*\*(.*?)\*\*/g);
-                                      return parts.map((part, idx) => 
-                                        idx % 2 === 1 ? (
-                                          <strong key={idx} className="font-bold text-gray-900">{part}</strong>
-                                        ) : (
-                                          <span key={idx}>{part}</span>
-                                        )
-                                      );
-                                    };
-                                    
-                                    // Handle list items
-                                    if (line.trim().match(/^\d+\./)) {
-                                      return (
-                                        <div key={i} className="flex gap-2 mb-2 ml-2">
-                                          <span className="text-purple-600 font-semibold flex-shrink-0">{line.match(/^\d+\./)}</span>
-                                          <p className="text-gray-700 flex-1 break-words">{renderTextWithBold(line.replace(/^\d+\.\s*/, ''))}</p>
-                                        </div>
-                                      );
-                                    }
-                                    
-                                    // Regular paragraphs
+                                  // Handle subheaders (###)
+                                    if (line.startsWith('### ')) {
+                                    return (
+                                        <h4 key={i} className="text-sm sm:text-base font-semibold text-purple-800 mt-3 mb-2 break-words">
+                                        <LatexRenderer content={line.replace('### ', '')} className="inline" />
+                                        </h4>
+                                    );
+                                    }
+                                    // Handle bold text (**text**) and LaTeX
+                                    const renderTextWithBold = (text: string) => {
+                                    const parts = text.split(/\*\*(.*?)\*\*/g);
+                                    return parts.map((part, idx) => 
+                                        idx % 2 === 1 ? (
+                                        <strong key={idx} className="font-bold text-gray-900">{part}</strong>
+                                        ) : (
+                                        <LatexRenderer key={idx} content={part} className="inline" />
+                                        )
+                                    );
+                                    };
+
+                                    // Handle list items
+                                    if (line.trim().match(/^\d+\./)) {
+                                    return (
+                                        <div key={i} className="flex gap-2 mb-2 ml-2">
+                                        <span className="text-purple-600 font-semibold flex-shrink-0">{line.match(/^\d+\./)}</span>
+                                        <p className="text-gray-700 flex-1 break-words">{renderTextWithBold(line.replace(/^\d+\.\s*/, ''))}</p>
+                                        </div>
+                                    );
+                                    }
+                                                                        // Regular paragraphs
                                     return (
                                       <p key={i} className="mb-3 text-gray-700 leading-relaxed break-words">
                                         {renderTextWithBold(line)}
