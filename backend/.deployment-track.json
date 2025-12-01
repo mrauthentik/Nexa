@@ -13,7 +13,7 @@
     "get-user-stats": "{\"index.ts\":\"6568d3f639319b7427679409592ae367\"}",
     "mark-notification-read": "{\"index.ts\":\"1d9b291875553504253ce4446e9e4153\"}",
     "signin": "{\"index.ts\":\"3fb79bb15ad1add68bf6af060083ae0f\"}",
-    "signup": "{\"index.ts\":\"770a55bf35ea29d8359ef0f8cced9368\"}",
+    "signup": "{\"index.ts\":\"a27eb16a6d176d3bd268a64bd330dd7e\"}",
     "submit-test": "{\"index.ts\":\"528533ef95a7e1ecc4e78a4d18a30af1\"}",
     "update-user-profile": "{\"index.ts\":\"9535068869384549c9c05dd5b8f411c8\"}",
     "get-course-question-count": "{\"index.ts\":\"1dc6b42a56d4ad7184e1b09f2ee72693\"}",
