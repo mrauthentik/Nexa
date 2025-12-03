@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Clock, MessageSqua
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { supportAPI } from '../services/api';
+import { Toaster } from 'react-hot-toast';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -109,8 +110,10 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
-      <Navbar />
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
+        <Navbar />
       
       {/* Hero Section */}
       <section className="relative py-16 md:py-24 overflow-hidden">
@@ -315,7 +318,8 @@ const ContactPage = () => {
       </section>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 };
 
