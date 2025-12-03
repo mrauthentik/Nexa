@@ -47,7 +47,7 @@
     "ai-explain-answer-groq": "{\"index.ts\":\"a0ea6c42e89ce67e4fbb132a9f220989\"}",
     "upload-profile-image": "{\"index.ts\":\"b9bcbb3d9f0f8d702075322e8c2c02a3\"}",
     "blog-posts": "{\"index.ts\":\"c7db9d610968058b75e315bfb7ee1d99\"}",
-    "submit-contact": "{\"index.ts\":\"cd3c0b5d46947f090f8ef3a1757ba748\"}",
+    "submit-contact": "{\"index.ts\":\"f6999f03cb4350d1812a6e11f4780c53\"}",
     "paystack-webhook": "{\"index.ts\":\"b6eb4b5e20243d0f8faaa9c354394b1f\"}",
     "verify-payment": "{\"index.ts\":\"97cd98e173be4be16a69e0c397eb08a4\"}",
     "send-password-reset": "{\"index.ts\":\"b33d92cd4ca0fadb5fc48c016751b54f\"}",

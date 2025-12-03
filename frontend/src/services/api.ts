@@ -715,13 +715,20 @@ export const adminExtendedAPI = {
 // Support/Contact API (for users)
 export const supportAPI = {
     sendMessage: async (data: { name: string; email: string; subject: string; message: string; priority?: string }) => {
-        const response = await fetch(`${FUNCTIONS_URL}/admin-manage-messages`, {
+        const response = await fetch(`${FUNCTIONS_URL}/submit-contact`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
             },
             body: JSON.stringify(data),
         });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to send message');
+        }
+        
         return response.json();
     },
 };
