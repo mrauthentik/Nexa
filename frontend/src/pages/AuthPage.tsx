@@ -32,17 +32,25 @@ const AuthPage = () => {
     }
   }, [location.state, user, profile]);
 
+  // Auto-redirect to dashboard when user is authenticated and verified
+  useEffect(() => {
+    if (user && profile && profile.email_verified && !loading && !showVerification) {
+      // User is logged in and verified, redirect to dashboard
+      const timer = setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [user, profile, loading, showVerification, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (isLogin) {
-        const result = await signIn(formData.email, formData.password);
-        // If signIn succeeds, navigate to dashboard
-        if (result) {
-          navigate('/dashboard');
-        }
+        await signIn(formData.email, formData.password);
+        // Navigation will be handled by the useEffect hook after profile loads
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast.error('Passwords do not match');

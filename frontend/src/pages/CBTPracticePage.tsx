@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import toast, { Toaster } from 'react-hot-toast';
@@ -8,7 +8,7 @@ import OnboardingTutorial from '../components/OnboardingTutorial';
 import Tooltip from '../components/Tooltip';
 import { useCoursesWithCounts } from '../hooks/useCourses';
 import { useDebounce } from '../hooks/useDebounce';
-import { BookOpen, Search, Filter } from 'lucide-react';
+import { BookOpen, Search, Filter, X, CheckCircle } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -32,6 +32,20 @@ const CBTPracticePage = () => {
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
+  
+  // Filter modal state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [modalLevel, setModalLevel] = useState('all');
+  const [modalDepartment, setModalDepartment] = useState('all');
+  const [modalSemester, setModalSemester] = useState('all');
+  
+  // Check if user has seen the filter modal before
+  useEffect(() => {
+    const hasSeenFilterModal = localStorage.getItem('cbt-filter-modal-seen');
+    if (!hasSeenFilterModal && courses.length > 0) {
+      setShowFilterModal(true);
+    }
+  }, [courses]);
 
   // Tutorial steps for onboarding
   const tutorialSteps = [
@@ -170,6 +184,31 @@ const CBTPracticePage = () => {
     localStorage.removeItem('cbt-tutorial-completed');
     window.location.reload();
   };
+  
+  // Handle filter modal actions
+  const handleApplyFilters = () => {
+    setSelectedLevel(modalLevel);
+    setSelectedDepartment(modalDepartment);
+    setSelectedSemester(modalSemester);
+    setShowFilterModal(false);
+    localStorage.setItem('cbt-filter-modal-seen', 'true');
+    toast.success('Filters applied successfully!');
+  };
+  
+  const handleShowAll = () => {
+    setSelectedLevel('all');
+    setSelectedDepartment('all');
+    setSelectedSemester('all');
+    setShowFilterModal(false);
+    localStorage.setItem('cbt-filter-modal-seen', 'true');
+    toast.success(`Showing all ${courses.length} courses`);
+  };
+  
+  const handleResetFilters = () => {
+    setModalLevel('all');
+    setModalDepartment('all');
+    setModalSemester('all');
+  };
 
   if (isLoading) {
     return (
@@ -191,6 +230,146 @@ const CBTPracticePage = () => {
         onSkip={() => toast('You can restart the tutorial anytime by clicking Tutorial on the CBT Page', { icon: 'ℹ️' })}
         storageKey="cbt-tutorial-completed"
       />
+      
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm animate-fade-in">
+          <div className={`relative w-full max-w-2xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl transform transition-all animate-scale-in`}>
+            {/* Header */}
+            <div className="relative p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl">
+                  <Filter className="text-white" size={24} />
+                </div>
+                <div>
+                  <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Filter Your Courses
+                  </h2>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Choose filters to find courses or view all at once
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFilterModal(false);
+                  localStorage.setItem('cbt-filter-modal-seen', 'true');
+                }}
+                className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+                  isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+                }`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Courses</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{courses.length}</p>
+                </div>
+                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Departments</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{departments.length}</p>
+                </div>
+                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Levels</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{levels.length}</p>
+                </div>
+              </div>
+              
+              {/* Filter Options */}
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Level
+                  </label>
+                  <select
+                    value={modalLevel}
+                    onChange={(e) => setModalLevel(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all`}
+                  >
+                    <option value="all">All Levels</option>
+                    {levels.map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Department
+                  </label>
+                  <select
+                    value={modalDepartment}
+                    onChange={(e) => setModalDepartment(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all`}
+                  >
+                    <option value="all">All Departments</option>
+                    {departments.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Semester
+                  </label>
+                  <select
+                    value={modalSemester}
+                    onChange={(e) => setModalSemester(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-lg border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all`}
+                  >
+                    <option value="all">All Semesters</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700 bg-gray-750' : 'border-gray-200 bg-gray-50'} rounded-b-2xl`}>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleResetFilters}
+                  className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+                    isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Reset Filters
+                </button>
+                <button
+                  onClick={handleShowAll}
+                  className={`flex-1 px-6 py-3 rounded-lg font-medium transition-all ${
+                    isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-900 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  Show All Courses
+                </button>
+                <button
+                  onClick={handleApplyFilters}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <CheckCircle size={20} />
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <DashboardLayout currentPage="/cbt">
           <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6`}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -258,15 +437,26 @@ const CBTPracticePage = () => {
                 <Filter size={16} />
                 <span>Showing {filteredCourses.length} of {courses.length} courses</span>
               </div>
-              <button
-                onClick={restartTutorial}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                <BookOpen size={14} />
-                Tutorial
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowFilterModal(true)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isDarkMode ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-teal-500 text-white hover:bg-teal-600'
+                  }`}
+                >
+                  <Filter size={14} />
+                  Quick Filter
+                </button>
+                <button
+                  onClick={restartTutorial}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <BookOpen size={14} />
+                  Tutorial
+                </button>
+              </div>
             </div>
           </div>
 
