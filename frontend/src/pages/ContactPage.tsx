@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Clock, MessageSquare } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { supportAPI } from '../services/api';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -74,34 +75,32 @@ const ContactPage = () => {
     setErrorMessage('');
 
     try {
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/submit-contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify(formData),
+      console.log('📧 Sending contact message:', formData);
+      const response = await supportAPI.sendMessage({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        priority: 'normal'
       });
 
-      const data = await response.json();
+      console.log('📧 Contact form response:', response);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send message');
+      if (response.success) {
+        setSubmitStatus('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+
+        // Reset success message after 5 seconds
+        setTimeout(() => {
+          setSubmitStatus('idle');
+        }, 5000);
+      } else {
+        console.error('❌ Message sending failed:', response);
+        setSubmitStatus('error');
+        setErrorMessage(response.error || 'Failed to send message. Please try again.');
       }
-
-      setSubmitStatus('success');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setSubmitStatus('idle');
-      }, 5000);
-
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      console.error('❌ Contact form error:', error);
       setSubmitStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
     } finally {

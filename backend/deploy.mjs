@@ -125,30 +125,6 @@ async function deployFunction(functionName) {
   }
 }
 
-// Run database migrations
-async function runMigrations() {
-  console.log('\n📊 Running database migrations...');
-  
-  try {
-    const command = `supabase db push`;
-    const { stdout, stderr } = await execPromise(command);
-    
-    if (stdout) {
-      console.log(stdout.trim());
-    }
-    
-    if (stderr && !stderr.includes('Finished')) {
-      console.error(`⚠️  Migration warnings: ${stderr}`);
-    }
-    
-    console.log('✅ Migrations completed');
-    return true;
-  } catch (error) {
-    console.error('❌ Migration failed');
-    console.error(error.message);
-    return false;
-  }
-}
 
 // Simple yes/no prompt
 function askQuestion(question) {
@@ -207,34 +183,17 @@ async function deployFunctions() {
   }
   
   // Ask what to deploy
-  const answer = await askQuestion('Deploy (a)ll, (c)hanged only, (m)igrations only, or (s)kip? [a/c/m/s]:');
+  const answer = await askQuestion('Deploy (a)ll or (c)hanged only? [a/c]:');
   
   let functionsToDeploy = [];
-  let runMigs = false;
   
   if (answer === 'a') {
     functionsToDeploy = allFunctionDirs;
-    runMigs = true;
   } else if (answer === 'c') {
     functionsToDeploy = changedFunctions;
-    runMigs = true;
-  } else if (answer === 'm') {
-    runMigs = true;
   } else {
     console.log('Deployment cancelled.');
     process.exit(0);
-  }
-  
-  // Run migrations if requested
-  if (runMigs) {
-    const migSuccess = await runMigrations();
-    if (!migSuccess) {
-      console.log('\n⚠️  Migrations failed. Continue with function deployment?');
-      const continueAnswer = await askQuestion('Continue? (y/N):');
-      if (continueAnswer !== 'y') {
-        process.exit(1);
-      }
-    }
   }
   
   // Deploy functions
@@ -276,7 +235,7 @@ async function deployFunctions() {
   console.log('\n🔗 Useful commands:');
   console.log('   supabase functions list          - List all functions');
   console.log('   supabase functions logs <name>   - View function logs');
-  console.log('   supabase db reset                - Reset database\n');
+  console.log('   supabase db push                 - Run database migrations\n');
 }
 
 // Run the deployment

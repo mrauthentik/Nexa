@@ -87,89 +87,179 @@ serve(async (req: Request) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'NEXA Support <noreply@nexaedu.ng>',
+          from: 'NEXA Support Team <noreply@nexaedu.ng>',
+          reply_to: 'noreply@nexaedu.ng',
           to: [message.email],
-          subject: `Re: ${message.subject}`,
+          subject: `✅ Response from NEXA Support: ${message.subject}`,
           html: `
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
               <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Reply from NEXA Support</title>
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <title>Response from NEXA Support</title>
+                <!--[if mso]>
+                <style type="text/css">
+                  body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+                </style>
+                <![endif]-->
               </head>
-              <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 20px;">
+              <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f4f8; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+                
+                <!-- Preheader Text (Hidden but shows in email preview) -->
+                <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+                  Your support request has been answered by the NEXA team. View your response inside.
+                </div>
+                
+                <!-- Main Container -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f0f4f8; padding: 40px 20px;">
                   <tr>
                     <td align="center">
-                      <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
-                        <!-- Header -->
+                      
+                      <!-- Email Card -->
+                      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); overflow: hidden;">
+                        
+                        <!-- Header with Logo and Brand -->
                         <tr>
-                          <td style="background: linear-gradient(135deg, #101829 0%, #1a2744 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">NEXA Support</h1>
-                            <p style="margin: 10px 0 0; color: #e5e7eb; font-size: 14px;">We're here to help!</p>
+                          <td style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); padding: 48px 40px; text-align: center; position: relative;">
+                            <!-- Logo -->
+                            <div style="margin-bottom: 16px;">
+                              <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
+                                <defs>
+                                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+                                  </linearGradient>
+                                </defs>
+                                <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" opacity="0.2"/>
+                                <text x="50" y="65" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="url(#logoGradient)" text-anchor="middle">N</text>
+                              </svg>
+                            </div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">NEXA</h1>
+                            <p style="margin: 8px 0 0; color: #94a3b8; font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">SUPPORT TEAM</p>
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                              <span style="display: inline-block; background: rgba(20, 184, 166, 0.15); color: #5eead4; padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">
+                                ✓ VERIFIED RESPONSE
+                              </span>
+                            </div>
                           </td>
                         </tr>
                         
-                        <!-- Content -->
+                        <!-- Main Content -->
                         <tr>
-                          <td style="padding: 40px 30px;">
-                            <h2 style="margin: 0 0 20px; color: #111827; font-size: 24px; font-weight: 600;">Hello ${message.name},</h2>
-                            <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                              Thank you for contacting NEXA Support. We've received your message and here's our response:
+                          <td style="padding: 48px 40px;">
+                            
+                            <!-- Greeting -->
+                            <h2 style="margin: 0 0 16px; color: #0f172a; font-size: 26px; font-weight: 700; line-height: 1.3;">
+                              Hello ${message.name}! 👋
+                            </h2>
+                            <p style="margin: 0 0 28px; color: #475569; font-size: 16px; line-height: 1.7;">
+                              Thank you for reaching out to <strong style="color: #14b8a6;">NEXA</strong>. Our support team has carefully reviewed your inquiry and prepared a response for you.
                             </p>
                             
-                            <!-- Original Message -->
-                            <div style="background-color: #f9fafb; border-left: 4px solid #14b8a6; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                              <p style="margin: 0 0 10px; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase;">Your Message:</p>
-                              <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.6;">
-                                ${message.message.replace(/\n/g, '<br>')}
+                            <!-- Original Message Box -->
+                            <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 5px solid #14b8a6; padding: 24px; margin: 28px 0; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
+                              <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                                <span style="display: inline-block; width: 8px; height: 8px; background: #14b8a6; border-radius: 50%; margin-right: 8px;"></span>
+                                <p style="margin: 0; color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">YOUR INQUIRY</p>
+                              </div>
+                              <p style="margin: 0; color: #334155; font-size: 15px; line-height: 1.7; font-style: italic;">
+                                "${message.message.replace(/\n/g, '<br>')}"
                               </p>
                             </div>
                             
-                            <!-- Reply -->
-                            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                              <p style="margin: 0 0 10px; color: #065f46; font-size: 12px; font-weight: 600; text-transform: uppercase;">Our Response:</p>
-                              <p style="margin: 0; color: #064e3b; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">
+                            <!-- Response Box -->
+                            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-left: 5px solid #10b981; padding: 28px; margin: 28px 0; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);">
+                              <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                                <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; margin-right: 8px;"></span>
+                                <p style="margin: 0; color: #065f46; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">OUR RESPONSE</p>
+                              </div>
+                              <div style="margin: 0; color: #064e3b; font-size: 16px; line-height: 1.8; font-weight: 500;">
                                 ${replyMessage.replace(/\n/g, '<br>')}
+                              </div>
+                            </div>
+                            
+                            <!-- Important Notice -->
+                            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 20px; margin: 32px 0; border-radius: 12px;">
+                              <p style="margin: 0 0 8px; color: #92400e; font-size: 14px; font-weight: 700; display: flex; align-items: center;">
+                                <span style="font-size: 20px; margin-right: 8px;">⚠️</span>
+                                IMPORTANT NOTICE
+                              </p>
+                              <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.6;">
+                                <strong>Please do not reply to this email.</strong> This is an automated notification from a no-reply address. For any follow-up questions or new inquiries, please submit a new message through our official support page.
                               </p>
                             </div>
                             
-                            <p style="margin: 20px 0 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                              If you have any further questions, feel free to reply to this email or contact us through our support page.
-                            </p>
+                            <!-- Need More Help Section -->
+                            <div style="background: #f8fafc; padding: 28px; margin: 32px 0; border-radius: 12px; text-align: center; border: 2px dashed #cbd5e1;">
+                              <p style="margin: 0 0 20px; color: #475569; font-size: 15px; line-height: 1.6;">
+                                <strong>Need more assistance?</strong><br>
+                                Our support team is always ready to help you succeed.
+                              </p>
+                              <a href="https://nexaedu.ng/contact" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4); transition: all 0.3s ease;">
+                                📧 Contact Support
+                              </a>
+                              <p style="margin: 16px 0 0; color: #94a3b8; font-size: 13px;">
+                                Average response time: 24-48 hours
+                              </p>
+                            </div>
                             
-                            <!-- CTA Button -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                              <tr>
-                                <td align="center">
-                                  <a href="https://nexaedu.ng/contact" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                                    Visit Support Page
-                                  </a>
-                                </td>
-                              </tr>
-                            </table>
+                            <!-- Signature -->
+                            <div style="margin-top: 40px; padding-top: 28px; border-top: 2px solid #e2e8f0;">
+                              <p style="margin: 0 0 8px; color: #0f172a; font-size: 15px; font-weight: 600;">
+                                Best regards,
+                              </p>
+                              <p style="margin: 0; color: #14b8a6; font-size: 17px; font-weight: 700;">
+                                The NEXA Support Team
+                              </p>
+                              <p style="margin: 8px 0 0; color: #64748b; font-size: 13px; font-style: italic;">
+                                Building Leaders, One Test at a Time 🚀
+                              </p>
+                            </div>
+                            
                           </td>
                         </tr>
                         
                         <!-- Footer -->
                         <tr>
-                          <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                            <p style="margin: 0 0 10px; color: #6b7280; font-size: 14px;">
+                          <td style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 40px; text-align: center; border-top: 3px solid #14b8a6;">
+                            
+                            <!-- Social Links -->
+                            <div style="margin-bottom: 24px;">
+                              <a href="https://nexaedu.ng" style="display: inline-block; margin: 0 8px; color: #64748b; text-decoration: none; font-size: 24px;">🌐</a>
+                              <a href="https://twitter.com/NexaPlatform" style="display: inline-block; margin: 0 8px; color: #64748b; text-decoration: none; font-size: 24px;">🐦</a>
+                              <a href="https://facebook.com/NexaPlatform" style="display: inline-block; margin: 0 8px; color: #64748b; text-decoration: none; font-size: 24px;">📘</a>
+                              <a href="https://instagram.com/NexaPlatform" style="display: inline-block; margin: 0 8px; color: #64748b; text-decoration: none; font-size: 24px;">📸</a>
+                            </div>
+                            
+                            <!-- Company Info -->
+                            <p style="margin: 0 0 8px; color: #475569; font-size: 14px; font-weight: 600;">
+                              NEXA Educational Platform
+                            </p>
+                            <p style="margin: 0 0 16px; color: #64748b; font-size: 13px; line-height: 1.6;">
+                              Abuja, Nigeria<br>
+                              <a href="https://nexaedu.ng" style="color: #14b8a6; text-decoration: none; font-weight: 600;">www.nexaedu.ng</a>
+                            </p>
+                            
+                            <!-- Legal -->
+                            <p style="margin: 0 0 8px; color: #94a3b8; font-size: 12px; line-height: 1.5;">
                               © 2025 NEXA. All rights reserved.
                             </p>
-                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                              Building Leaders, One Test at a Time.
+                            <p style="margin: 0; color: #cbd5e1; font-size: 11px; line-height: 1.5;">
+                              This is an automated message from NEXA Support. Please do not reply to this email.<br>
+                              For support inquiries, visit our <a href="https://nexaedu.ng/contact" style="color: #14b8a6; text-decoration: none;">Contact Page</a>.
                             </p>
-                            <p style="margin: 10px 0 0; color: #9ca3af; font-size: 12px;">
-                              This is an automated message from NEXA Support.
-                            </p>
+                            
                           </td>
                         </tr>
+                        
                       </table>
+                      
                     </td>
                   </tr>
                 </table>
+                
               </body>
             </html>
           `,
