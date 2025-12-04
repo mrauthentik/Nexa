@@ -25,7 +25,9 @@ import AdminAnalytics from './pages/AdminAnalytics'
 import AdminMessages from './pages/AdminMessages'
 import AdminAnnouncements from './pages/AdminAnnouncements'
 import AdminBlog from './pages/AdminBlog'
+import AdminSurveysPage from './pages/AdminSurveysPage'
 import GetHelpPage from './pages/GetHelpPage'
+import NotificationsPage from './pages/NotificationsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import TermsOfServicePage from './pages/TermsOfServicePage'
 import CookiePolicyPage from './pages/CookiePolicyPage'
@@ -72,6 +74,7 @@ function App() {
             <Route path="/cbt/instruction/:courseId" element={<ProtectedRoute><CBTInstructionPage /></ProtectedRoute>} />
             <Route path="/cbt/test/:courseId" element={<ProtectedRoute><CBTTestPage /></ProtectedRoute>} />
             <Route path="/cbt/results" element={<ProtectedRoute><CBTResultsPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><GetHelpPage /></ProtectedRoute>} />
             
             {/* Admin Only Routes */}
@@ -81,6 +84,7 @@ function App() {
             <Route path="/admin/messages" element={<ProtectedRoute requireAdmin><AdminMessages /></ProtectedRoute>} />
             <Route path="/admin/announcements" element={<ProtectedRoute requireAdmin><AdminAnnouncements /></ProtectedRoute>} />
             <Route path="/admin/blog" element={<ProtectedRoute requireAdmin><AdminBlog /></ProtectedRoute>} />
+            <Route path="/admin/surveys" element={<ProtectedRoute requireAdmin><AdminSurveysPage /></ProtectedRoute>} />
             <Route path="/admin/add-summary" element={<ProtectedRoute requireAdmin><AdminAddSummary /></ProtectedRoute>} />
             <Route path="/admin/add-questions" element={<ProtectedRoute requireAdmin><AdminAddQuestions /></ProtectedRoute>} />
             

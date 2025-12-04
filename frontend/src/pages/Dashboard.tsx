@@ -20,6 +20,8 @@ const Dashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
 
   // Fetch notifications and stats from database
   useEffect(() => {
@@ -49,6 +51,13 @@ const Dashboard = () => {
       };
     }
   }, [user, profile]);
+
+  // Fetch calendar events when month changes
+  useEffect(() => {
+    if (user && profile && profile.email_verified) {
+      fetchCalendarEvents();
+    }
+  }, [currentDate, user, profile]);
 
   const fetchNotifications = async () => {
     if (!user) {
@@ -92,6 +101,27 @@ const Dashboard = () => {
       console.error('Error fetching dashboard stats:', error);
       // Silently handle error - user will see default stats instead
       // Network issues shouldn't disrupt the user experience
+    }
+  };
+
+  const fetchCalendarEvents = async () => {
+    if (!user) return;
+    
+    try {
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', startOfMonth.toISOString().split('T')[0])
+        .lte('date', endOfMonth.toISOString().split('T')[0]);
+
+      if (error) throw error;
+      setCalendarEvents(data || []);
+    } catch (error: any) {
+      console.error('Error fetching calendar events:', error);
     }
   };
 
@@ -484,9 +514,9 @@ const Dashboard = () => {
                     {/* Footer */}
                     {notifications.length > 0 && (
                       <div className={`px-4 py-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <button className={`w-full text-center text-sm font-medium ${isDarkMode ? 'text-primary-400 hover:text-primary-300' : 'text-primary-600 hover:text-primary-700'}`}>
+                        <a href="/notifications" className={`block w-full text-center text-sm font-medium ${isDarkMode ? 'text-primary-400 hover:text-primary-300' : 'text-primary-600 hover:text-primary-700'}`}>
                           View all notifications
-                        </button>
+                        </a>
                       </div>
                     )}
                   </div>
@@ -631,6 +661,12 @@ const Dashboard = () => {
                   const isSelected = day === selectedDate && 
                     currentDate.getMonth() === new Date().getMonth() && 
                     currentDate.getFullYear() === new Date().getFullYear();
+                  
+                  // Check if this date has events
+                  const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const dayEvents = calendarEvents.filter(event => event.date === dateStr);
+                  const hasEvents = dayEvents.length > 0;
+                  
                   return (
                     <button
                       key={day}
@@ -638,9 +674,10 @@ const Dashboard = () => {
                         setSelectedDate(day);
                         const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                         setTaskDate(clickedDate);
+                        setSelectedDateEvents(dayEvents);
                         setShowTaskModal(true);
                       }}
-                      className={`aspect-square flex items-center justify-center text-sm rounded-lg transition-colors ${
+                      className={`aspect-square flex flex-col items-center justify-center text-sm rounded-lg transition-colors relative ${
                         isSelected
                           ? 'bg-orange-500 text-white font-semibold'
                           : isToday
@@ -651,6 +688,13 @@ const Dashboard = () => {
                       }`}
                     >
                       {day}
+                      {hasEvents && (
+                        <div className="absolute bottom-1 flex gap-0.5">
+                          {dayEvents.slice(0, 3).map((_, idx) => (
+                            <div key={idx} className="w-1 h-1 rounded-full bg-primary-600"></div>
+                          ))}
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -746,10 +790,10 @@ const Dashboard = () => {
       {/* Task Creation Modal */}
       {showTaskModal && taskDate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className={`max-w-md w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-6`}>
+          <div className={`max-w-md w-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-6 max-h-[80vh] overflow-y-auto`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Add Task for {taskDate.toLocaleDateString()}
+                {selectedDateEvents.length > 0 ? `Events for ${taskDate.toLocaleDateString()}` : `Add Task for ${taskDate.toLocaleDateString()}`}
               </h3>
               <button
                 onClick={() => setShowTaskModal(false)}
@@ -760,9 +804,42 @@ const Dashboard = () => {
                 </svg>
               </button>
             </div>
-            <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              You can create tasks and schedule items from the Schedule page.
-            </p>
+            
+            {selectedDateEvents.length > 0 ? (
+              <div className="space-y-3 mb-4">
+                {selectedDateEvents.map((event) => (
+                  <div key={event.id} className={`p-3 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{event.title}</h4>
+                        <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {event.start_time} - {event.end_time}
+                        </p>
+                        {event.description && (
+                          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{event.description}</p>
+                        )}
+                        {event.location && (
+                          <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>📍 {event.location}</p>
+                        )}
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        event.type === 'exam' ? 'bg-red-100 text-red-700' :
+                        event.type === 'assignment' ? 'bg-yellow-100 text-yellow-700' :
+                        event.type === 'class' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {event.type}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                No events scheduled for this date. Create tasks and schedule items from the Schedule page.
+              </p>
+            )}
+            
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -771,13 +848,13 @@ const Dashboard = () => {
                 }}
                 className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
               >
-                Go to Schedule
+                {selectedDateEvents.length > 0 ? 'Manage in Schedule' : 'Go to Schedule'}
               </button>
               <button
                 onClick={() => setShowTaskModal(false)}
                 className={`px-4 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
-                Cancel
+                Close
               </button>
             </div>
           </div>

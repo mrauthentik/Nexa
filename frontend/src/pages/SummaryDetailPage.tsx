@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronLeft, ChevronRight, BookOpen, FileText, Menu, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ChevronLeft, ChevronRight, BookOpen, FileText, Menu, X, StickyNote, Maximize2, Minimize2 } from 'lucide-react';
 import RichNoteEditor from '../components/RichNoteEditor';
 import supabase from '../supabaseClient';
 import toast, { Toaster } from 'react-hot-toast';
 
 const SummaryDetailPage = () => {
   const { isDarkMode } = useTheme();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'summary' | 'notes'>('summary');
   const [currentSection, setCurrentSection] = useState(0);
   const [readingProgress, setReadingProgress] = useState(0);
   const [completedSections, setCompletedSections] = useState<number[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
 
   // Function to navigate to CBT
   const handleTakeCBT = async () => {
@@ -147,13 +149,21 @@ const SummaryDetailPage = () => {
     if (!completedSections.includes(currentSection)) {
       setCompletedSections([...completedSections, currentSection]);
     }
+    // Navigate to next section after marking complete
+    if (currentSection < summary.content.length - 1) {
+      setCurrentSection(currentSection + 1);
+      toast.success('Section completed! Moving to next section.');
+    } else {
+      toast.success('🎉 All sections completed!');
+    }
   };
 
   const currentSectionData = summary.content[currentSection];
 
   return (
     <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
+      
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -163,17 +173,16 @@ const SummaryDetailPage = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} flex flex-col flex-shrink-0 bg-gray-900 text-white fixed lg:static inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out ${
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} fixed lg:static inset-y-0 left-0 z-50 bg-gray-900 text-white flex flex-col transform transition-all duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div className={`p-6 ${isSidebarCollapsed ? 'px-3' : ''}`}>
           <div className="flex items-center justify-between">
-            <div className={`flex items-center gap-2 ${isSidebarCollapsed ? 'flex-col' : ''}`}>
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold">N</span>
-              </div>
+            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'flex-col' : ''}`}>
+              <img src="/logo.png" alt="NEXA Logo" className="w-8 h-8 object-contain flex-shrink-0" />
               {!isSidebarCollapsed && <span className="text-xl font-bold whitespace-nowrap">NEXA</span>}
             </div>
+            
             {/* Close button for mobile */}
             <button
               onClick={() => setIsSidebarOpen(false)}
@@ -181,10 +190,11 @@ const SummaryDetailPage = () => {
             >
               <X className="w-6 h-6" />
             </button>
+            
             {/* Collapse button for desktop */}
             {!isSidebarCollapsed && (
               <button
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                onClick={() => setIsSidebarCollapsed(true)}
                 className="hidden lg:block p-2 hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
                 title="Collapse sidebar"
               >
@@ -192,6 +202,7 @@ const SummaryDetailPage = () => {
               </button>
             )}
           </div>
+          
           {/* Expand button when collapsed */}
           {isSidebarCollapsed && (
             <button
@@ -204,53 +215,55 @@ const SummaryDetailPage = () => {
           )}
         </div>
 
-        <nav className="flex-1 px-4 overflow-y-auto">
-          <a href="/dashboard" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <nav className="flex-1 px-4">
+          <a href="/dashboard" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors hover:bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             {!isSidebarCollapsed && <span>Dashboard</span>}
           </a>
-          <a href="/summaries" className={`flex items-center gap-3 px-4 py-3 bg-gray-800 rounded-lg mb-2 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="/summaries" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {!isSidebarCollapsed && <span>Summaries</span>}
           </a>
-          <a href="#" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="/cbt" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors hover:bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             {!isSidebarCollapsed && <span>CBT Practice</span>}
           </a>
-          <a href="#" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="/schedule" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors hover:bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             {!isSidebarCollapsed && <span>Schedule</span>}
           </a>
-          <a href="#" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-            {!isSidebarCollapsed && <span>Resources</span>}
-          </a>
         </nav>
 
         <div className="p-4 border-t border-gray-800">
-          <a href="#" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <a href="/billing" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors hover:bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
-            {!isSidebarCollapsed && <span>Get Help</span>}
+            {!isSidebarCollapsed && <span>Billing</span>}
           </a>
-          <a href="/settings" className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition-colors ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a href="/settings" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg mb-2 transition-colors hover:bg-gray-800`}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             {!isSidebarCollapsed && <span>Settings</span>}
           </a>
+          {isAdmin && (
+            <a href="/admin" className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors`}>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              {!isSidebarCollapsed && <span>Admin Panel</span>}
+            </a>
+          )}
         </div>
       </aside>
 
@@ -259,7 +272,6 @@ const SummaryDetailPage = () => {
         {/* Header */}
         <header className={`border-b px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center justify-between gap-4">
-            {/* Mobile menu button */}
             <button
               onClick={() => setIsSidebarOpen(true)}
               className={`lg:hidden p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
@@ -267,14 +279,24 @@ const SummaryDetailPage = () => {
               <Menu className={`w-6 h-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} />
             </button>
             <a href="/summaries" className={`flex items-center gap-2 ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-5 h-5" />
               Back to Summaries
             </a>
             <div className="flex items-center gap-3">
-              <button className={`px-4 py-2 rounded-lg transition-colors ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                Download PDF
+              {/* Notes Toggle Button - Top Right */}
+              <button
+                onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  isNotesExpanded
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : isDarkMode
+                    ? 'bg-gray-700 text-white hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <StickyNote className="w-5 h-5" />
+                {isNotesExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                <span className="hidden sm:inline">Notes</span>
               </button>
               <button
                 onClick={handleTakeCBT}
@@ -286,73 +308,61 @@ const SummaryDetailPage = () => {
           </div>
         </header>
 
-        {/* Scrollable Content Area */}
-        <div id="content-area" className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            {/* Reading Progress Bar */}
-            <div className={`sticky top-0 z-10 border-b mb-8 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
-              <div className="h-1 bg-gray-200">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-300"
-                  style={{ width: `${readingProgress}%` }}
-                />
-              </div>
-              <div className="py-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
-                    Reading Progress: <span className={`font-semibold ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`}>{Math.round(readingProgress)}%</span>
-                  </span>
-                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{summary.readTime} read</span>
+        {/* Scrollable Content Area - Side by Side Layout */}
+        <div className="flex-1 overflow-hidden flex">
+          {/* Summary Content */}
+          <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isNotesExpanded ? 'w-1/2' : 'w-full'}`}>
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+              {/* Congratulations Message - Moved to Top */}
+              {readingProgress >= 100 && (
+                <div className="mb-8 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-500 rounded-xl p-6 text-center animate-bounce-in">
+                  <svg className="w-16 h-16 mx-auto mb-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>🎉 Congratulations!</h3>
+                  <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    You've completed all sections. Ready to test your knowledge?
+                  </p>
+                  <button
+                    onClick={handleTakeCBT}
+                    className="inline-block px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-lg"
+                  >
+                    Take CBT Practice Test →
+                  </button>
+                </div>
+              )}
+
+              {/* Reading Progress Bar */}
+              <div className={`sticky top-0 z-10 border-b mb-8 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}>
+                <div className="h-1 bg-gray-200">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-300"
+                    style={{ width: `${readingProgress}%` }}
+                  />
+                </div>
+                <div className="py-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                      Reading Progress: <span className={`font-semibold ${isDarkMode ? 'text-primary-400' : 'text-primary-600'}`}>{Math.round(readingProgress)}%</span>
+                    </span>
+                    <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{summary.readTime} read</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Title Section */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`text-sm font-semibold px-3 py-1 rounded ${isDarkMode ? 'text-primary-400 bg-primary-900/30' : 'text-primary-600 bg-primary-50'}`}>
-                  {summary.courseCode}
-                </span>
-                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>• {summary.course}</span>
+              {/* Title Section */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`text-sm font-semibold px-3 py-1 rounded ${isDarkMode ? 'text-primary-400 bg-primary-900/30' : 'text-primary-600 bg-primary-50'}`}>
+                    {summary.courseCode}
+                  </span>
+                  <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>• {summary.course}</span>
+                </div>
+                <h1 className={`text-4xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{summary.title}</h1>
+                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Last updated {summary.lastUpdated}</p>
               </div>
-              <h1 className={`text-4xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{summary.title}</h1>
-              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Last updated {summary.lastUpdated}</p>
-            </div>
 
-            {/* Tabs */}
-            <div className={`flex gap-4 mb-8 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <button
-                onClick={() => setActiveTab('summary')}
-                className={`pb-3 px-1 font-medium transition-colors ${
-                  activeTab === 'summary'
-                    ? isDarkMode
-                      ? 'text-primary-400 border-b-2 border-primary-400'
-                      : 'text-primary-600 border-b-2 border-primary-600'
-                    : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Summary Content
-              </button>
-              <button
-                onClick={() => setActiveTab('notes')}
-                className={`pb-3 px-1 font-medium transition-colors ${
-                  activeTab === 'notes'
-                    ? isDarkMode
-                      ? 'text-primary-400 border-b-2 border-primary-400'
-                      : 'text-primary-600 border-b-2 border-primary-600'
-                    : isDarkMode
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                My Notes
-              </button>
-            </div>
-
-            {/* Content */}
-            {activeTab === 'summary' ? (
+              {/* Content */}
               <div className="space-y-6">
                 {/* Progress Indicator */}
                 <div className={`flex items-center justify-between p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
@@ -408,9 +418,6 @@ const SummaryDetailPage = () => {
                       <div
                         key={topicIdx}
                         className={`p-6 rounded-lg border-l-4 border-primary-500 ${isDarkMode ? 'bg-gray-700/50' : 'bg-primary-50'}`}
-                        style={{
-                          animation: `fadeInUp 0.5s ease-out ${topicIdx * 0.1}s both`,
-                        }}
                       >
                         <h3 className={`text-xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {topic.title}
@@ -467,30 +474,27 @@ const SummaryDetailPage = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Completion Message */}
-                {readingProgress >= 100 && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-500 rounded-xl p-6 text-center">
-                    <svg className="w-16 h-16 mx-auto mb-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>🎉 Congratulations!</h3>
-                    <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      You've completed all sections. Ready to test your knowledge?
-                    </p>
-                    <button
-                      onClick={handleTakeCBT}
-                      className="inline-block px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-lg"
-                    >
-                      Take CBT Practice Test →
-                    </button>
-                  </div>
-                )}
               </div>
-            ) : (
-              <RichNoteEditor summaryId={summary.id.toString()} />
-            )}
+            </div>
           </div>
+
+          {/* Notes Panel - Side by Side */}
+          {isNotesExpanded && (
+            <div className={`w-1/2 border-l overflow-y-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <div className="sticky top-0 z-10 p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>My Notes</h3>
+                <button
+                  onClick={() => setIsNotesExpanded(false)}
+                  className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4">
+                <RichNoteEditor summaryId={summary.id.toString()} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
