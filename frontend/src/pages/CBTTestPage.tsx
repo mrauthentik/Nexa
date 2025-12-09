@@ -144,25 +144,37 @@ const CBTTestPage = () => {
     setShowConfirmSubmit(false);
     setTestSubmitted(true);
 
-    // Calculate score
+    // Calculate score - iterate through all questions and check answers
     let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    
     questions.forEach((question, index) => {
       const userAnswer = answers[index];
       const correctAnswer = question.correct_answer;
       
+      // Check if question was answered
+      if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+        skippedCount++;
+        return;
+      }
+      
       // For fill-in-blank, do exact match (case-sensitive, trimmed)
       if (question.question_type === 'fill_in_blank') {
-        // Trim whitespace and compare
-        const trimmedUserAnswer = (userAnswer || '').trim();
-        const trimmedCorrectAnswer = (correctAnswer || '').toString().trim();
+        const trimmedUserAnswer = userAnswer.trim();
+        const trimmedCorrectAnswer = correctAnswer.toString().trim();
         
         if (trimmedUserAnswer === trimmedCorrectAnswer) {
           correctCount++;
+        } else {
+          wrongCount++;
         }
       } else {
         // For multiple choice, compare answer letters
         if (userAnswer === correctAnswer) {
           correctCount++;
+        } else {
+          wrongCount++;
         }
       }
     });
@@ -284,19 +296,52 @@ const CBTTestPage = () => {
               <div className={`grid grid-cols-3 gap-4 mb-8 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-6`}>
                 <div>
                   <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {Object.values(answers).filter((ans, idx) => ans === questions[idx]?.correct_answer).length}
+                    {(() => {
+                      let correct = 0;
+                      questions.forEach((q, idx) => {
+                        const userAns = answers[idx];
+                        if (userAns !== undefined && userAns !== null && userAns !== '') {
+                          if (q.question_type === 'fill_in_blank') {
+                            if (userAns.trim() === q.correct_answer.toString().trim()) correct++;
+                          } else {
+                            if (userAns === q.correct_answer) correct++;
+                          }
+                        }
+                      });
+                      return correct;
+                    })()}
                   </p>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Correct</p>
                 </div>
                 <div>
                   <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {Object.values(answers).filter((ans, idx) => ans !== questions[idx]?.correct_answer).length}
+                    {(() => {
+                      let wrong = 0;
+                      questions.forEach((q, idx) => {
+                        const userAns = answers[idx];
+                        if (userAns !== undefined && userAns !== null && userAns !== '') {
+                          if (q.question_type === 'fill_in_blank') {
+                            if (userAns.trim() !== q.correct_answer.toString().trim()) wrong++;
+                          } else {
+                            if (userAns !== q.correct_answer) wrong++;
+                          }
+                        }
+                      });
+                      return wrong;
+                    })()}
                   </p>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Wrong</p>
                 </div>
                 <div>
                   <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {questions.length - Object.keys(answers).length}
+                    {(() => {
+                      let skipped = 0;
+                      questions.forEach((q, idx) => {
+                        const userAns = answers[idx];
+                        if (userAns === undefined || userAns === null || userAns === '') skipped++;
+                      });
+                      return skipped;
+                    })()}
                   </p>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Skipped</p>
                 </div>
@@ -304,17 +349,32 @@ const CBTTestPage = () => {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
-                  onClick={() => navigate('/cbt/results', {
-                    state: {
-                      score,
-                      correctCount: Object.values(answers).filter((ans, idx) => ans === questions[idx]?.correct_answer).length,
-                      totalQuestions: questions.length,
-                      timeTaken: (timeLimit * 60) - timeLeft,
-                      questions,
-                      userAnswers: answers,
-                      course
-                    }
-                  })}
+                  onClick={() => {
+                    // Calculate correct count properly
+                    let correct = 0;
+                    questions.forEach((q, idx) => {
+                      const userAns = answers[idx];
+                      if (userAns !== undefined && userAns !== null && userAns !== '') {
+                        if (q.question_type === 'fill_in_blank') {
+                          if (userAns.trim() === q.correct_answer.toString().trim()) correct++;
+                        } else {
+                          if (userAns === q.correct_answer) correct++;
+                        }
+                      }
+                    });
+                    
+                    navigate('/cbt/results', {
+                      state: {
+                        score,
+                        correctCount: correct,
+                        totalQuestions: questions.length,
+                        timeTaken: (timeLimit * 60) - timeLeft,
+                        questions,
+                        userAnswers: answers,
+                        course
+                      }
+                    });
+                  }}
                   className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

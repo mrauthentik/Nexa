@@ -291,7 +291,15 @@ const CBTResultsPage = () => {
           <div className="space-y-6">
             {questions.map((question, index) => {
               const userAnswer = userAnswers[index];
-              const isCorrect = userAnswer === question.correct_answer;
+              // Check if answer is correct based on question type
+              let isCorrect = false;
+              if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
+                if (question.question_type === 'fill_in_blank') {
+                  isCorrect = userAnswer.trim() === question.correct_answer.toString().trim();
+                } else {
+                  isCorrect = userAnswer === question.correct_answer;
+                }
+              }
               const showingExplanation = showExplanation === index;
 
               return (
