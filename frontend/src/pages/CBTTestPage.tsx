@@ -336,7 +336,7 @@ const CBTTestPage = () => {
                   <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {(() => {
                       let skipped = 0;
-                      questions.forEach((q, idx) => {
+                      questions.forEach((_, idx) => {
                         const userAns = answers[idx];
                         if (userAns === undefined || userAns === null || userAns === '') skipped++;
                       });
