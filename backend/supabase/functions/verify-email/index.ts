@@ -24,7 +24,7 @@ serve(async (req: Request) => {
   try {
     const { action, email, code } = await req.json();
 
-    // Create Supabase client
+    // Create Supabase client (for Auth)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -33,6 +33,12 @@ serve(async (req: Request) => {
           headers: { Authorization: req.headers.get('Authorization')! },
         },
       }
+    );
+
+    // Create Supabase Admin client (for Database operations bypassing RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     // ACTION: SEND - Send verification code
@@ -49,7 +55,7 @@ serve(async (req: Request) => {
 
       // Get user by email
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      
+
       if (userError || !user) {
         return new Response(
           JSON.stringify({ error: 'User not found' }),
@@ -69,7 +75,8 @@ serve(async (req: Request) => {
         timestamp: Date.now(),
       };
 
-      const { error: insertError } = await supabaseClient
+      // Use Admin client for DB writes
+      const { error: insertError } = await supabaseAdmin
         .from('email_verification_codes')
         .insert({
           user_id: user.id,
@@ -89,7 +96,7 @@ serve(async (req: Request) => {
       console.log('Verification code stored successfully');
 
       // Get user profile for personalization
-      const { data: profile } = await supabaseClient
+      const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
@@ -200,7 +207,7 @@ serve(async (req: Request) => {
         });
 
         const resendData = await resendResponse.json();
-        
+
         if (!resendResponse.ok) {
           console.error('Resend API error:', JSON.stringify(resendData, null, 2));
           throw new Error(`Failed to send email: ${resendData.message || 'Unknown error'}`);
@@ -209,8 +216,8 @@ serve(async (req: Request) => {
         console.log('Verification email sent successfully:', resendData.id);
 
         return new Response(
-          JSON.stringify({ 
-            success: true, 
+          JSON.stringify({
+            success: true,
             message: 'Verification code sent to email',
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -239,7 +246,7 @@ serve(async (req: Request) => {
 
       // Get user
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-      
+
       if (userError || !user) {
         return new Response(
           JSON.stringify({ error: 'User not found' }),
@@ -247,8 +254,8 @@ serve(async (req: Request) => {
         );
       }
 
-      // Get verification code from database
-      const { data: verificationRecord, error: fetchError } = await supabaseClient
+      // Get verification code from database (Use Admin)
+      const { data: verificationRecord, error: fetchError } = await supabaseAdmin
         .from('email_verification_codes')
         .select('*')
         .eq('user_id', user.id)
@@ -274,8 +281,8 @@ serve(async (req: Request) => {
         );
       }
 
-      // Check if profile exists first
-      const { data: existingProfile } = await supabaseClient
+      // Check if profile exists first (Use Admin)
+      const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
         .select('id')
         .eq('id', user.id)
@@ -283,9 +290,9 @@ serve(async (req: Request) => {
 
       if (existingProfile) {
         // Update existing profile to mark email as verified
-        const { error: updateError } = await supabaseClient
+        const { error: updateError } = await supabaseAdmin
           .from('profiles')
-          .update({ 
+          .update({
             email_verified: true,
             updated_at: new Date().toISOString(),
           })
@@ -299,8 +306,8 @@ serve(async (req: Request) => {
           );
         }
       } else {
-        // Create profile if it doesn't exist
-        const { error: insertError } = await supabaseClient
+        // Create profile if it doesn't exist (Use Admin)
+        const { error: insertError } = await supabaseAdmin
           .from('profiles')
           .insert({
             id: user.id,
@@ -323,8 +330,8 @@ serve(async (req: Request) => {
         }
       }
 
-      // Delete used verification code
-      await supabaseClient
+      // Delete used verification code (Use Admin)
+      await supabaseAdmin
         .from('email_verification_codes')
         .delete()
         .eq('id', verificationRecord.id);
@@ -332,8 +339,8 @@ serve(async (req: Request) => {
       console.log('Email verified successfully');
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: 'Email verified successfully',
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -348,12 +355,12 @@ serve(async (req: Request) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Function error:', errorMessage);
-    
+
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
