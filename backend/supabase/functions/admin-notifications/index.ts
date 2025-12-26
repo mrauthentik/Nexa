@@ -51,11 +51,11 @@ serve(async (req) => {
     // GET - Fetch admin notifications
     if (req.method === 'GET') {
       console.log('📢 Fetching admin notifications for user:', user.id)
-      
+
       const { data: notifications, error } = await supabaseClient
-        .from('notifications')
+        .from('admin_notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('admin_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -83,10 +83,10 @@ serve(async (req) => {
       console.log('✅ Marking notification as read:', notificationId)
 
       const { error } = await supabaseClient
-        .from('notifications')
+        .from('admin_notifications')
         .update({ read: true })
         .eq('id', notificationId)
-        .eq('user_id', user.id)
+        .eq('admin_id', user.id)
 
       if (error) {
         console.error('❌ Error marking notification as read:', error)
@@ -112,10 +112,10 @@ serve(async (req) => {
       console.log('🗑️ Deleting notification:', notificationId)
 
       const { error } = await supabaseClient
-        .from('notifications')
+        .from('admin_notifications')
         .delete()
         .eq('id', notificationId)
-        .eq('user_id', user.id)
+        .eq('admin_id', user.id)
 
       if (error) {
         console.error('❌ Error deleting notification:', error)
