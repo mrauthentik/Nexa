@@ -13,7 +13,7 @@ const AuthCallback = () => {
         console.log('📍 Current URL:', window.location.href);
         console.log('🔗 Hash fragment:', window.location.hash);
         console.log('📂 Pathname:', window.location.pathname);
-        
+
         // Get the session from the URL hash
         const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -42,22 +42,22 @@ const AuthCallback = () => {
             const profileData = {
               id: session.user.id,
               email: session.user.email || '',
-              full_name: session.user.user_metadata?.full_name || 
-                        session.user.user_metadata?.name || 
-                        session.user.email?.split('@')[0] || 'User',
+              full_name: session.user.user_metadata?.full_name ||
+                session.user.user_metadata?.name ||
+                session.user.email?.split('@')[0] || 'User',
               role: 'student',
               email_verified: true, // Google OAuth users are pre-verified
-              avatar_url: session.user.user_metadata?.avatar_url || 
-                         session.user.user_metadata?.picture,
+              avatar_url: session.user.user_metadata?.avatar_url ||
+                session.user.user_metadata?.picture,
               subscription_tier: 'free',
               subscription_status: 'active',
             };
-            
+
             console.log('👤 Creating profile with data:', profileData);
-            
+
             const { error: insertError } = await supabase
               .from('profiles')
-              .insert(profileData);
+              .upsert(profileData);
 
             if (insertError) {
               console.error('❌ Error creating profile:', insertError);
