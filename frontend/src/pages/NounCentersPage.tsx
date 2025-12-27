@@ -22,13 +22,19 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Custom Marker Icon
+// Custom Teal Marker Icon (SVG)
+const svgIcon = encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#14b8a6">
+  <path d="M12 0c-4.418 0-8 3.582-8 8 0 4.418 6 14 8 16 2-2 8-11.582 8-16 0-4.418-3.582-8-8-8zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/>
+</svg>
+`);
+
 const customIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-teal.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    iconUrl: `data:image/svg+xml;utf-8,${svgIcon}`,
+    iconSize: [32, 42], // Adjusted size
+    iconAnchor: [16, 42], // Tip of the pin
+    popupAnchor: [0, -42],
+    className: 'drop-shadow-lg' // Add some shadow via Tailwind/CSS if possible, or leave as is
 });
 
 // Component to handle map view updates
@@ -76,7 +82,7 @@ const NounCentersPage = () => {
 
                 {/* Sidebar List - Floating/Overlay style */}
                 <div
-                    className={`absolute left-0 top-0 bottom-0 z-[400] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col`}
+                    className={`absolute left-0 top-0 bottom-0 z-[400] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col h-full overflow-hidden`}
                 >
                     {/* Search Header */}
                     <div className="p-4 border-b border-gray-800 bg-gray-900/50">
