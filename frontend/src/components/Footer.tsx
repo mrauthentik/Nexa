@@ -26,7 +26,7 @@ const Footer = () => {
         { label: 'About', href: '/#about' },
         { label: 'Contact', href: '/contact' },
         { label: 'Reviews', href: '/#reviews' },
-        { label: 'Sitemap', href: '/sitemap' },
+        { label: 'Noun Centers', href: '/centers' },
       ],
     },
     {

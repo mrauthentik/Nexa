@@ -37,6 +37,7 @@ import DocumentationPage from './pages/DocumentationPage'
 import FeaturesPage from './pages/FeaturesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ContactPage from './pages/ContactPage'
+import NounCentersPage from './pages/NounCentersPage'
 import CookieConsent from './components/CookieConsent'
 import AuthCallback from './components/AuthCallback'
 
@@ -61,7 +62,8 @@ function App() {
             <Route path="/cookie-policy" element={<CookiePolicyPage />} />
             <Route path="/sitemap" element={<SitemapPage />} />
             <Route path="/contact" element={<ContactPage />} />
-            
+            <Route path="/centers" element={<NounCentersPage />} />
+
             {/* Protected Student Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
@@ -76,7 +78,7 @@ function App() {
             <Route path="/cbt/results" element={<ProtectedRoute><CBTResultsPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><GetHelpPage /></ProtectedRoute>} />
-            
+
             {/* Admin Only Routes */}
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/students" element={<ProtectedRoute requireAdmin><AdminStudents /></ProtectedRoute>} />
@@ -87,7 +89,7 @@ function App() {
             <Route path="/admin/surveys" element={<ProtectedRoute requireAdmin><AdminSurveysPage /></ProtectedRoute>} />
             <Route path="/admin/add-summary" element={<ProtectedRoute requireAdmin><AdminAddSummary /></ProtectedRoute>} />
             <Route path="/admin/add-questions" element={<ProtectedRoute requireAdmin><AdminAddQuestions /></ProtectedRoute>} />
-            
+
             {/* 404 Page */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
