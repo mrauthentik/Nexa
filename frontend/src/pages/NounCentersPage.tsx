@@ -78,7 +78,7 @@ const NounCentersPage = () => {
                 <Navbar />
             </div>
 
-            <div className="flex-1 relative flex">
+            <div className="flex-1 relative flex min-h-0">
 
                 {/* Sidebar List - Floating/Overlay style */}
                 <div
@@ -114,7 +114,7 @@ const NounCentersPage = () => {
                     </div>
 
                     {/* List Content */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
                         {filteredCenters.map((center) => (
                             <div
                                 key={center.id}
