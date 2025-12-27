@@ -82,7 +82,7 @@ const NounCentersPage = () => {
 
                 {/* Sidebar List - Floating/Overlay style */}
                 <div
-                    className={`absolute left-0 top-0 bottom-0 z-[400] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col h-full overflow-hidden`}
+                    className={`absolute left-0 top-0 bottom-0 z-[1500] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col h-full overflow-hidden`}
                 >
                     {/* Search Header */}
                     <div className="p-4 border-b border-gray-800 bg-gray-900/50">
@@ -150,7 +150,7 @@ const NounCentersPage = () => {
                     {!showList && (
                         <button
                             onClick={() => setShowList(true)}
-                            className="absolute top-4 left-4 z-[400] p-3 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors md:hidden"
+                            className="absolute top-4 left-4 z-[1500] p-3 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors md:hidden"
                         >
                             <List size={20} />
                         </button>
@@ -192,7 +192,7 @@ const NounCentersPage = () => {
 
                     {/* Selected Center Floating Card details */}
                     {selectedCenter && (
-                        <div className="absolute top-4 right-4 z-[400] w-full max-w-sm bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right-10 fade-in duration-300">
+                        <div className="absolute top-4 right-4 z-[1500] w-full max-w-sm bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right-10 fade-in duration-300">
                             <div className="bg-gradient-to-r from-teal-600 to-cyan-600 p-4 relative">
                                 <button
                                     onClick={() => setSelectedCenter(null)}
@@ -276,7 +276,7 @@ const NounCentersPage = () => {
                     )}
 
                     {/* Stats Overlay - Top Right (similar to screenshot) */}
-                    <div className="absolute top-4 right-4 md:right-12 z-[300] hidden md:block">
+                    <div className="absolute top-4 right-4 md:right-12 z-[1500] hidden md:block">
                         <div className="bg-gray-900/80 backdrop-blur border border-gray-800 rounded-lg p-3 flex items-center gap-4">
                             <div>
                                 <p className="text-xs text-gray-500 uppercase">Total Centers</p>
