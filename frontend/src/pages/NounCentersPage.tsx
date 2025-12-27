@@ -22,13 +22,19 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 // Custom Marker Icon
+// Custom Teal Marker Icon (SVG)
+const svgIcon = encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#14b8a6">
+  <path d="M12 0c-4.418 0-8 3.582-8 8 0 4.418 6 14 8 16 2-2 8-11.582 8-16 0-4.418-3.582-8-8-8zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/>
+</svg>
+`);
+
 const customIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-teal.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    iconUrl: `data:image/svg+xml;utf-8,${svgIcon}`,
+    iconSize: [32, 42], // Adjusted size
+    iconAnchor: [16, 42], // Tip of the pin
+    popupAnchor: [0, -42],
+    className: 'drop-shadow-lg' // Add some shadow via Tailwind/CSS if possible, or leave as is
 });
 
 // Component to handle map view updates
@@ -72,11 +78,11 @@ const NounCentersPage = () => {
                 <Navbar />
             </div>
 
-            <div className="flex-1 relative flex">
+            <div className="flex-1 relative flex min-h-0">
 
                 {/* Sidebar List - Floating/Overlay style */}
                 <div
-                    className={`absolute left-0 top-0 bottom-0 z-[400] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col`}
+                    className={`absolute left-0 top-0 bottom-0 z-[1500] w-full md:w-96 bg-gray-900/95 backdrop-blur-xl border-r border-gray-800 transition-transform duration-300 transform ${showList ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:translate-x-0 flex flex-col h-full overflow-hidden`}
                 >
                     {/* Search Header */}
                     <div className="p-4 border-b border-gray-800 bg-gray-900/50">
@@ -108,7 +114,7 @@ const NounCentersPage = () => {
                     </div>
 
                     {/* List Content */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
                         {filteredCenters.map((center) => (
                             <div
                                 key={center.id}
@@ -144,7 +150,7 @@ const NounCentersPage = () => {
                     {!showList && (
                         <button
                             onClick={() => setShowList(true)}
-                            className="absolute top-4 left-4 z-[400] p-3 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors md:hidden"
+                            className="absolute top-4 left-4 z-[1500] p-3 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors md:hidden"
                         >
                             <List size={20} />
                         </button>
@@ -186,7 +192,7 @@ const NounCentersPage = () => {
 
                     {/* Selected Center Floating Card details */}
                     {selectedCenter && (
-                        <div className="absolute top-4 right-4 z-[400] w-full max-w-sm bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right-10 fade-in duration-300">
+                        <div className="absolute top-4 right-4 z-[1500] w-full max-w-sm bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-right-10 fade-in duration-300">
                             <div className="bg-gradient-to-r from-teal-600 to-cyan-600 p-4 relative">
                                 <button
                                     onClick={() => setSelectedCenter(null)}
@@ -270,7 +276,7 @@ const NounCentersPage = () => {
                     )}
 
                     {/* Stats Overlay - Top Right (similar to screenshot) */}
-                    <div className="absolute top-4 right-4 md:right-12 z-[300] hidden md:block">
+                    <div className="absolute top-4 right-4 md:right-12 z-[1500] hidden md:block">
                         <div className="bg-gray-900/80 backdrop-blur border border-gray-800 rounded-lg p-3 flex items-center gap-4">
                             <div>
                                 <p className="text-xs text-gray-500 uppercase">Total Centers</p>
