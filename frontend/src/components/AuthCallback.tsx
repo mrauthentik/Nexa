@@ -13,7 +13,7 @@ const AuthCallback = () => {
         console.log('📍 Current URL:', window.location.href);
         console.log('🔗 Hash fragment:', window.location.hash);
         console.log('📂 Pathname:', window.location.pathname);
-        
+
         // Get the session from the URL hash
         const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -38,26 +38,18 @@ const AuthCallback = () => {
 
           if (profileError && profileError.code === 'PGRST116') {
             console.log('📝 Profile not found, creating new profile...');
-            // Profile doesn't exist, create it
-            const profileData = {
-              id: session.user.id,
-              email: session.user.email || '',
-              full_name: session.user.user_metadata?.full_name || 
-                        session.user.user_metadata?.name || 
-                        session.user.email?.split('@')[0] || 'User',
-              role: 'student',
-              email_verified: true, // Google OAuth users are pre-verified
-              avatar_url: session.user.user_metadata?.avatar_url || 
-                         session.user.user_metadata?.picture,
-              subscription_tier: 'free',
-              subscription_status: 'active',
-            };
-            
-            console.log('👤 Creating profile with data:', profileData);
-            
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert(profileData);
+
+            // Use the database function to create profile (bypasses RLS and handles enums)
+            const { data: newProfile, error: insertError } = await supabase
+              .rpc('create_or_update_profile', {
+                p_user_id: session.user.id,
+                p_email: session.user.email || '',
+                p_full_name: session.user.user_metadata?.full_name ||
+                  session.user.user_metadata?.name ||
+                  session.user.email?.split('@')[0] || 'User',
+                p_avatar_url: session.user.user_metadata?.avatar_url ||
+                  session.user.user_metadata?.picture || null,
+              });
 
             if (insertError) {
               console.error('❌ Error creating profile:', insertError);
@@ -66,7 +58,7 @@ const AuthCallback = () => {
               return;
             }
 
-            console.log('✅ Profile created successfully');
+            console.log('✅ Profile created successfully:', newProfile);
 
             // Create welcome notification
             console.log('📬 Creating welcome notification...');

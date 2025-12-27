@@ -6,17 +6,17 @@ const FUNCTIONS_URL = import.meta.env.VITE_SUPABASE_URL + '/functions/v1';
 const getAuthHeaders = async () => {
     // Get the current session (Supabase handles auto-refresh)
     const { data: { session }, error } = await supabase.auth.getSession();
-    
+
     if (error) {
         console.error('❌ Session error:', error);
         throw new Error('Session error: ' + error.message);
     }
-    
+
     if (!session?.access_token) {
         console.error('❌ No active session - user needs to log in');
         throw new Error('No active session');
     }
-    
+
     return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`,
@@ -59,7 +59,7 @@ export const summariesAPI = {
         const params = new URLSearchParams();
         if (category) params.append('category', category);
         if (search) params.append('search', search);
-        
+
         const response = await fetch(`${FUNCTIONS_URL}/get-summaries?${params}`, {
             headers: await getAuthHeaders(),
         });
@@ -123,7 +123,7 @@ export const courseQuestionsAPI = {
     getQuestions: async (courseId: string, limit?: number) => {
         const params = new URLSearchParams({ courseId });
         if (limit) params.append('limit', limit.toString());
-        
+
         const response = await fetch(`${FUNCTIONS_URL}/get-course-questions?${params}`, {
             headers: await getAuthHeaders(),
         });
@@ -169,17 +169,17 @@ export const coursesAPI = {
             if (filters?.level) params.append('level', filters.level);
             if (filters?.department) params.append('department', filters.department);
             if (filters?.semester) params.append('semester', filters.semester.toString());
-            
+
             const response = await fetch(`${FUNCTIONS_URL}/get-courses?${params}`, {
                 headers: await getAuthHeaders(),
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('get-courses error:', response.status, errorText);
                 throw new Error(`Failed to fetch courses: ${response.status}`);
             }
-            
+
             return response.json();
         } catch (error) {
             console.error('coursesAPI.getAll error:', error);
@@ -193,7 +193,7 @@ export const coursesAPI = {
             .select('*')
             .eq('id', courseId)
             .single();
-        
+
         if (error) throw error;
         return data;
     },
@@ -205,7 +205,7 @@ export const calendarAPI = {
         const params = new URLSearchParams();
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
-        
+
         const response = await fetch(`${FUNCTIONS_URL}/get-calendar-events?${params}`, {
             headers: await getAuthHeaders(),
         });
@@ -233,11 +233,11 @@ export const calendarAPI = {
 
 // CBT Test Submission API
 export const cbtAPI = {
-    submitTest: async (submissionData: { 
-        courseId: string; 
-        score: number; 
-        percentage: number; 
-        timeTaken: number; 
+    submitTest: async (submissionData: {
+        courseId: string;
+        score: number;
+        percentage: number;
+        timeTaken: number;
         answers: any;
         totalQuestions: number;
         correctAnswers: number;
@@ -436,12 +436,12 @@ export const settingsAPI = {
                 level: profileData.level
             }),
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || 'Failed to update profile');
         }
-        
+
         return response.json();
     },
 
@@ -538,7 +538,7 @@ export const profileImageAPI = {
     // Upload profile image
     uploadImage: async (file: File) => {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session?.access_token) {
             throw new Error('No active session');
         }
@@ -586,12 +586,12 @@ export const adminExtendedAPI = {
         const response = await fetch(`${FUNCTIONS_URL}/admin-get-students`, {
             headers: await getAuthHeaders(),
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         return response.json();
     },
 
@@ -676,12 +676,19 @@ export const adminExtendedAPI = {
 
     // Announcements
     getAnnouncements: async (target?: string) => {
-        const url = target 
+        const url = target
             ? `${FUNCTIONS_URL}/admin-manage-announcements?target=${target}`
             : `${FUNCTIONS_URL}/admin-manage-announcements`;
-        const response = await fetch(url, {
-            headers: await getAuthHeaders(),
-        });
+
+        // Landing page announcements should be public
+        const headers = target === 'landing'
+            ? {
+                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+            }
+            : await getAuthHeaders();
+
+        const response = await fetch(url, { headers });
         return response.json();
     },
 
@@ -723,12 +730,12 @@ export const supportAPI = {
             },
             body: JSON.stringify(data),
         });
-        
+
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || 'Failed to send message');
         }
-        
+
         return response.json();
     },
 };
