@@ -80,6 +80,10 @@ const LearnPage = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [quizScore, setQuizScore] = useState(0);
     const [showQuizResult, setShowQuizResult] = useState(false);
+    const [answeredQuestions, setAnsweredQuestions] = useState<{ [key: number]: number }>({});
+    const [showExplanation, setShowExplanation] = useState<number | null>(null);
+    const [isExplaining, setIsExplaining] = useState(false);
+    const [aiExplanation, setAiExplanation] = useState<string | null>(null);
 
     // Mind Map Node Detail State
     const [selectedNodeData, setSelectedNodeData] = useState<{ label: string; summary?: string; keypoints?: string[] } | null>(null);
@@ -305,10 +309,77 @@ const LearnPage = () => {
             setupMindMap(module.content);
             setActiveTab('mindmap');
         } else if (module.type === 'quiz') {
-            setCurrentQuestionIndex(0);
-            setQuizScore(0);
-            setShowQuizResult(false);
+            resetQuiz();
             setActiveTab('quiz');
+        }
+    };
+
+    const resetQuiz = () => {
+        setCurrentQuestionIndex(0);
+        setQuizScore(0);
+        setShowQuizResult(false);
+        setAnsweredQuestions({});
+        setShowExplanation(null);
+        setAiExplanation(null);
+    };
+
+    const handleQuizAnswer = (questionIndex: number, selectedOptionIndex: number, correctIndex: number) => {
+        // Don't allow re-answering
+        if (answeredQuestions[questionIndex] !== undefined) return;
+
+        // Record the answer
+        setAnsweredQuestions(prev => ({ ...prev, [questionIndex]: selectedOptionIndex }));
+
+        // Update score if correct
+        if (selectedOptionIndex === correctIndex) {
+            setQuizScore(s => s + 1);
+        }
+
+        // Show explanation section
+        setShowExplanation(questionIndex);
+        setAiExplanation(null);
+    };
+
+    const goToNextQuestion = () => {
+        if (selectedModule && currentQuestionIndex < selectedModule.content.length - 1) {
+            setCurrentQuestionIndex(c => c + 1);
+            setShowExplanation(null);
+            setAiExplanation(null);
+        } else {
+            setShowQuizResult(true);
+        }
+    };
+
+    const nexaExplainQuiz = async (question: string, options: string[], correctIndex: number, userAnswer: number) => {
+        setIsExplaining(true);
+        setAiExplanation(null);
+
+        try {
+            // Call the Groq AI explain endpoint
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-explain-answer-groq`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    question_text: question,
+                    options: options,
+                    correct_answer: options[correctIndex],
+                    user_answer: options[userAnswer],
+                    is_correct: userAnswer === correctIndex
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to get explanation');
+
+            const data = await response.json();
+            setAiExplanation(data.explanation || 'Unable to generate explanation at this time.');
+        } catch (error) {
+            console.error('Nexa Explain error:', error);
+            setAiExplanation('Sorry, I could not generate an explanation right now. Please try again.');
+        } finally {
+            setIsExplaining(false);
         }
     };
 

@@ -62,14 +62,14 @@ serve(async (req) => {
                 break;
 
             case 'quiz':
-                systemInstruction = `You are an expert exam creator. create a set of 5 multiple-choice questions based on the provided text.
+                systemInstruction = `You are an expert exam creator. Create a set of 10 multiple-choice questions based on the provided text.
                 Return the result strictly as a valid JSON array of objects.
                 Each object must have:
                 - question (string)
                 - options (array of 4 strings)
                 - correctIndex (number, 0-3)
-                - explanation (string)`;
-                prompt = `Create a 5-question multiple choice quiz based on this content:
+                - explanation (string explaining why the correct answer is right)`;
+                prompt = `Create a 10-question multiple choice quiz based on this content:
                 Title: ${title}
                 Content:
                 ${content.substring(0, 6000)}
