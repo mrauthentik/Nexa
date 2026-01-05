@@ -516,9 +516,18 @@ const LearnPage = () => {
         if (activeTab === 'player' && isPlaying && selectedModule?.type === 'audio-script') {
             synth.cancel();
 
-            const textToRead = typeof selectedModule.content === 'string'
+            const rawText = typeof selectedModule.content === 'string'
                 ? selectedModule.content
                 : (selectedModule.content.result || "No audio content available.");
+
+            // Clean markdown characters like **, #, -, etc. so the TTS doesn't read them
+            const textToRead = rawText
+                .replace(/\*\*/g, '') // bold
+                .replace(/\*/g, '')   // italic
+                .replace(/#/g, '')    // headers
+                .replace(/__/g, '')   // underline
+                .replace(/`/g, '')    // code
+                .trim();
 
             utterance = new SpeechSynthesisUtterance(textToRead);
             utterance.rate = speechRate;

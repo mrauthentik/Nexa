@@ -65,6 +65,9 @@ serve(async (req) => {
                 The script should sound natural when read aloud, using rhetorical questions, clear transitions, and a friendly tone.
                 Break down complex topics into simple analogies.
                 Ensure you cover the entire document, especially the core concepts found in the middle and the concluding sections.
+                
+                IMPORTANT: Do NOT use markdown formatting like asterisks (**bold**) or hashtags (# Header) in the script. The script will be read by a text-to-speech engine, and these characters will confuse it. Use plain text only.
+                
                 Structure it as:
                 1. Intro (Hook & Overview)
                 2. Key Concept 1 (Initial concepts)
@@ -79,7 +82,7 @@ serve(async (req) => {
                 ${smartContent} 
                 
                 IMPORTANT: Do not just focus on the introduction. Make sure to pull key insights from the middle and final sections of the provided text.
-                Return ONLY the script text, ready to be read.`;
+                Return ONLY the script text, ready to be read. Avoid all markdown formatting.`;
                 break;
 
             case 'quiz':
