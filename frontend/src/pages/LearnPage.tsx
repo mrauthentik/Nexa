@@ -47,6 +47,8 @@ interface LearnModule {
     progress: number;
     content: any;
     created_at?: string;
+    source_id?: string;
+    source_type?: 'summary' | 'upload';
 }
 
 interface UserUpload {
@@ -678,7 +680,7 @@ const LearnPage = () => {
                                         {modules.map((module) => (
                                             <div
                                                 key={module.id}
-                                                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md bg-white dark:bg-gray-800 transition-all group"
+                                                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md bg-white dark:bg-gray-800 transition-all group relative"
                                             >
                                                 <div
                                                     onClick={() => openModule(module)}
@@ -692,7 +694,7 @@ const LearnPage = () => {
                                                             module.type === 'mindmap' ? <BrainCircuit size={20} /> : <CheckCircle size={20} />}
                                                     </div>
                                                     <div className="flex-1">
-                                                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">{module.title}</h3>
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 pr-6">{module.title}</h3>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400">
                                                             {new Date(module.created_at || Date.now()).toLocaleDateString()}
                                                         </p>
@@ -703,10 +705,10 @@ const LearnPage = () => {
                                                 </div>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); deleteModule(module.id); }}
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                    className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
                                                     title="Delete"
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         ))}
@@ -948,10 +950,10 @@ const LearnPage = () => {
                                 {showQuizResult ? (
                                     <div className="p-12 text-center">
                                         <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${quizScore >= selectedModule.content.length * 0.7
-                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                                                : quizScore >= selectedModule.content.length * 0.5
-                                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                                                    : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                            : quizScore >= selectedModule.content.length * 0.5
+                                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                                                : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                                             }`}>
                                             <CheckCircle size={48} />
                                         </div>
@@ -1019,18 +1021,18 @@ const LearnPage = () => {
                                                         onClick={() => handleQuizAnswer(currentQuestionIndex, idx, correctIndex)}
                                                         disabled={isAnswered}
                                                         className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium ${isAnswered
-                                                                ? isCorrect
-                                                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                                                    : isUserSelected
-                                                                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                                                                        : 'border-gray-200 dark:border-gray-700 opacity-60'
-                                                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                                            ? isCorrect
+                                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                                : isUserSelected
+                                                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                                                                    : 'border-gray-200 dark:border-gray-700 opacity-60'
+                                                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                                                             }`}
                                                     >
                                                         <div className="flex items-center justify-between">
                                                             <div>
                                                                 <span className={`inline-block w-8 font-bold ${isAnswered && isCorrect ? 'text-green-600' :
-                                                                        isAnswered && isUserSelected ? 'text-red-600' : 'text-gray-400'
+                                                                    isAnswered && isUserSelected ? 'text-red-600' : 'text-gray-400'
                                                                     }`}>
                                                                     {String.fromCharCode(65 + idx)}.
                                                                 </span>
