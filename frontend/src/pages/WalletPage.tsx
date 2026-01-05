@@ -17,11 +17,11 @@ const WalletPage = () => {
     const { isDarkMode } = useTheme();
 
     // Mock Data
-    const [balance, setBalance] = useState(50000);
-    const [income, setIncome] = useState(120000);
-    const [expenses, setExpenses] = useState(70000);
+    const [balance] = useState(50000);
+    const [income] = useState(120000);
+    const [expenses] = useState(70000);
 
-    const [transactions, setTransactions] = useState([
+    const [transactions] = useState([
         { id: 1, type: 'credit', description: 'Deposit via Paystack', amount: 20000, date: '2025-01-04T10:30:00', status: 'success' },
         { id: 2, type: 'debit', description: 'Course Material Purchase', amount: 5000, date: '2025-01-03T14:20:00', status: 'success' },
         { id: 3, type: 'debit', description: 'Monthly Subscription', amount: 2000, date: '2025-01-01T09:00:00', status: 'success' },
@@ -65,8 +65,8 @@ const WalletPage = () => {
                         <button
                             onClick={handleWithdraw}
                             className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isDarkMode
-                                    ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
-                                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                                ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                                 }`}
                         >
                             <ArrowUpRight size={18} />
@@ -159,8 +159,8 @@ const WalletPage = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`p-2 rounded-lg ${tx.type === 'credit'
-                                                        ? isDarkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-50 text-green-600'
-                                                        : isDarkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
+                                                    ? isDarkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-50 text-green-600'
+                                                    : isDarkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600'
                                                     }`}>
                                                     {tx.type === 'credit' ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
                                                 </div>
@@ -175,15 +175,15 @@ const WalletPage = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tx.status === 'success'
-                                                    ? isDarkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-800'
-                                                    : isDarkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-800'
+                                                ? isDarkMode ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-800'
+                                                : isDarkMode ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
                                                 {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                                             </span>
                                         </td>
                                         <td className={`px-6 py-4 text-right font-medium ${tx.type === 'credit'
-                                                ? 'text-green-500'
-                                                : isDarkMode ? 'text-white' : 'text-gray-900'
+                                            ? 'text-green-500'
+                                            : isDarkMode ? 'text-white' : 'text-gray-900'
                                             }`}>
                                             {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
                                         </td>

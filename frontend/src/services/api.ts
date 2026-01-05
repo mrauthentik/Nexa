@@ -740,6 +740,99 @@ export const supportAPI = {
     },
 };
 
+// Learn API
+export const learnAPI = {
+    generateContent: async (type: 'audio-script' | 'quiz' | 'mindmap', content: string, title: string, courseCode?: string) => {
+        const response = await fetch(`${FUNCTIONS_URL}/generate-learn-content`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({ type, content, title, courseCode }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to generate content');
+        }
+        return response.json();
+    },
+
+    saveModule: async (data: any) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user found');
+
+        const { data: saved, error } = await supabase
+            .from('learn_modules')
+            .insert({
+                user_id: user.id,
+                ...data
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return saved;
+    },
+
+    getModules: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data, error } = await supabase
+            .from('learn_modules')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    deleteModule: async (id: string) => {
+        const { error } = await supabase
+            .from('learn_modules')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
+    }
+};
+
+// User Uploads API
+export const uploadsAPI = {
+    upload: async (title: string, content: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user found');
+
+        const { data, error } = await supabase
+            .from('user_uploads')
+            .insert({
+                user_id: user.id,
+                title,
+                content
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    getAll: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data, error } = await supabase
+            .from('user_uploads')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    }
+};
+
 export default {
     auth: authAPI,
     summaries: summariesAPI,
@@ -758,4 +851,6 @@ export default {
     billing: billingAPI,
     notes: notesAPI,
     support: supportAPI,
+    learn: learnAPI,
+    uploads: uploadsAPI,
 };

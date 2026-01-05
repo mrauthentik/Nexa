@@ -33,7 +33,7 @@
     "admin-get-students": "{\"index.ts\":\"c710be832dbf82c6e6a9429dc3e3de07\"}",
     "admin-manage-announcements": "{\"index.ts\":\"bfee2e0b397902b7505aca78a5fb036e\"}",
     "admin-manage-messages": "{\"index.ts\":\"4f1542c9d58a78428f90b90bb746fbc7\"}",
-    "admin-notifications": "{\"index.ts\":\"cd30ea043a1f83b7f458f17d9a875e03\"}",
+    "admin-notifications": "{\"index.ts\":\"8dad33f913ebf5b8c9bdaa057a73d9fd\"}",
     "admin-top-performers": "{\"index.ts\":\"4749dfda24c4b84eb52d32cf3ac1c291\"}",
     "check-event-reminders": "{\"index.ts\":\"c6a342f1a40db9fce856c89774ba28cd\"}",
     "create-checkout-session": "{\"index.ts\":\"d3ca836173dda44f1c1617facac2dc8d\"}",
@@ -51,7 +51,8 @@
     "paystack-webhook": "{\"index.ts\":\"b6eb4b5e20243d0f8faaa9c354394b1f\"}",
     "verify-payment": "{\"index.ts\":\"97cd98e173be4be16a69e0c397eb08a4\"}",
     "send-password-reset": "{\"index.ts\":\"b33d92cd4ca0fadb5fc48c016751b54f\"}",
-    "verify-email": "{\"index.ts\":\"ad358990cf0cd6dcaf5334000659ef38\"}",
-    "send-admin-reply": "{\"index.ts\":\"fed4e192d1fd24d122d397f8c13c5816\"}"
+    "verify-email": "{\"index.ts\":\"ec5d26f4f2b8fb24beffcfe37cc36eeb\"}",
+    "send-admin-reply": "{\"index.ts\":\"4cb848e3d19fb78f333e72e67e365057\"}",
+    "generate-learn-content": "{\"index.ts\":\"3c2a6ae29080f7ddc398e9a6e6eb1da9\"}"
   }
 }

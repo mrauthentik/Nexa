@@ -39,6 +39,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import ContactPage from './pages/ContactPage'
 import NounCentersPage from './pages/NounCentersPage'
 import WalletPage from './pages/WalletPage'
+import LearnPage from './pages/LearnPage'
 import CookieConsent from './components/CookieConsent'
 import AuthCallback from './components/AuthCallback'
 
@@ -70,6 +71,7 @@ function App() {
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+            <Route path="/learn" element={<ProtectedRoute><LearnPage /></ProtectedRoute>} />
             <Route path="/summaries" element={<ProtectedRoute><SummariesPage /></ProtectedRoute>} />
             <Route path="/summaries/:id" element={<ProtectedRoute><SummaryDetailPage /></ProtectedRoute>} />
             <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
