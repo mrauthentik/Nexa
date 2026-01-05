@@ -1169,11 +1169,34 @@ const LearnPage = () => {
                                                 {/* AI Explanation */}
                                                 {aiExplanation && (
                                                     <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                                                        <div className="flex items-center gap-2 mb-2">
+                                                        <div className="flex items-center gap-2 mb-3">
                                                             <Sparkles size={16} className="text-purple-600" />
-                                                            <h4 className="text-sm font-semibold text-purple-600 dark:text-purple-400">Nexa AI Explanation</h4>
+                                                            <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400">Nexa AI Explanation</h4>
                                                         </div>
-                                                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{aiExplanation}</p>
+                                                        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed space-y-2">
+                                                            {aiExplanation.split('\n').map((line, i) => {
+                                                                // Handle headers
+                                                                if (line.startsWith('### ')) {
+                                                                    return <h5 key={i} className="text-base font-bold mt-4 mb-2 text-gray-900 dark:text-white">{line.replace('### ', '')}</h5>;
+                                                                }
+                                                                if (line.startsWith('## ')) {
+                                                                    return <h4 key={i} className="text-lg font-bold mt-5 mb-3 text-gray-900 dark:text-white">{line.replace('## ', '')}</h4>;
+                                                                }
+
+                                                                // Handle bold text within lines
+                                                                const parts = line.split(/(\*\*.*?\*\*)/g);
+                                                                return (
+                                                                    <p key={i} className="whitespace-pre-wrap">
+                                                                        {parts.map((part, j) => {
+                                                                            if (part.startsWith('**') && part.endsWith('**')) {
+                                                                                return <strong key={j} className="font-bold text-gray-900 dark:text-white">{part.slice(2, -2)}</strong>;
+                                                                            }
+                                                                            return part;
+                                                                        })}
+                                                                    </p>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
                                                 )}
 
