@@ -40,29 +40,52 @@ serve(async (req) => {
         let prompt = '';
         let systemInstruction = '';
 
+        // Smart content sampler to handle large PDFs and focus on middle/end
+        const getSmartContent = (text: string, maxChars: number = 40000): string => {
+            if (text.length <= maxChars) return text;
+
+            // If text is very long, we sample it: 15% beginning, 50% middle, 35% end
+            const introSize = Math.floor(maxChars * 0.15);
+            const endSize = Math.floor(maxChars * 0.35);
+            const middleSize = maxChars - introSize - endSize;
+
+            const intro = text.substring(0, introSize);
+            const midStart = Math.floor(text.length / 2) - Math.floor(middleSize / 2);
+            const middle = text.substring(midStart, midStart + middleSize);
+            const end = text.substring(text.length - endSize);
+
+            return `[DOCUMENT START - INTRODUCTION]\n${intro}\n\n[... SECTION OMITTED ...]\n\n[DOCUMENT MIDDLE - CORE CONCEPTS]\n${middle}\n\n[... SECTION OMITTED ...]\n\n[DOCUMENT END - CONCLUSIONS & ADVANCED TOPICS]\n${end}`;
+        };
+
+        const smartContent = getSmartContent(content);
+
         switch (type) {
             case 'audio-script':
                 systemInstruction = `You are an expert educational podcaster and teacher. Your goal is to convert technical course material into an engaging, easy-to-digest audio script.
                 The script should sound natural when read aloud, using rhetorical questions, clear transitions, and a friendly tone.
                 Break down complex topics into simple analogies.
+                Ensure you cover the entire document, especially the core concepts found in the middle and the concluding sections.
                 Structure it as:
                 1. Intro (Hook & Overview)
-                2. Key Concept 1
-                3. Key Concept 2
-                4. Key Concept 3 (if applicable)
+                2. Key Concept 1 (Initial concepts)
+                3. Key Concept 2 (Core middle concepts)
+                4. Key Concept 3 (Advanced/Final concepts)
                 5. Review/Summary
                 6. Outro`;
-                prompt = `Convert the following course summary into a spoken-word lesson script for a student studying ${courseCode || 'this subject'}.
+                prompt = `Convert the following course material into a spoken-word lesson script for a student studying ${courseCode || 'this subject'}.
                 
                 Summary Title: ${title}
-                Content:
-                ${content.substring(0, 6000)} 
+                Content (Samples from across the document):
+                ${smartContent} 
                 
+                IMPORTANT: Do not just focus on the introduction. Make sure to pull key insights from the middle and final sections of the provided text.
                 Return ONLY the script text, ready to be read.`;
                 break;
 
             case 'quiz':
                 systemInstruction = `You are an expert exam creator. Create a set of 10 multiple-choice questions based on the provided text.
+                Ensure the questions are distributed across the material. Do NOT just focus on the beginning/intro.
+                Pay special attention to the middle and latter sections of the document to test deeper understanding.
                 Return the result strictly as a valid JSON array of objects.
                 Each object must have:
                 - question (string)
@@ -71,14 +94,16 @@ serve(async (req) => {
                 - explanation (string explaining why the correct answer is right)`;
                 prompt = `Create a 10-question multiple choice quiz based on this content:
                 Title: ${title}
-                Content:
-                ${content.substring(0, 6000)}
+                Content (Samples from across the document):
+                ${smartContent}
                 
-                IMPORTANT: Return ONLY the JSON array. Do not include markdown formatting like \`\`\`json.`;
+                IMPORTANT: I want a comprehensive quiz. Please select questions from the middle and end of the document, as well as the start. 
+                Return ONLY the JSON array. Do not include markdown formatting like \`\`\`json.`;
                 break;
 
             case 'mindmap':
                 systemInstruction = `You are an expert at structuring knowledge. Create a hierarchical node-based mind map structure for the provided content.
+                Ensure you capture the full depth of the document, including the foundational intro, the detailed middle, and the concluding advanced topics.
                 Each node MUST include:
                 - label: The topic name (short)
                 - summary: A 2-3 sentence summary explaining this topic in simple terms
@@ -89,20 +114,18 @@ serve(async (req) => {
                 {
                   "root": {
                     "label": "Main Topic",
-                    "summary": "A brief explanation of the main topic...",
-                    "keypoints": ["Key point 1", "Key point 2"],
-                    "children": [
-                       { "label": "Subtopic 1", "summary": "...", "keypoints": [...], "children": [...] },
-                       { "label": "Subtopic 2", "summary": "...", "keypoints": [...], "children": [...] }
-                    ]
+                    "summary": "...",
+                    "keypoints": [...],
+                    "children": [...]
                   }
                 }`;
-                prompt = `Create a detailed mind map structure for this content. Include summary and keypoints for EVERY node:
+                prompt = `Create a detailed mind map structure for this content. 
                 Title: ${title}
-                Content:
-                ${content.substring(0, 6000)}
+                Content (Samples from across the document):
+                ${smartContent}
                 
-                IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting like \`\`\`json.`;
+                IMPORTANT: Ensure the mind map reflects the entire document's structure, especially the middle and final topics.
+                Return ONLY the JSON object. Do not include markdown formatting like \`\`\`json.`;
                 break;
         }
 

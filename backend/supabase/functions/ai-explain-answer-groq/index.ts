@@ -11,18 +11,16 @@ const corsHeaders = {
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
 interface ExplainRequest {
-    questionId: string;
-    questionText: string;
-    questionType: string;
-    userAnswer: string;
-    correctAnswer: string;
-    options?: {
-        option_a?: string;
-        option_b?: string;
-        option_c?: string;
-        option_d?: string;
-    };
-    courseId: string;
+    questionId?: string;
+    questionText?: string;
+    question_text?: string; // Support both naming conventions
+    questionType?: string;
+    userAnswer?: string;
+    user_answer?: string; // Support both naming conventions
+    correctAnswer?: string;
+    correct_answer?: string; // Support both naming conventions
+    options?: any; // Flexible options format
+    courseId?: string;
 }
 
 serve(async (req) => {
@@ -42,85 +40,106 @@ serve(async (req) => {
         );
 
         const requestData: ExplainRequest = await req.json();
-        const { questionId, questionText, questionType, userAnswer, correctAnswer, options, courseId } = requestData;
 
-        if (!questionId || !questionText || !courseId) {
+        // Normalize fields
+        const qText = requestData.questionText || requestData.question_text;
+        const uAnswer = requestData.userAnswer || requestData.user_answer;
+        const cAnswer = requestData.correctAnswer || requestData.correct_answer;
+        const qType = requestData.questionType || 'multiple_choice';
+        const qId = requestData.questionId;
+        const cId = requestData.courseId;
+
+        if (!qText) {
             return new Response(
-                JSON.stringify({ error: 'Missing required fields' }),
+                JSON.stringify({ error: 'Question text is required' }),
                 { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
 
-        // Get course details
-        const { data: course } = await supabase
-            .from('courses')
-            .select('code, title, department, level')
-            .eq('id', courseId)
-            .single();
+        // Get course details if courseId is available
+        let course = null;
+        if (cId) {
+            const { data } = await supabase
+                .from('courses')
+                .select('code, title, department, level')
+                .eq('id', cId)
+                .single();
+            course = data;
+        }
 
-        // Get question explanation
-        const { data: question } = await supabase
-            .from('questions')
-            .select('explanation')
-            .eq('id', questionId)
-            .single();
+        // Get question explanation from DB if questionId is available
+        let question = null;
+        if (qId) {
+            const { data } = await supabase
+                .from('questions')
+                .select('explanation')
+                .eq('id', qId)
+                .single();
+            question = data;
+        }
 
-        // Fetch course materials
-        const { data: summaries } = await supabase
-            .from('summaries')
-            .select(`
-                title,
-                description,
-                summary_sections (
-                    title,
-                    summary_topics (
-                        subtitle,
-                        content
-                    )
-                )
-            `)
-            .eq('course_id', courseId)
-            .limit(3);
-
-        // Build context from course materials
+        // Fetch course materials if courseId is available
         let courseMaterialContext = '';
-        if (summaries && summaries.length > 0) {
-            courseMaterialContext = '\n\nRelevant Course Material:\n';
-            summaries.forEach((summary: any) => {
-                courseMaterialContext += `\n### ${summary.title}\n`;
-                if (summary.description) {
-                    courseMaterialContext += `${summary.description}\n`;
-                }
-                if (summary.summary_sections) {
-                    summary.summary_sections.forEach((section: any) => {
-                        courseMaterialContext += `\n#### ${section.title}\n`;
-                        if (section.summary_topics) {
-                            section.summary_topics.slice(0, 2).forEach((topic: any) => {
-                                courseMaterialContext += `**${topic.subtitle}**: ${topic.content.substring(0, 200)}...\n`;
-                            });
-                        }
-                    });
-                }
-            });
+        if (cId) {
+            const { data: summaries } = await supabase
+                .from('summaries')
+                .select(`
+                    title,
+                    description,
+                    summary_sections (
+                        title,
+                        summary_topics (
+                            subtitle,
+                            content
+                        )
+                    )
+                `)
+                .eq('course_id', cId)
+                .limit(3);
+
+            if (summaries && summaries.length > 0) {
+                courseMaterialContext = '\n\nRelevant Course Material:\n';
+                summaries.forEach((summary: any) => {
+                    courseMaterialContext += `\n### ${summary.title}\n`;
+                    if (summary.description) {
+                        courseMaterialContext += `${summary.description}\n`;
+                    }
+                    if (summary.summary_sections) {
+                        summary.summary_sections.forEach((section: any) => {
+                            courseMaterialContext += `\n#### ${section.title}\n`;
+                            if (section.summary_topics) {
+                                section.summary_topics.slice(0, 2).forEach((topic: any) => {
+                                    courseMaterialContext += `**${topic.subtitle}**: ${topic.content.substring(0, 200)}...\n`;
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         }
 
         // Format options
         let optionsText = '';
-        if (options && questionType === 'multiple_choice') {
-            optionsText = `\nOptions:\nA. ${options.option_a || 'N/A'}\nB. ${options.option_b || 'N/A'}`;
-            if (options.option_c) optionsText += `\nC. ${options.option_c}`;
-            if (options.option_d) optionsText += `\nD. ${options.option_d}`;
+        if (requestData.options) {
+            if (Array.isArray(requestData.options)) {
+                optionsText = '\nOptions:\n' + requestData.options.map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`).join('\n');
+            } else if (typeof requestData.options === 'object') {
+                const optObj = requestData.options;
+                optionsText = `\nOptions:\nA. ${optObj.option_a || 'N/A'}\nB. ${optObj.option_b || 'N/A'}`;
+                if (optObj.option_c) optionsText += `\nC. ${optObj.option_c}`;
+                if (optObj.option_d) optionsText += `\nD. ${optObj.option_d}`;
+            }
         }
 
         const systemPrompt = `You are an expert educational AI tutor specializing in ${course?.department || 'various subjects'}. Help students understand their mistakes with clear, encouraging explanations.`;
 
         const userPrompt = `Course: ${course?.code || 'Unknown'} - ${course?.title || 'Unknown'} (${course?.level || 'Unknown'})
 
-Question: ${questionText}
+Question: ${qText}
 ${optionsText}
 
-Student's Answer: ${userAnswer || '(No answer provided)'}
-Correct Answer: ${correctAnswer}
+Student's Answer: ${uAnswer || '(No answer provided)'}
+Correct Answer: ${cAnswer}
 
 ${question?.explanation ? `Instructor's Explanation: ${question.explanation}\n` : ''}
 ${courseMaterialContext}
@@ -138,15 +157,15 @@ Keep your explanation concise but thorough (100-200 words). Use a friendly, enco
 
         if (!GROQ_API_KEY) {
             const fallbackExplanation = generateFallbackExplanation(
-                questionText,
-                userAnswer,
-                correctAnswer,
+                qText || '',
+                uAnswer || '',
+                cAnswer || '',
                 question?.explanation,
-                questionType
+                qType
             );
 
             return new Response(
-                JSON.stringify({ 
+                JSON.stringify({
                     explanation: fallbackExplanation,
                     source: 'fallback'
                 }),
@@ -175,17 +194,17 @@ Keep your explanation concise but thorough (100-200 words). Use a friendly, enco
         if (!groqResponse.ok) {
             const errorData = await groqResponse.text();
             console.error('Groq API error:', errorData);
-            
+
             const fallbackExplanation = generateFallbackExplanation(
-                questionText,
-                userAnswer,
-                correctAnswer,
+                qText || '',
+                uAnswer || '',
+                cAnswer || '',
                 question?.explanation,
-                questionType
+                qType
             );
 
             return new Response(
-                JSON.stringify({ 
+                JSON.stringify({
                     explanation: fallbackExplanation,
                     source: 'fallback',
                     error: 'AI service temporarily unavailable'
@@ -198,19 +217,19 @@ Keep your explanation concise but thorough (100-200 words). Use a friendly, enco
         const aiExplanation = groqData.choices[0]?.message?.content || 'Unable to generate explanation';
 
         return new Response(
-            JSON.stringify({ 
+            JSON.stringify({
                 explanation: aiExplanation,
                 source: 'ai',
                 provider: 'groq',
-                courseMaterial: summaries && summaries.length > 0
+                courseMaterial: !!courseMaterialContext
             }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error in ai-explain-answer:', error);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: error.message || 'An unknown error occurred' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
@@ -224,28 +243,28 @@ function generateFallbackExplanation(
     questionType?: string
 ): string {
     let explanation = `## Understanding Your Answer\n\n`;
-    
+
     if (userAnswer && userAnswer !== correctAnswer) {
         explanation += `**Your Answer:** ${userAnswer}\n`;
         explanation += `**Correct Answer:** ${correctAnswer}\n\n`;
     }
-    
+
     if (dbExplanation) {
         explanation += `### Explanation\n${dbExplanation}\n\n`;
     } else {
         explanation += `### Why This Matters\n`;
         explanation += `The correct answer is **${correctAnswer}**. `;
-        
+
         if (questionType === 'fill_in_blank') {
             explanation += `For fill-in-the-blank questions, the answer must match exactly. Make sure to review the specific terminology and definitions from your course material.\n\n`;
         } else {
             explanation += `Review the question carefully and consider the key concepts being tested.\n\n`;
         }
     }
-    
+
     explanation += `### Study Tip\n`;
     explanation += `Review your course notes and materials related to this topic. Pay special attention to definitions, key concepts, and examples that relate to this question.\n\n`;
     explanation += `*Note: For a more detailed AI-powered explanation, please contact your administrator to configure the AI service.*`;
-    
+
     return explanation;
 }
