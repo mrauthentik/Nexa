@@ -18,7 +18,8 @@ import {
     Loader2,
     Trash2,
     Volume2,
-    Settings2
+    Settings2,
+    Zap
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { summariesAPI, learnAPI, uploadsAPI } from '../services/api';
@@ -869,21 +870,24 @@ const LearnPage = () => {
                                             <div className="flex gap-2 flex-wrap">
                                                 <button
                                                     onClick={() => { setSpeechRate(0.8); setSpeechPitch(1.0); }}
-                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                                 >
-                                                    📚 Study Mode
+                                                    <BookOpen size={14} />
+                                                    Study Mode
                                                 </button>
                                                 <button
                                                     onClick={() => { setSpeechRate(1.0); setSpeechPitch(1.0); }}
-                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                                 >
-                                                    🎧 Normal
+                                                    <Headphones size={14} />
+                                                    Normal
                                                 </button>
                                                 <button
                                                     onClick={() => { setSpeechRate(1.5); setSpeechPitch(1.0); }}
-                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                                                 >
-                                                    ⚡ Speed Review
+                                                    <Zap size={14} />
+                                                    Speed Review
                                                 </button>
                                             </div>
                                         </div>
