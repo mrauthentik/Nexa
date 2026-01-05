@@ -29,9 +29,10 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 // Set worker source for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // Types
 interface LearnModule {
@@ -518,8 +519,8 @@ const LearnPage = () => {
                                                 className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 transition-all"
                                             >
                                                 <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${module.type === 'audio-script' ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
-                                                        module.type === 'mindmap' ? 'bg-gradient-to-br from-purple-400 to-purple-600' :
-                                                            'bg-gradient-to-br from-orange-400 to-orange-600'
+                                                    module.type === 'mindmap' ? 'bg-gradient-to-br from-purple-400 to-purple-600' :
+                                                        'bg-gradient-to-br from-orange-400 to-orange-600'
                                                     }`}>
                                                     {module.type === 'audio-script' ? <Play size={20} fill="currentColor" className="ml-1" /> :
                                                         module.type === 'mindmap' ? <BrainCircuit size={20} /> : <CheckCircle size={20} />}
@@ -698,8 +699,8 @@ const LearnPage = () => {
                             onDragLeave={() => setIsDragging(false)}
                             onDrop={onDrop}
                             className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center transition-all ${isDragging
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
-                                    : 'border-gray-300 dark:border-gray-700'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
+                                : 'border-gray-300 dark:border-gray-700'
                                 }`}
                         >
                             {uploading ? (
