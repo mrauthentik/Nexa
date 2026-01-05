@@ -58,3 +58,5 @@ lerna-debug.log*
 
 # Build files
 *.tsbuildinfo
+
+*.deployment-track.json
