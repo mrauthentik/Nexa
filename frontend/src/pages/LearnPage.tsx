@@ -16,10 +16,12 @@ import {
     X,
     FileText,
     Loader2,
-    Trash2,
     Volume2,
     Settings2,
-    Zap
+    Zap,
+    AlertTriangle,
+    Trash,
+    Trash2
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { summariesAPI, learnAPI, uploadsAPI } from '../services/api';
@@ -101,6 +103,24 @@ const LearnPage = () => {
     const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
     const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [showAudioSettings, setShowAudioSettings] = useState(false);
+
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        type: 'danger' | 'warning' | 'info';
+        confirmText?: string;
+    }>({
+        show: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        type: 'info'
+    });
+
+    const closeConfirmModal = () => setConfirmModal(prev => ({ ...prev, show: false }));
 
     // Load available voices
     useEffect(() => {
@@ -396,41 +416,63 @@ const LearnPage = () => {
             return;
         }
 
-        if (!confirm("This will generate a new version of this content. Continue?")) return;
-
-        // Determine if we should delete the old one or just generate a new one
-        // For now, let's just generate a new one. The user can delete the old one if they want.
-        handleGenerateContent(module.source_id, module.source_type, module.type as any);
+        setConfirmModal({
+            show: true,
+            title: 'Regenerate Content',
+            message: 'This will generate a new version of this content using AI. This may take a few moments. Continue?',
+            type: 'info',
+            confirmText: 'Regenerate',
+            onConfirm: () => {
+                handleGenerateContent(module.source_id!, module.source_type!, module.type as any);
+                closeConfirmModal();
+            }
+        });
     };
 
     const deleteModule = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this generated content?')) return;
-
-        try {
-            await learnAPI.deleteModule(id);
-            setModules(modules.filter(m => m.id !== id));
-            if (selectedModule?.id === id) {
-                setSelectedModule(null);
-                setActiveTab('library');
+        setConfirmModal({
+            show: true,
+            title: 'Delete Content',
+            message: 'Are you sure you want to delete this generated content? This action cannot be undone.',
+            type: 'danger',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await learnAPI.deleteModule(id);
+                    setModules(prev => prev.filter(m => m.id !== id));
+                    if (selectedModule?.id === id) {
+                        setSelectedModule(null);
+                        setActiveTab('library');
+                    }
+                    toast.success('Content deleted successfully');
+                } catch (error) {
+                    console.error(error);
+                    toast.error('Failed to delete content');
+                }
+                closeConfirmModal();
             }
-            toast.success('Content deleted successfully');
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to delete content');
-        }
+        });
     };
 
     const deleteUpload = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this uploaded file?')) return;
-
-        try {
-            await uploadsAPI.delete(id);
-            setUploads(uploads.filter(u => u.id !== id));
-            toast.success('Upload deleted successfully');
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to delete upload');
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Delete Upload',
+            message: 'Are you sure you want to delete this uploaded file? This will not delete any modules generated from it, but you won\'t be able to regenerate them from this source. Continue?',
+            type: 'danger',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    await uploadsAPI.delete(id);
+                    setUploads(prev => prev.filter(u => u.id !== id));
+                    toast.success('Upload deleted successfully');
+                } catch (error) {
+                    console.error(error);
+                    toast.error('Failed to delete upload');
+                }
+                closeConfirmModal();
+            }
+        });
     };
 
     /* Mind Map Logic */
@@ -1221,6 +1263,45 @@ const LearnPage = () => {
                 </div>
             )}
 
+            {/* CONFIRMATION MODAL */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${confirmModal.type === 'danger'
+                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                : confirmModal.type === 'warning'
+                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                }`}>
+                                {confirmModal.type === 'danger' ? <Trash size={24} /> : <AlertTriangle size={24} />}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{confirmModal.title}</h3>
+                                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{confirmModal.message}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={closeConfirmModal}
+                                className="px-4 py-2 rounded-xl font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmModal.onConfirm}
+                                className={`px-6 py-2 rounded-xl font-medium text-white shadow-lg transition-all active:scale-95 ${confirmModal.type === 'danger'
+                                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
+                                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                                    }`}
+                            >
+                                {confirmModal.confirmText || 'Confirm'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 };
