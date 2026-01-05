@@ -943,70 +943,179 @@ const LearnPage = () => {
 
                     {/* QUIZ VIEW */}
                     {activeTab === 'quiz' && selectedModule && (
-                        <div className="h-full flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
+                        <div className="h-full flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900 overflow-auto">
                             <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                                 {showQuizResult ? (
                                     <div className="p-12 text-center">
-                                        <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 dark:text-green-400">
+                                        <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${quizScore >= selectedModule.content.length * 0.7
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                                : quizScore >= selectedModule.content.length * 0.5
+                                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
+                                                    : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                            }`}>
                                             <CheckCircle size={48} />
                                         </div>
                                         <h2 className="text-3xl font-bold mb-2">Quiz Completed!</h2>
-                                        <p className="text-xl text-gray-500 mb-8">You scored {quizScore} out of {selectedModule.content.length}</p>
-                                        <button
-                                            onClick={() => setActiveTab('library')}
-                                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-                                        >
-                                            Back to Library
-                                        </button>
+                                        <p className="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                            {quizScore}/{selectedModule.content.length}
+                                        </p>
+                                        <p className="text-gray-500 mb-8">
+                                            {quizScore >= selectedModule.content.length * 0.7
+                                                ? "Excellent work! You've mastered this material."
+                                                : quizScore >= selectedModule.content.length * 0.5
+                                                    ? "Good job! Keep practicing to improve."
+                                                    : "Keep studying. You'll get there!"}
+                                        </p>
+                                        <div className="flex gap-4 justify-center">
+                                            <button
+                                                onClick={resetQuiz}
+                                                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                            >
+                                                <Sparkles size={18} />
+                                                Retry Quiz
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('library')}
+                                                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                Back to Library
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="p-8">
-                                        <div className="flex justify-between items-center mb-8">
-                                            <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-                                                Question {currentQuestionIndex + 1} of {selectedModule.content.length}
-                                            </span>
+                                        {/* Header */}
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                                    Question {currentQuestionIndex + 1} of {selectedModule.content.length}
+                                                </span>
+                                                <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold">
+                                                    Score: {quizScore}
+                                                </span>
+                                            </div>
                                             <span className="px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs font-bold">
                                                 AI Generated
                                             </span>
                                         </div>
 
-                                        <h3 className="text-2xl font-bold mb-8 leading-relaxed">
+                                        {/* Question */}
+                                        <h3 className="text-xl font-bold mb-6 leading-relaxed">
                                             {selectedModule.content[currentQuestionIndex].question}
                                         </h3>
 
-                                        <div className="space-y-4">
-                                            {selectedModule.content[currentQuestionIndex].options.map((option: string, idx: number) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() => {
-                                                        if (idx === selectedModule.content[currentQuestionIndex].correctIndex) {
-                                                            setQuizScore(s => s + 1);
-                                                            toast.success("Correct!", { duration: 1000, icon: '🎉' });
-                                                        } else {
-                                                            toast.error("Incorrect", { duration: 1000 });
-                                                        }
+                                        {/* Options */}
+                                        <div className="space-y-3">
+                                            {selectedModule.content[currentQuestionIndex].options.map((option: string, idx: number) => {
+                                                const isAnswered = answeredQuestions[currentQuestionIndex] !== undefined;
+                                                const userAnswer = answeredQuestions[currentQuestionIndex];
+                                                const correctIndex = selectedModule.content[currentQuestionIndex].correctIndex;
+                                                const isCorrect = idx === correctIndex;
+                                                const isUserSelected = userAnswer === idx;
 
-                                                        if (currentQuestionIndex < selectedModule.content.length - 1) {
-                                                            setTimeout(() => setCurrentQuestionIndex(c => c + 1), 1000);
-                                                        } else {
-                                                            setShowQuizResult(true);
-                                                        }
-                                                    }}
-                                                    className="w-full text-left p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all font-medium text-lg"
-                                                >
-                                                    <span className="inline-block w-8 font-bold text-gray-400">{String.fromCharCode(65 + idx)}.</span>
-                                                    {option}
-                                                </button>
-                                            ))}
+                                                return (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => handleQuizAnswer(currentQuestionIndex, idx, correctIndex)}
+                                                        disabled={isAnswered}
+                                                        className={`w-full text-left p-4 rounded-xl border-2 transition-all font-medium ${isAnswered
+                                                                ? isCorrect
+                                                                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                                    : isUserSelected
+                                                                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                                                                        : 'border-gray-200 dark:border-gray-700 opacity-60'
+                                                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <span className={`inline-block w-8 font-bold ${isAnswered && isCorrect ? 'text-green-600' :
+                                                                        isAnswered && isUserSelected ? 'text-red-600' : 'text-gray-400'
+                                                                    }`}>
+                                                                    {String.fromCharCode(65 + idx)}.
+                                                                </span>
+                                                                {option}
+                                                            </div>
+                                                            {isAnswered && isCorrect && (
+                                                                <CheckCircle size={20} className="text-green-600" />
+                                                            )}
+                                                            {isAnswered && isUserSelected && !isCorrect && (
+                                                                <X size={20} className="text-red-600" />
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
+
+                                        {/* Explanation Section - Shows after answering */}
+                                        {showExplanation === currentQuestionIndex && (
+                                            <div className="mt-6 p-5 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                                                {/* Built-in Explanation */}
+                                                <div className="mb-4">
+                                                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Explanation</h4>
+                                                    <p className="text-gray-700 dark:text-gray-300">
+                                                        {selectedModule.content[currentQuestionIndex].explanation || 'No explanation provided.'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Nexa Explain Button */}
+                                                {!aiExplanation && (
+                                                    <button
+                                                        onClick={() => nexaExplainQuiz(
+                                                            selectedModule.content[currentQuestionIndex].question,
+                                                            selectedModule.content[currentQuestionIndex].options,
+                                                            selectedModule.content[currentQuestionIndex].correctIndex,
+                                                            answeredQuestions[currentQuestionIndex]
+                                                        )}
+                                                        disabled={isExplaining}
+                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:opacity-90 transition-all disabled:opacity-50"
+                                                    >
+                                                        {isExplaining ? (
+                                                            <>
+                                                                <Loader2 size={16} className="animate-spin" />
+                                                                Nexa is thinking...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Sparkles size={16} />
+                                                                Nexa Explain
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+
+                                                {/* AI Explanation */}
+                                                {aiExplanation && (
+                                                    <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <Sparkles size={16} className="text-purple-600" />
+                                                            <h4 className="text-sm font-semibold text-purple-600 dark:text-purple-400">Nexa AI Explanation</h4>
+                                                        </div>
+                                                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{aiExplanation}</p>
+                                                    </div>
+                                                )}
+
+                                                {/* Next Button */}
+                                                <div className="mt-6 flex justify-end">
+                                                    <button
+                                                        onClick={goToNextQuestion}
+                                                        className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                    >
+                                                        {currentQuestionIndex < selectedModule.content.length - 1 ? 'Next Question' : 'See Results'}
+                                                        <SkipForward size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* Progress Bar */}
                                 <div className="h-2 bg-gray-100 dark:bg-gray-700 w-full">
                                     <div
-                                        className="h-full bg-blue-500 transition-all duration-300"
-                                        style={{ width: `${((currentQuestionIndex + 1) / selectedModule.content.length) * 100}%` }}
+                                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300"
+                                        style={{ width: `${((currentQuestionIndex + (answeredQuestions[currentQuestionIndex] !== undefined ? 1 : 0)) / selectedModule.content.length) * 100}%` }}
                                     ></div>
                                 </div>
                             </div>
