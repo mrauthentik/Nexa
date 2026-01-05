@@ -515,7 +515,7 @@ const LearnPage = () => {
                                     <div className="space-y-4">
                                         {/* User Uploads */}
                                         {uploads.map((upload) => (
-                                            <div key={upload.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors bg-blue-50/50 dark:bg-blue-900/20">
+                                            <div key={upload.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors bg-blue-50/50 dark:bg-blue-900/20 group">
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div>
                                                         <h3 className="font-semibold text-base flex items-center gap-2">
@@ -524,6 +524,13 @@ const LearnPage = () => {
                                                         </h3>
                                                         <span className="text-xs text-gray-500">Uploaded {new Date(upload.created_at).toLocaleDateString()}</span>
                                                     </div>
+                                                    <button
+                                                        onClick={() => deleteUpload(upload.id)}
+                                                        className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                        title="Delete upload"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </div>
                                                 <div className="flex gap-2 mt-2">
                                                     <button
