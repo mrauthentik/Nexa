@@ -154,7 +154,9 @@ const LearnPage = () => {
                     type: m.content_type === 'audio' ? 'audio-script' : m.content_type,
                     progress: 0,
                     content: m.content,
-                    created_at: m.created_at
+                    created_at: m.created_at,
+                    source_id: m.source_id,
+                    source_type: m.source_type
                 }));
                 setModules(mappedModules);
             }
@@ -287,7 +289,9 @@ const LearnPage = () => {
                 type: type,
                 progress: 0,
                 content: content,
-                created_at: savedModule.created_at
+                created_at: savedModule.created_at,
+                source_id: sourceId,
+                source_type: sourceType
             };
 
             setModules([newModule, ...modules]);
@@ -383,6 +387,19 @@ const LearnPage = () => {
         } finally {
             setIsExplaining(false);
         }
+    };
+
+    const handleRegenerate = async (module: LearnModule) => {
+        if (!module.source_id || !module.source_type) {
+            toast.error("Source information missing. Cannot regenerate.");
+            return;
+        }
+
+        if (!confirm("This will generate a new version of this content. Continue?")) return;
+
+        // Determine if we should delete the old one or just generate a new one
+        // For now, let's just generate a new one. The user can delete the old one if they want.
+        handleGenerateContent(module.source_id, module.source_type, module.type as any);
     };
 
     const deleteModule = async (id: string) => {
@@ -588,10 +605,10 @@ const LearnPage = () => {
                                     <div className="space-y-4">
                                         {/* User Uploads */}
                                         {uploads.map((upload) => (
-                                            <div key={upload.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors bg-blue-50/50 dark:bg-blue-900/20 group">
+                                            <div key={upload.id} className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors bg-blue-50/50 dark:bg-blue-900/20 group relative">
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div>
-                                                        <h3 className="font-semibold text-base flex items-center gap-2">
+                                                        <h3 className="font-semibold text-base flex items-center gap-2 pr-8">
                                                             <FileText size={16} className="text-blue-500" />
                                                             {upload.title}
                                                         </h3>
@@ -599,7 +616,7 @@ const LearnPage = () => {
                                                     </div>
                                                     <button
                                                         onClick={() => deleteUpload(upload.id)}
-                                                        className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                        className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10"
                                                         title="Delete upload"
                                                     >
                                                         <Trash2 size={16} />
@@ -968,17 +985,24 @@ const LearnPage = () => {
                                                     ? "Good job! Keep practicing to improve."
                                                     : "Keep studying. You'll get there!"}
                                         </p>
-                                        <div className="flex gap-4 justify-center">
+                                        <div className="flex gap-3 justify-center flex-wrap">
                                             <button
                                                 onClick={resetQuiz}
-                                                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
                                             >
                                                 <Sparkles size={18} />
                                                 Retry Quiz
                                             </button>
                                             <button
+                                                onClick={() => handleRegenerate(selectedModule)}
+                                                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+                                            >
+                                                <Sparkles size={18} />
+                                                Regenerate
+                                            </button>
+                                            <button
                                                 onClick={() => setActiveTab('library')}
-                                                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                                className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                             >
                                                 Back to Library
                                             </button>
