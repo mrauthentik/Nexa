@@ -41,7 +41,7 @@ serve(async (req) => {
         let systemInstruction = '';
 
         // Smart content sampler to handle large PDFs and focus on middle/end
-        const getSmartContent = (text: string, maxChars: number = 40000): string => {
+        const getSmartContent = (text: string, maxChars: number = 25000): string => {
             if (text.length <= maxChars) return text;
 
             // If text is very long, we sample it: 15% beginning, 50% middle, 35% end
@@ -140,20 +140,20 @@ serve(async (req) => {
                 'Authorization': `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
+                model: 'llama-3.3-70b-versatile', // Use a more powerful model for better JSON adherence
                 messages: [
                     { role: 'system', content: systemInstruction },
                     { role: 'user', content: prompt }
                 ],
                 temperature: 0.7,
-                max_tokens: 2000,
+                max_tokens: 4000,
             }),
         });
 
         if (!groqResponse.ok) {
             const err = await groqResponse.text();
             console.error('Groq Error:', err);
-            throw new Error('Failed to generate content via Groq AI');
+            throw new Error(`Groq AI Error: ${err.substring(0, 100)}`);
         }
 
         const groqData = await groqResponse.json();
@@ -177,7 +177,7 @@ serve(async (req) => {
                 JSON.parse(resultText);
             } catch (e) {
                 console.error("Invalid JSON content", resultText);
-                throw new Error("AI returned invalid JSON format");
+                throw new Error("AI returned invalid JSON format. Please try again.");
             }
         }
 
@@ -186,10 +186,10 @@ serve(async (req) => {
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 
-    } catch (error) {
-        console.error('Error:', error);
+    } catch (error: any) {
+        console.error('Error in generate-learn-content:', error);
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: error.message || 'An unexpected error occurred during generation' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
