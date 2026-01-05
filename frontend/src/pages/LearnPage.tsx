@@ -600,25 +600,36 @@ const LearnPage = () => {
                                         {modules.map((module) => (
                                             <div
                                                 key={module.id}
-                                                onClick={() => openModule(module)}
-                                                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md cursor-pointer bg-white dark:bg-gray-800 transition-all"
+                                                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-md bg-white dark:bg-gray-800 transition-all group"
                                             >
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${module.type === 'audio-script' ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
-                                                    module.type === 'mindmap' ? 'bg-gradient-to-br from-purple-400 to-purple-600' :
-                                                        'bg-gradient-to-br from-orange-400 to-orange-600'
-                                                    }`}>
-                                                    {module.type === 'audio-script' ? <Play size={20} fill="currentColor" className="ml-1" /> :
-                                                        module.type === 'mindmap' ? <BrainCircuit size={20} /> : <CheckCircle size={20} />}
+                                                <div
+                                                    onClick={() => openModule(module)}
+                                                    className="flex items-center gap-4 flex-1 cursor-pointer"
+                                                >
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg ${module.type === 'audio-script' ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
+                                                        module.type === 'mindmap' ? 'bg-gradient-to-br from-purple-400 to-purple-600' :
+                                                            'bg-gradient-to-br from-orange-400 to-orange-600'
+                                                        }`}>
+                                                        {module.type === 'audio-script' ? <Play size={20} fill="currentColor" className="ml-1" /> :
+                                                            module.type === 'mindmap' ? <BrainCircuit size={20} /> : <CheckCircle size={20} />}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">{module.title}</h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            {new Date(module.created_at || Date.now()).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-gray-400">
+                                                        <SkipForward size={20} />
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">{module.title}</h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {new Date(module.created_at || Date.now()).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <div className="text-gray-400">
-                                                    <SkipForward size={20} />
-                                                </div>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteModule(module.id); }}
+                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                             </div>
                                         ))}
                                         {modules.length === 0 && <p className="text-gray-500 italic">No AI content generated yet.</p>}
