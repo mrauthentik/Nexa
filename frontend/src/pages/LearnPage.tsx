@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import DashboardLayout from '../components/DashboardLayout';
 import {
@@ -15,7 +15,10 @@ import {
     Upload,
     X,
     FileText,
-    Loader2
+    Loader2,
+    Trash2,
+    Volume2,
+    Settings2
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { summariesAPI, learnAPI, uploadsAPI } from '../services/api';
@@ -77,6 +80,43 @@ const LearnPage = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [quizScore, setQuizScore] = useState(0);
     const [showQuizResult, setShowQuizResult] = useState(false);
+
+    // Mind Map Node Detail State
+    const [selectedNodeData, setSelectedNodeData] = useState<{ label: string; summary?: string; keypoints?: string[] } | null>(null);
+
+    // Memoize ReactFlow types to avoid re-render warnings
+    const nodeTypes = useMemo(() => ({}), []);
+    const edgeTypes = useMemo(() => ({}), []);
+
+    // Audio Player Professional Controls
+    const [speechRate, setSpeechRate] = useState(1.0);
+    const [speechPitch, setSpeechPitch] = useState(1.0);
+    const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+    const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [showAudioSettings, setShowAudioSettings] = useState(false);
+
+    // Load available voices
+    useEffect(() => {
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            // Filter for English voices primarily
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            setAvailableVoices(englishVoices.length > 0 ? englishVoices : voices);
+
+            // Set default voice
+            if (!selectedVoice && voices.length > 0) {
+                const preferred = voices.find(v =>
+                    v.name.includes('Google') ||
+                    v.name.includes('Samantha') ||
+                    v.name.includes('Microsoft')
+                );
+                setSelectedVoice(preferred || englishVoices[0] || voices[0]);
+            }
+        };
+
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }, []);
 
     useEffect(() => {
         fetchData();
@@ -272,6 +312,36 @@ const LearnPage = () => {
         }
     };
 
+    const deleteModule = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this generated content?')) return;
+
+        try {
+            await learnAPI.deleteModule(id);
+            setModules(modules.filter(m => m.id !== id));
+            if (selectedModule?.id === id) {
+                setSelectedModule(null);
+                setActiveTab('library');
+            }
+            toast.success('Content deleted successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete content');
+        }
+    };
+
+    const deleteUpload = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this uploaded file?')) return;
+
+        try {
+            await uploadsAPI.delete(id);
+            setUploads(uploads.filter(u => u.id !== id));
+            toast.success('Upload deleted successfully');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete upload');
+        }
+    };
+
     /* Mind Map Logic */
     const setupMindMap = (content: any) => {
         const newNodes: any[] = [];
@@ -283,17 +353,24 @@ const LearnPage = () => {
 
             newNodes.push({
                 id: currentId,
-                data: { label: dataNode.label },
+                data: {
+                    label: dataNode.label,
+                    summary: dataNode.summary || '',
+                    keypoints: dataNode.keypoints || []
+                },
                 position: { x, y },
                 type: level === 0 ? 'input' : 'default',
                 style: {
                     background: isDarkMode ? '#1f2937' : '#fff',
                     color: isDarkMode ? '#fff' : '#000',
-                    border: '1px solid #777',
-                    borderRadius: '10px',
-                    padding: '10px',
+                    border: '2px solid #6366f1',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
                     minWidth: '150px',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.2s ease'
                 }
             });
 
@@ -304,29 +381,41 @@ const LearnPage = () => {
                     target: currentId,
                     type: 'smoothstep',
                     animated: true,
-                    style: { stroke: '#6366f1' }
+                    style: { stroke: '#6366f1', strokeWidth: 2 }
                 });
             }
 
             if (dataNode.children && dataNode.children.length > 0) {
-                const width = 250;
+                const width = 280;
                 const totalWidth = dataNode.children.length * width;
                 let startX = x - totalWidth / 2 + width / 2;
 
                 dataNode.children.forEach((child: any, index: number) => {
-                    processNode(child, currentId, startX + (index * width), y + 150, level + 1);
+                    processNode(child, currentId, startX + (index * width), y + 180, level + 1);
                 });
             }
         };
 
         if (content.root) {
-            processNode(content.root, null, 400, 50, 0);
+            processNode(content.root, null, 500, 50, 0);
         } else {
             console.warn("Unexpected mindmap structure", content);
         }
 
         setNodes(newNodes);
         setEdges(newEdges);
+        setSelectedNodeData(null); // Reset selection when new map loads
+    };
+
+    // Handle node click to show details
+    const onNodeClick = (_event: React.MouseEvent, node: any) => {
+        if (node.data) {
+            setSelectedNodeData({
+                label: node.data.label,
+                summary: node.data.summary,
+                keypoints: node.data.keypoints
+            });
+        }
     };
 
     /* Audio Player Logic */
@@ -342,16 +431,12 @@ const LearnPage = () => {
                 : (selectedModule.content.result || "No audio content available.");
 
             utterance = new SpeechSynthesisUtterance(textToRead);
-            utterance.rate = 1.0;
-            utterance.pitch = 1.0;
+            utterance.rate = speechRate;
+            utterance.pitch = speechPitch;
 
-            const voices = synth.getVoices();
-            const preferredVoice = voices.find(v =>
-                v.name.includes('Google US English') ||
-                v.name.includes('Google UK English Female') ||
-                v.name.includes('Samantha')
-            );
-            if (preferredVoice) utterance.voice = preferredVoice;
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
 
             utterance.onend = () => setIsPlaying(false);
             utterance.onerror = (e) => {
@@ -367,7 +452,7 @@ const LearnPage = () => {
         return () => {
             synth.cancel();
         };
-    }, [isPlaying, activeTab, selectedModule]);
+    }, [isPlaying, activeTab, selectedModule, speechRate, speechPitch, selectedVoice]);
 
 
     if (loading) return <DashboardLayout currentPage="/learn"><LoadingSpinner /></DashboardLayout>;
@@ -547,10 +632,11 @@ const LearnPage = () => {
                     {activeTab === 'player' && selectedModule && (
                         <div className="h-full flex flex-col items-center justify-center p-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
                             <div className="w-full max-w-2xl text-center z-10">
-                                <div className="relative w-64 h-64 mx-auto mb-10 group">
+                                {/* Album Art / Visualizer */}
+                                <div className="relative w-56 h-56 mx-auto mb-8 group">
                                     <div className={`absolute inset-0 rounded-full bg-blue-500 blur-3xl opacity-20 transition-opacity duration-1000 ${isPlaying ? 'opacity-50 animate-pulse' : ''}`}></div>
-                                    <div className="relative w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-gray-700 shadow-2xl flex items-center justify-center overflow-hidden">
-                                        {/* Visualizer Lines (Css animation) */}
+                                    <div className={`relative w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-gray-700 shadow-2xl flex items-center justify-center overflow-hidden transition-transform duration-500 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '10s' }}>
+                                        {/* Visualizer Lines */}
                                         {isPlaying && (
                                             <div className="absolute inset-x-0 bottom-0 h-1/2 flex items-end justify-center gap-1 opacity-50">
                                                 {[...Array(10)].map((_, i) => (
@@ -558,29 +644,138 @@ const LearnPage = () => {
                                                 ))}
                                             </div>
                                         )}
-                                        <Headphones size={80} className="text-white relative z-10" />
+                                        <Headphones size={70} className="text-white relative z-10" />
                                     </div>
                                 </div>
 
-                                <h2 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">{selectedModule.title}</h2>
-                                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-sm font-medium mb-8">Audio Lesson</span>
+                                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{selectedModule.title}</h2>
+                                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-sm font-medium mb-6">
+                                    {selectedVoice?.name || 'Audio Lesson'}
+                                </span>
 
-                                <div className="flex items-center justify-center gap-8 mb-8">
-                                    <button className="p-4 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                                        <Rewind size={28} />
+                                {/* Playback Controls */}
+                                <div className="flex items-center justify-center gap-6 mb-6">
+                                    <button className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                                        <Rewind size={24} />
                                     </button>
                                     <button
                                         onClick={() => setIsPlaying(!isPlaying)}
-                                        className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all"
+                                        className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all"
                                     >
-                                        {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+                                        {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                                     </button>
-                                    <button className="p-4 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                                        <SkipForward size={28} />
+                                    <button className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                                        <SkipForward size={24} />
+                                    </button>
+                                    <button
+                                        onClick={() => setShowAudioSettings(!showAudioSettings)}
+                                        className={`p-3 rounded-full transition-all ${showAudioSettings ? 'bg-blue-100 dark:bg-blue-900 text-blue-600' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                    >
+                                        <Settings2 size={24} />
                                     </button>
                                 </div>
 
-                                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 max-h-40 overflow-y-auto text-left text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed custom-scrollbar">
+                                {/* Audio Settings Panel */}
+                                {showAudioSettings && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mb-6 shadow-lg border border-gray-200 dark:border-gray-700 text-left animate-in fade-in duration-200">
+                                        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                            <Volume2 size={16} />
+                                            Audio Settings
+                                        </h3>
+
+                                        {/* Speed Control */}
+                                        <div className="mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Speed</label>
+                                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{speechRate.toFixed(1)}x</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0.5"
+                                                max="2"
+                                                step="0.1"
+                                                value={speechRate}
+                                                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                                <span>Slow</span>
+                                                <span>Normal</span>
+                                                <span>Fast</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Pitch Control */}
+                                        <div className="mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pitch</label>
+                                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{speechPitch.toFixed(1)}</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0.5"
+                                                max="2"
+                                                step="0.1"
+                                                value={speechPitch}
+                                                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                                <span>Deep</span>
+                                                <span>Normal</span>
+                                                <span>High</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Voice Selection */}
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Voice</label>
+                                            <select
+                                                value={selectedVoice?.name || ''}
+                                                onChange={(e) => {
+                                                    const voice = availableVoices.find(v => v.name === e.target.value);
+                                                    if (voice) setSelectedVoice(voice);
+                                                }}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                            >
+                                                {availableVoices.map(voice => (
+                                                    <option key={voice.name} value={voice.name}>
+                                                        {voice.name} ({voice.lang})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Quick Presets */}
+                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Quick Presets</label>
+                                            <div className="flex gap-2 flex-wrap">
+                                                <button
+                                                    onClick={() => { setSpeechRate(0.8); setSpeechPitch(1.0); }}
+                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                >
+                                                    📚 Study Mode
+                                                </button>
+                                                <button
+                                                    onClick={() => { setSpeechRate(1.0); setSpeechPitch(1.0); }}
+                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                >
+                                                    🎧 Normal
+                                                </button>
+                                                <button
+                                                    onClick={() => { setSpeechRate(1.5); setSpeechPitch(1.0); }}
+                                                    className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                                >
+                                                    ⚡ Speed Review
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Transcript */}
+                                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 max-h-32 overflow-y-auto text-left text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed custom-scrollbar">
+                                    <p className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Transcript</p>
                                     {typeof selectedModule.content === 'string' ? selectedModule.content : selectedModule.content?.result}
                                 </div>
                             </div>
@@ -589,19 +784,71 @@ const LearnPage = () => {
 
                     {/* MIND MAP VIEW */}
                     {activeTab === 'mindmap' && selectedModule && (
-                        <div className="h-full w-full bg-gray-50 dark:bg-gray-900">
-                            <ReactFlow
-                                nodes={nodes}
-                                edges={edges}
-                                onNodesChange={onNodesChange}
-                                onEdgesChange={onEdgesChange}
-                                fitView
-                                attributionPosition="bottom-right"
-                            >
-                                <Background color={isDarkMode ? '#333' : '#aaa'} gap={16} />
-                                <Controls />
-                                <MiniMap style={isDarkMode ? { backgroundColor: '#333' } : {}} />
-                            </ReactFlow>
+                        <div className="flex h-[500px]">
+                            {/* Mind Map Canvas */}
+                            <div style={{ flex: selectedNodeData ? '1 1 60%' : '1 1 100%', height: '100%' }} className="bg-gray-50 dark:bg-gray-900 transition-all duration-300">
+                                <ReactFlow
+                                    nodes={nodes}
+                                    edges={edges}
+                                    onNodesChange={onNodesChange}
+                                    onEdgesChange={onEdgesChange}
+                                    onNodeClick={onNodeClick}
+                                    nodeTypes={nodeTypes}
+                                    edgeTypes={edgeTypes}
+                                    fitView
+                                    attributionPosition="bottom-right"
+                                >
+                                    <Background color={isDarkMode ? '#333' : '#aaa'} gap={16} />
+                                    <Controls />
+                                    <MiniMap style={isDarkMode ? { backgroundColor: '#333' } : {}} />
+                                </ReactFlow>
+                            </div>
+
+                            {/* Node Details Panel */}
+                            {selectedNodeData && (
+                                <div className="w-[40%] h-full border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 overflow-y-auto animate-in slide-in-from-right duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedNodeData.label}</h3>
+                                        <button
+                                            onClick={() => setSelectedNodeData(null)}
+                                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {selectedNodeData.summary && (
+                                        <div className="mb-6">
+                                            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Summary</h4>
+                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                                {selectedNodeData.summary}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {selectedNodeData.keypoints && selectedNodeData.keypoints.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Key Points</h4>
+                                            <ul className="space-y-3">
+                                                {selectedNodeData.keypoints.map((point, idx) => (
+                                                    <li key={idx} className="flex items-start gap-3">
+                                                        <span className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {!selectedNodeData.summary && (!selectedNodeData.keypoints || selectedNodeData.keypoints.length === 0) && (
+                                        <p className="text-gray-500 italic">No additional details available for this topic.</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 

@@ -79,17 +79,25 @@ serve(async (req) => {
 
             case 'mindmap':
                 systemInstruction = `You are an expert at structuring knowledge. Create a hierarchical node-based mind map structure for the provided content.
-                Return the result strictly as a valid JSON object compatible with ReactFlow format, but since you don't calculate positions, just return a hierarchical tree object:
+                Each node MUST include:
+                - label: The topic name (short)
+                - summary: A 2-3 sentence summary explaining this topic in simple terms
+                - keypoints: An array of 2-4 key bullet points about this topic
+                - children: An array of child nodes (same structure)
+                
+                Return the result strictly as a valid JSON object:
                 {
                   "root": {
                     "label": "Main Topic",
+                    "summary": "A brief explanation of the main topic...",
+                    "keypoints": ["Key point 1", "Key point 2"],
                     "children": [
-                       { "label": "Subtopic 1", "children": [...] },
-                       { "label": "Subtopic 2", "children": [...] }
+                       { "label": "Subtopic 1", "summary": "...", "keypoints": [...], "children": [...] },
+                       { "label": "Subtopic 2", "summary": "...", "keypoints": [...], "children": [...] }
                     ]
                   }
                 }`;
-                prompt = `Create a mind map structure for this content:
+                prompt = `Create a detailed mind map structure for this content. Include summary and keypoints for EVERY node:
                 Title: ${title}
                 Content:
                 ${content.substring(0, 6000)}

@@ -282,6 +282,12 @@ const Dashboard = () => {
               </svg>
               <span>Schedule</span>
             </a>
+            <a href="/learn" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+              <span>Learn</span>
+            </a>
             <a href="/billing" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-lg mb-2 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -442,9 +448,9 @@ const Dashboard = () => {
                               <div className="flex gap-3">
                                 {/* Icon */}
                                 <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${notification.type === 'assignment' ? 'bg-orange-100' :
-                                    notification.type === 'exam' ? 'bg-red-100' :
-                                      notification.type === 'grade' ? 'bg-green-100' :
-                                        'bg-blue-100'
+                                  notification.type === 'exam' ? 'bg-red-100' :
+                                    notification.type === 'grade' ? 'bg-green-100' :
+                                      'bg-blue-100'
                                   }`}>
                                   {notification.icon === 'clipboard' && (
                                     <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,12 +687,12 @@ const Dashboard = () => {
                           setShowTaskModal(true);
                         }}
                         className={`aspect-square flex flex-col items-center justify-center text-sm rounded-lg transition-colors relative ${isSelected
-                            ? 'bg-orange-500 text-white font-semibold'
-                            : isToday
-                              ? 'bg-primary-100 text-primary-700 font-semibold'
-                              : isDarkMode
-                                ? 'hover:bg-gray-700 text-gray-300'
-                                : 'hover:bg-gray-100'
+                          ? 'bg-orange-500 text-white font-semibold'
+                          : isToday
+                            ? 'bg-primary-100 text-primary-700 font-semibold'
+                            : isDarkMode
+                              ? 'hover:bg-gray-700 text-gray-300'
+                              : 'hover:bg-gray-100'
                           }`}
                       >
                         {day}
@@ -824,9 +830,9 @@ const Dashboard = () => {
                         )}
                       </div>
                       <span className={`text-xs px-2 py-1 rounded ${event.type === 'exam' ? 'bg-red-100 text-red-700' :
-                          event.type === 'assignment' ? 'bg-yellow-100 text-yellow-700' :
-                            event.type === 'class' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
+                        event.type === 'assignment' ? 'bg-yellow-100 text-yellow-700' :
+                          event.type === 'class' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
                         }`}>
                         {event.type}
                       </span>
