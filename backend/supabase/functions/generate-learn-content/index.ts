@@ -1,13 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Use Gemini API Key (assuming user has it set up as per previous files)
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+// Use Groq API Key
+const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
 interface LearnRequest {
     type: 'audio-script' | 'quiz' | 'mindmap';
@@ -31,9 +30,9 @@ serve(async (req) => {
             );
         }
 
-        if (!GEMINI_API_KEY) {
+        if (!GROQ_API_KEY) {
             return new Response(
-                JSON.stringify({ error: 'Gemini API Key not configured' }),
+                JSON.stringify({ error: 'Groq API Key not configured' }),
                 { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
         }
@@ -57,7 +56,7 @@ serve(async (req) => {
                 
                 Summary Title: ${title}
                 Content:
-                ${content.substring(0, 8000)} // Limit context window
+                ${content.substring(0, 6000)} 
                 
                 Return ONLY the script text, ready to be read.`;
                 break;
@@ -73,7 +72,7 @@ serve(async (req) => {
                 prompt = `Create a 5-question multiple choice quiz based on this content:
                 Title: ${title}
                 Content:
-                ${content.substring(0, 8000)}
+                ${content.substring(0, 6000)}
                 
                 IMPORTANT: Return ONLY the JSON array. Do not include markdown formatting like \`\`\`json.`;
                 break;
@@ -93,44 +92,52 @@ serve(async (req) => {
                 prompt = `Create a mind map structure for this content:
                 Title: ${title}
                 Content:
-                ${content.substring(0, 8000)}
+                ${content.substring(0, 6000)}
                 
                 IMPORTANT: Return ONLY the JSON object. Do not include markdown formatting like \`\`\`json.`;
                 break;
         }
 
-        // Call Gemini
-        const geminiResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: systemInstruction + "\n\n" + prompt }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 2000,
-                    }
-                }),
-            }
-        );
+        // Call Groq API
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-8b-instant',
+                messages: [
+                    { role: 'system', content: systemInstruction },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000,
+            }),
+        });
 
-        if (!geminiResponse.ok) {
-            const err = await geminiResponse.text();
-            console.error('Gemini Error:', err);
-            throw new Error('Failed to generate content via AI');
+        if (!groqResponse.ok) {
+            const err = await groqResponse.text();
+            console.error('Groq Error:', err);
+            throw new Error('Failed to generate content via Groq AI');
         }
 
-        const geminiData = await geminiResponse.json();
-        let resultText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+        const groqData = await groqResponse.json();
+        let resultText = groqData.choices[0]?.message?.content;
 
         if (!resultText) throw new Error('No content generated');
 
         // Clean up JSON if needed
         if (type === 'quiz' || type === 'mindmap') {
             resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Handle cases where the AI adds extra text before or after the JSON
+            const firstBracket = resultText.indexOf(type === 'quiz' ? '[' : '{');
+            const lastBracket = resultText.lastIndexOf(type === 'quiz' ? ']' : '}');
+
+            if (firstBracket !== -1 && lastBracket !== -1) {
+                resultText = resultText.substring(firstBracket, lastBracket + 1);
+            }
+
             try {
                 // Validate JSON
                 JSON.parse(resultText);
