@@ -8,6 +8,8 @@
     "deploy:unix": "bash ./deploy.sh",
     "link": "supabase link",
     "migrate": "supabase db push",
+    "migrate:all": "node run-all-migrations.mjs",
+    "populate:past-questions": "node populate-questions-auto.mjs",
     "reset": "supabase db reset",
     "functions:list": "supabase functions list",
     "functions:logs": "supabase functions logs",
