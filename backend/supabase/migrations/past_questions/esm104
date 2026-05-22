@@ -1,0 +1,939 @@
+DO $$
+DECLARE 
+    v_course_id UUID;
+BEGIN
+    -- Get the course ID for ESM104
+    SELECT id INTO v_course_id FROM courses WHERE code = 'ESM104' LIMIT 1;
+
+    -- Multiple Choice Questions (170 questions - 85%)
+    
+    -- Q1
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who defined the environment as "the region, surroundings or circumstances in which anything exists; everything external to the organisms"?', 'multiple_choice', 'Strahler and Strahler', 'Alan Gilpin (1976)', 'Cook and Weidner', 'Ratzel', 'B', 'Alan Gilpin (1976) defined environment in his book "Dictionary of Environmental Terms".');
+
+    -- Q2
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'In which country is there no legislation that clearly defines environment despite much published speeches?', 'multiple_choice', 'United States', 'Canada', 'Nigeria', 'United Kingdom', 'C', 'In Nigeria, in spite of much published speeches there is no legislation that clearly defines environment.');
+
+    -- Q3
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When was the National Environmental Protection Agency (NEPA) established in the U.S.A?', 'multiple_choice', '1959', '1969', '1979', '1989', 'B', 'National Environmental Protection Agency was established in 1969.');
+
+    -- Q4
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many types of environment are generally recognized?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'There are two types of environment: natural/physical environment and man-made/cultural environment.');
+
+    -- Q5
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of the following refers to non-cultural and non-social environment before the advent of man on earth?', 'multiple_choice', 'Cultural environment', 'Natural environment', 'Effective environment', 'Social environment', 'B', 'The natural environment refers to non-cultural and non-social environment before the advent of man on earth.');
+
+    -- Q6
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'According to Strahler and Strahler (1972), environmental science can be defined as the study of:', 'multiple_choice', 'Only biological systems', 'Only physical systems', 'All systems of air, land, water, energy and life', 'Only human-environment interactions', 'C', 'Environmental science studies all systems of air, land, water, energy and life that surround man.');
+
+    -- Q7
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of the following takes long time to form and is therefore non-renewable?', 'multiple_choice', 'Solar energy', 'Wind energy', 'Fossil fuels', 'Water resources', 'C', 'Fossil fuels take long time to form and therefore are non-renewable.');
+
+    -- Q8
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are the two areas of interaction between natural system and man?', 'multiple_choice', 'Biology and Chemistry', 'Geosciences and Eco-science', 'Physics and Mathematics', 'Sociology and Economics', 'B', 'The two areas are Geosciences and Eco-science.');
+
+    -- Q9
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of the following is concerned with the components and processes of the atmosphere, lithosphere and hydrosphere?', 'multiple_choice', 'Eco-Science', 'Geoscience', 'Biology', 'Chemistry', 'B', 'Geoscience deals with physical phenomena in atmosphere, lithosphere and hydrosphere.');
+
+    -- Q10
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many realms make up the environment?', 'multiple_choice', 'Two', 'Three', 'Four', 'Five', 'C', 'The four realms are lithosphere, atmosphere, hydrosphere and biosphere.');
+
+    -- Q11
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When did the global concern for human environment start according to Cook and Weidner (1977)?', 'multiple_choice', '1939', '1949', '1959', '1969', 'B', 'Global concern for human environment started in 1949.');
+
+    -- Q12
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What was established in 1949 as an international organization for conservation?', 'multiple_choice', 'UNEP', 'IUCN', 'FEPA', 'WHO', 'B', 'International Union for Conservation of Nature (IUCN) was established in 1949.');
+
+    -- Q13
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When was the First United Nations Conference on the Human Environment held in Stockholm?', 'multiple_choice', 'June 5, 1962', 'June 5, 1972', 'June 5, 1982', 'June 5, 1992', 'B', 'The conference was opened on June 5, 1972.');
+
+    -- Q14
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which special agency was formulated as a major achievement of the Stockholm Conference?', 'multiple_choice', 'IUCN', 'UNEP', 'WHO', 'UNESCO', 'B', 'United Nations Environmental Programme (UNEP) was established.');
+
+    -- Q15
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Where was the International Workshop on Environmental Education held in October 1975?', 'multiple_choice', 'Stockholm', 'Belgrade', 'Tbilisi', 'Geneva', 'B', 'The workshop was held in Belgrade.');
+
+    -- Q16
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How would you describe the atmosphere?', 'multiple_choice', 'Liquid envelope', 'Solid envelope', 'Gaseous envelope', 'Plasma envelope', 'C', 'The atmosphere is a gaseous envelope held to Earth by gravitational forces.');
+
+    -- Q17
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Up to what altitude is the composition of the atmosphere fairly homogenous?', 'multiple_choice', '40km', '60km', '80km', '100km', 'C', 'The atmosphere is homogenous up to about 80km altitude.');
+
+    -- Q18
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the fairly homogenous part of the atmosphere called?', 'multiple_choice', 'Heterosphere', 'Homosphere', 'Troposphere', 'Stratosphere', 'B', 'The homosphere refers to the uniform composition layer.');
+
+    -- Q19
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which gas constitutes the highest percentage in the homosphere?', 'multiple_choice', 'Oxygen', 'Nitrogen', 'Carbon dioxide', 'Argon', 'B', 'Nitrogen makes up 78.08% of the atmosphere.');
+
+    -- Q20
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Where are the dense gases found in the atmosphere?', 'multiple_choice', 'Upper layer', 'Middle layer', 'Lower layer', 'Throughout equally', 'C', 'Dense gases are found at the lower layer up to 15km from Earth surface.');
+
+    -- Q21
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What factor is used to stratify or divide the atmosphere into layers?', 'multiple_choice', 'Pressure', 'Temperature', 'Density', 'Composition', 'B', 'Temperature is used to define the structure of the atmosphere.');
+
+    -- Q22
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is the lowest layer of the atmosphere?', 'multiple_choice', 'Stratosphere', 'Troposphere', 'Mesosphere', 'Thermosphere', 'B', 'The troposphere is the lowest atmospheric layer.');
+
+    -- Q23
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the rate of temperature decrease with increasing height in the troposphere called?', 'multiple_choice', 'Adiabatic rate', 'Environmental Lapse Rate', 'Temperature gradient', 'Thermal decline', 'B', 'This rate is called the Environmental Lapse Rate.');
+
+    -- Q24
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which atmospheric layer contains the ozone layer?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Thermosphere', 'B', 'The stratosphere contains the ozone layer.');
+
+    -- Q25
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the lithosphere also known as?', 'multiple_choice', 'Earth''s core', 'Earth''s mantle', 'Earth''s crust', 'Earth''s atmosphere', 'C', 'The lithosphere is the Earth''s crust.');
+
+    -- Q26
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many parts make up the lithosphere?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'The lithosphere is made up of two parts: SIAL and SIMA.');
+
+    -- Q27
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the part of lithosphere rich in silica and alumina called?', 'multiple_choice', 'SIMA', 'SIAL', 'MANTLE', 'CORE', 'B', 'SIAL contains silica and alumina.');
+
+    -- Q28
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the most important source of energy in the lithosphere?', 'multiple_choice', 'Solar energy', 'Wind energy', 'Radioactivity', 'Tidal energy', 'C', 'Radioactivity from radio isotopes is the key energy source.');
+
+    -- Q29
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the origin of most rocks in the Earth''s crust?', 'multiple_choice', 'Sedimentary', 'Metamorphic', 'Igneous', 'Organic', 'C', 'Most crustal rocks are igneous in origin.');
+
+    -- Q30
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many types of minerals are provided by the lithosphere?', 'multiple_choice', 'Two', 'Three', 'Four', 'Five', 'B', 'Three types: metalliferous, precious, and non-metallic minerals.');
+
+    -- Continue with 140 more multiple choice questions...
+
+    -- Fill in the Blank Questions (30 questions - 15%)
+    
+    -- Q171
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The term environment according to Alan Gilpin (1976) is everything ______ to the organisms.', 'fill_in_blank', 'external', 'Environment includes everything external to organisms.');
+
+    -- Q172
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The ______ environment is everything external to the organism which affects the fulfilment of that organism.', 'fill_in_blank', 'effective', 'The effective environment influences organism fulfillment.');
+
+    -- Q173
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'We have natural or physical environment, and ______ or cultural environment.', 'fill_in_blank', 'man-made', 'The two environment types are natural and man-made.');
+
+    -- Q174
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The increasing interest in environmental problems led to the birth of a new discipline called ______.', 'fill_in_blank', 'Environmental Science', 'Environmental Science emerged from growing environmental concerns.');
+
+    -- Q175
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'According to Strahler and Strahler (1972), environmental science studies all systems of air, land, water, ______ and life.', 'fill_in_blank', 'energy', 'Energy is a key component in environmental systems.');
+
+    -- Q176
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Fossil fuels take long time to form and are therefore ______.', 'fill_in_blank', 'non-renewable', 'Fossil fuels are non-renewable due to their long formation time.');
+
+    -- Q177
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The four realms of the environment are lithosphere, atmosphere, hydrosphere and ______.', 'fill_in_blank', 'biosphere', 'The biosphere is the fourth realm comprising living organisms.');
+
+    -- Q178
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'IUCN stands for International Union for ______ of Nature.', 'fill_in_blank', 'Conservation', 'IUCN focuses on nature conservation.');
+
+    -- Q179
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'UNEP stands for United Nations ______ Programme.', 'fill_in_blank', 'Environmental', 'UNEP is the UN''s environmental agency.');
+
+    -- Q180
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The atmosphere is held to the Earth by ______ forces.', 'fill_in_blank', 'gravitational', 'Gravity keeps the atmosphere clinging to Earth.');
+
+    -- Q181
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The part of atmosphere with uniform composition is called the ______.', 'fill_in_blank', 'homosphere', 'Homosphere has relatively uniform gas composition.');
+
+    -- Q182
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Nitrogen constitutes about ______% of the atmosphere.', 'fill_in_blank', '78.08', 'Nitrogen is the most abundant atmospheric gas at 78.08%.');
+
+    -- Q183
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The atmospheric layer where temperature decreases with height is called ______.', 'fill_in_blank', 'troposphere', 'Troposphere shows temperature decrease with altitude.');
+
+    -- Q184
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The boundary between troposphere and stratosphere is called ______.', 'fill_in_blank', 'tropopause', 'Tropopause marks the transition between these layers.');
+
+    -- Q185
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The lithosphere part rich in silicon and magnesium is called ______.', 'fill_in_blank', 'SIMA', 'SIMA contains silicon and magnesium.');
+
+    -- Q186
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The most important resource provided by the lithosphere is ______.', 'fill_in_blank', 'soil', 'Soil is crucial for plant growth and food production.');
+
+    -- Q187
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Water is the only element that occurs naturally in ______ states.', 'fill_in_blank', 'three', 'Water exists as solid, liquid, and gas naturally.');
+
+    -- Q188
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The scientific study of water is called ______.', 'fill_in_blank', 'hydrology', 'Hydrology studies water properties and distribution.');
+
+    -- Q189
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The endless interchange of water between ocean, air and land is called ______ cycle.', 'fill_in_blank', 'hydrological', 'Hydrological cycle describes water movement.');
+
+    -- Q190
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The biosphere is also referred to as the ______ world.', 'fill_in_blank', 'organic', 'Biosphere comprises all living organisms.');
+
+    -- Q191
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Organisms that manufacture food from simple organic substances are called ______.', 'fill_in_blank', 'producers', 'Producers create food via photosynthesis.');
+
+    -- Q192
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The concept that physical environment determines human behavior is called environmental ______.', 'fill_in_blank', 'determinism', 'Environmental determinism emphasizes environmental influence.');
+
+    -- Q193
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The philosophy that nature is permissive rather than mandatory is called ______.', 'fill_in_blank', 'possibilism', 'Possibilism allows for human choice within environmental limits.');
+
+    -- Q194
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'FEPA stands for Federal Environmental ______ Agency.', 'fill_in_blank', 'Protection', 'FEPA was Nigeria''s environmental protection body.');
+
+    -- Q195
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'EIA stands for Environmental ______ Assessment.', 'fill_in_blank', 'Impact', 'EIA evaluates potential environmental effects of projects.');
+
+    -- Q196
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Climate can be defined as a synthesis or ______ of weather.', 'fill_in_blank', 'amalgam', 'Climate represents long-term weather patterns.');
+
+    -- Q197
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The thermosphere temperature varies between ______°C.', 'fill_in_blank', '1100 and 1650', 'Thermosphere experiences extremely high temperatures.');
+
+    -- Q198
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Plants are self-nourishing and are called ______.', 'fill_in_blank', 'autotrophes', 'Autotrophes produce their own food via photosynthesis.');
+
+    -- Q199
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The hydrological cycle consists of ______ phases.', 'fill_in_blank', 'two', 'The two phases are land and ocean phases.');
+
+    -- Q200
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The Rio 92 conference is popularly called the ______ Summit.', 'fill_in_blank', 'Earth', 'Rio 92 was known as the Earth Summit.');
+
+-- Continuing with more Multiple Choice Questions (Q31-Q170)
+
+    -- Q31
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the average density of SIAL?', 'multiple_choice', '2.7g/cm³', '3.0g/cm³', '2.5g/cm³', '3.5g/cm³', 'A', 'The SIAL has an average density of 2.7g/cm³.');
+
+    -- Q32
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What lies beneath the lithosphere?', 'multiple_choice', 'Crust and core', 'Mantle and core', 'SIAL and SIMA', 'Atmosphere and hydrosphere', 'B', 'Beneath the lithosphere are the mantle and the core.');
+
+    -- Q33
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of the following is NOT a type of mineral provided by the lithosphere?', 'multiple_choice', 'Metalliferous minerals', 'Precious minerals', 'Non-metallic minerals', 'Synthetic minerals', 'D', 'The three types are metalliferous, precious, and non-metallic minerals.');
+
+    -- Q34
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What percentage of Earth''s surface materials consist of water?', 'multiple_choice', '50%', '60%', '70%', '75%', 'D', 'Three quarters (75%) of surface materials consist of water.');
+
+    -- Q35
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What do plants manufacture with water?', 'multiple_choice', 'Proteins', 'Carbohydrates', 'Fats', 'Vitamins', 'B', 'Plants manufacture carbohydrates with water through photosynthesis.');
+
+    -- Q36
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the scientific study of oceans called?', 'multiple_choice', 'Hydrology', 'Limnology', 'Oceanography', 'Hydrography', 'C', 'Oceanography is the scientific study of all phenomena associated with ocean.');
+
+    -- Q37
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many branches of oceanography are mentioned?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'There are two branches: physical and biological oceanography.');
+
+    -- Q38
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the study of lakes and fresh water called?', 'multiple_choice', 'Oceanography', 'Hydrology', 'Limnology', 'Hydrography', 'C', 'Limnology is the scientific study of lakes, fresh water and ponds.');
+
+    -- Q39
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'At what height does the tropopause vary at the equator?', 'multiple_choice', '10 km', '15 km', '17 km', '20 km', 'C', 'The tropopause reaches about 17 km at the equator.');
+
+    -- Q40
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which layer gives way to the thermosphere at the mesopause?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Homosphere', 'C', 'The mesosphere gives way to the thermosphere at the mesopause.');
+
+    -- Q41
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is another name for the hydrological cycle?', 'multiple_choice', 'Water circuit', 'Rain cycle', 'Water cycle', 'Precipitation cycle', 'C', 'The Hydrological cycle is also known as the Water cycle.');
+
+    -- Q42
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many phases does the hydrological cycle have?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'The hydrological cycle consists of two phases: land and ocean phases.');
+
+    -- Q43
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the biosphere also referred to as?', 'multiple_choice', 'Inorganic world', 'Organic world', 'Physical world', 'Chemical world', 'B', 'The biosphere is referred to as the organic world.');
+
+    -- Q44
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which organisms are self-nourishing?', 'multiple_choice', 'Animals', 'Plants', 'Fungi', 'Bacteria', 'B', 'Plants are self-nourishing and called Autotrophes.');
+
+    -- Q45
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many groups are recognized in the better system of biosphere classification?', 'multiple_choice', 'Two', 'Three', 'Four', 'Five', 'C', 'Four groups: Monera, Protista, Metaphyta, and Metazora.');
+
+    -- Q46
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Where does the biosphere lie?', 'multiple_choice', 'Interface of lithosphere, atmosphere and hydrosphere', 'Only in the atmosphere', 'Only in the hydrosphere', 'Only in the lithosphere', 'A', 'The biosphere lies at the interface of all three spheres.');
+
+    -- Q47
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What results from functional interactions between organisms and their physical environment?', 'multiple_choice', 'Biomes', 'Ecosystems', 'Habitats', 'Communities', 'B', 'These interactions result in ecosystems.');
+
+    -- Q48
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many basic components do ecosystems have?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'Ecosystems have two basic components: abiotic and biotic.');
+
+    -- Q49
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which organisms manufacture food from simple organic substances?', 'multiple_choice', 'Consumers', 'Producers', 'Decomposers', 'Scavengers', 'B', 'Producers manufacture food through photosynthesis.');
+
+    -- Q50
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who is environmental determinism usually traced to?', 'multiple_choice', 'Aristotle', 'Ratzel', 'Strahler', 'Gilpin', 'B', 'The concept is usually traced to Ratzel.');
+
+    -- Q51
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which philosophy emphasizes man''s freedom of action?', 'multiple_choice', 'Determinism', 'Possibilism', 'Probabilism', 'Fatalism', 'B', 'Possibilism emphasizes human choice within environmental limits.');
+
+    -- Q52
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What occurs when precipitation is insufficient for crop growth?', 'multiple_choice', 'Flood', 'Agricultural drought', 'Meteorological drought', 'Hydrological drought', 'B', 'Agricultural drought affects crop water needs.');
+
+    -- Q53
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does ITD stand for?', 'multiple_choice', 'International Temperature Division', 'Intertropical Discontinuity', 'Internal Thermal Dynamics', 'International Time Difference', 'B', 'ITD means Intertropical Discontinuity.');
+
+    -- Q54
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When were river basin authorities first established in Nigeria?', 'multiple_choice', '1966', '1976', '1986', '1996', 'B', 'They were established on June 15, 1976.');
+
+    -- Q55
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which country was the largest producer of sulphur oxide?', 'multiple_choice', 'United States', 'China', 'Soviet Union', 'United Kingdom', 'C', 'The former Soviet Union was the largest producer.');
+
+    -- Q56
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Where was the Convention on Long Range Trans-boundary Air Pollution signed?', 'multiple_choice', 'Stockholm', 'Geneva', 'Ottawa', 'Helsinki', 'B', 'It was signed in Geneva in November 1979.');
+
+    -- Q57
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What was FEPA converted to?', 'multiple_choice', 'State Environmental Agency', 'Ministry of Environment', 'National Conservation Service', 'Federal Pollution Control', 'B', 'FEPA was converted to the Ministry of Environment.');
+
+    -- Q58
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does EIA stand for?', 'multiple_choice', 'Environmental Impact Assessment', 'Environmental International Agency', 'Ecological Impact Analysis', 'Environmental Inspection Authority', 'A', 'EIA means Environmental Impact Assessment.');
+
+    -- Q59
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who invented the thermometer?', 'multiple_choice', 'Newton', 'Galileo', 'Toricelli', 'Einstein', 'B', 'Thermometer was invented by Galileo in 1593.');
+
+    -- Q60
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What counteracts the warming effect of CO2?', 'multiple_choice', 'Ozone', 'Aerosols', 'Water vapor', 'Nitrogen', 'B', 'Aerosols are known to counteract CO2 warming effect.');
+
+    -- Q61
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What type of flood results from convection storms?', 'multiple_choice', 'Long rain floods', 'Flash floods', 'Coastal floods', 'River floods', 'B', 'Flash floods are often results of convection storms.');
+
+    -- Q62
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When did the Ogunpa river flood occur in Ibadan?', 'multiple_choice', '1970', '1980', '1990', '2000', 'B', 'It occurred on August 30, 1980.');
+
+    -- Q63
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does GTS stand for?', 'multiple_choice', 'Global Temperature System', 'Geological Time Scale', 'Global Telecommunications System', 'Geographic Tracking Service', 'C', 'GTS means Global Telecommunications System.');
+
+    -- Q64
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which layer extends from 50km to 80km?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Thermosphere', 'C', 'Mesosphere extends from 50km to 80km.');
+
+    -- Q65
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the chemical formula for water?', 'multiple_choice', 'H2O', 'CO2', 'O2', 'N2', 'A', 'The chemical formula for water is H₂O.');
+
+    -- Q66
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the freezing point of water?', 'multiple_choice', '0°C', '10°C', '100°C', '-10°C', 'A', 'The freezing point is 0°C.');
+
+    -- Q67
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the boiling point of water?', 'multiple_choice', '0°C', '50°C', '100°C', '150°C', 'C', 'The boiling point is 100°C.');
+
+    -- Q68
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What percentage of an average man is water?', 'multiple_choice', 'One-third', 'One-half', 'Two-thirds', 'Three-quarters', 'C', 'An average man is two-thirds (2/3) water.');
+
+    -- Q69
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What kind of solvent is water?', 'multiple_choice', 'Universal solvent', 'Selective solvent', 'Organic solvent', 'Inorganic solvent', 'A', 'Water is a universal solvent.');
+
+    -- Q70
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What process is water important for in geomorphology?', 'multiple_choice', 'Erosion', 'Weathering', 'Deposition', 'All of the above', 'D', 'Water is important for weathering, erosion, and deposition.');
+
+    -- Q71
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of these is NOT a realm of the environment?', 'multiple_choice', 'Lithosphere', 'Atmosphere', 'Hydrosphere', 'Photosphere', 'D', 'The four realms are litho-, atmo-, hydro-, and biosphere.');
+
+    -- Q72
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the main characteristic of the troposphere?', 'multiple_choice', 'Temperature increases with height', 'Temperature decreases with height', 'Constant temperature', 'No temperature pattern', 'B', 'Troposphere shows uniform temperature decrease with height.');
+
+    -- Q73
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which layer has horizontal air movement?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Thermosphere', 'B', 'Stratosphere is characterized by horizontal air movement.');
+
+    -- Q74
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the combination of stratosphere and troposphere called?', 'multiple_choice', 'Upper atmosphere', 'Lower atmosphere', 'Middle atmosphere', 'Outer atmosphere', 'B', 'They constitute the lower atmosphere.');
+
+    -- Q75
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which layer has very high atmospheric pressure?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Thermosphere', 'C', 'Mesosphere is characterized by very high atmospheric pressure.');
+
+    -- Q76
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What shields Earth from ultraviolet radiation?', 'multiple_choice', 'Nitrogen', 'Oxygen', 'Ozone', 'Carbon dioxide', 'C', 'Ozone shields Earth from UV radiation.');
+
+    -- Q77
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are compounds containing silica and oxygen called?', 'multiple_choice', 'Carbonates', 'Silicates', 'Oxides', 'Sulfates', 'B', 'Silicate compounds contain silica and oxygen.');
+
+    -- Q78
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which of these is a nuclear fuel?', 'multiple_choice', 'Iron', 'Copper', 'Uranium', 'Bauxite', 'C', 'Uranium and thorium are nuclear fuels.');
+
+    -- Q79
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is soil formed from?', 'multiple_choice', 'Weathered materials only', 'Organic matter only', 'Weathered materials, organic matter, air and water', 'Air and water only', 'C', 'Soil forms from weathered materials, organic matter, air and water.');
+
+    -- Q80
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is crucial to man''s food supply?', 'multiple_choice', 'Atmosphere', 'Soil', 'Hydrosphere', 'Lithosphere', 'B', 'Soil is the medium of plant growth and crucial for food supply.');
+
+    -- Q81
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does hydrosphere include?', 'multiple_choice', 'Only oceans', 'Only fresh water', 'All water on earth', 'Only atmospheric water', 'C', 'Hydrosphere includes all water on earth in all forms.');
+
+    -- Q82
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How do plants take their nutrients?', 'multiple_choice', 'In solid form', 'In solution', 'As gases', 'Through absorption', 'B', 'Plants take their nutrients in solution.');
+
+    -- Q83
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is hydrography concerned with?', 'multiple_choice', 'Fresh water only', 'Ocean navigation aspects', 'Marine life', 'Water chemistry', 'B', 'Hydrography deals with navigation-related aspects of water bodies.');
+
+    -- Q84
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does physical oceanography study?', 'multiple_choice', 'Marine life only', 'Ocean basin extent and sea water movement', 'Water chemistry only', 'Atmospheric interactions only', 'B', 'It studies ocean basins, sea water movement, temperature and salinity.');
+
+    -- Q85
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the boundary between mesosphere and thermosphere called?', 'multiple_choice', 'Tropopause', 'Stratopause', 'Mesopause', 'Thermopause', 'C', 'The boundary is called mesopause.');
+
+    -- Q86
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Over which area does evaporation exceed precipitation?', 'multiple_choice', 'Land', 'Oceans', 'Lakes', 'Rivers', 'B', 'Over the oceans evaporation exceeds precipitation.');
+
+    -- Q87
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How is surplus land water transported to oceans?', 'multiple_choice', 'As vapor', 'As surface runoff through streams', 'Through groundwater', 'By animals', 'B', 'Surplus water is transported as surface runoff through streams.');
+
+    -- Q88
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which life forms are more numerous in the biosphere?', 'multiple_choice', 'Large animals', 'Visible plants', 'Microscopic life forms', 'Birds and mammals', 'C', 'Microscopic life forms are greater in number.');
+
+    -- Q89
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Into how many parts can the organic world be divided?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'The organic world can be divided into two parts: plants and animals.');
+
+    -- Q90
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are animals by nature?', 'multiple_choice', 'Autotrophic', 'Heterotrophic', 'Photosynthetic', 'Decomposers', 'B', 'Animals are heterotrophic in nature.');
+
+    -- Q91
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which group includes bacteria and blue-green algae?', 'multiple_choice', 'Protista', 'Monera', 'Metaphyta', 'Metazora', 'B', 'Monera includes primitive organisms like bacteria and blue-green algae.');
+
+    -- Q92
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which organisms lack inter-cellular organization?', 'multiple_choice', 'Monera', 'Protista', 'Metaphyta', 'Metazora', 'B', 'Protista lack inter-cellular organization and specialization.');
+
+    -- Q93
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which group includes true animals and humans?', 'multiple_choice', 'Monera', 'Protista', 'Metaphyta', 'Metazora', 'D', 'Metazora are the true animals including humans.');
+
+    -- Q94
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are the living components of ecosystems called?', 'multiple_choice', 'Abiotic components', 'Biotic components', 'Physical components', 'Chemical components', 'B', 'Living components are called biotic components.');
+
+    -- Q95
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are the main producers in ecosystems?', 'multiple_choice', 'Animals', 'Green plants', 'Fungi', 'Bacteria', 'B', 'Producers are mainly green plants.');
+
+    -- Q96
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Into how many groups can consumers be divided?', 'multiple_choice', 'Two', 'Three', 'Four', 'Five', 'B', 'Consumers can be divided into herbivores, carnivores and omnivores.');
+
+    -- Q97
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who regarded Europeans as brave but lacking in technical skills?', 'multiple_choice', 'Ratzel', 'Aristotle', 'Strahler', 'Gilpin', 'B', 'Aristotle held these views about Europeans and Asians.');
+
+    -- Q98
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are the three components of physical environment mentioned?', 'multiple_choice', 'Water, air, soil', 'Topography, climate, soil', 'Rocks, minerals, water', 'Plants, animals, humans', 'B', 'The three components are topography, climate and soil.');
+
+    -- Q99
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does possibilism emphasize?', 'multiple_choice', 'Environmental limits', 'Human freedom of action', 'Biological determinism', 'Climate control', 'B', 'Possibilism emphasizes human freedom within environmental limits.');
+
+    -- Q100
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What type of environment has restricted opportunities?', 'multiple_choice', 'Tropical environment', 'Marginal environment', 'Urban environment', 'Agricultural environment', 'B', 'Marginal environments have very restricted options.');
+
+       -- Q101
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the essence of determinism?', 'multiple_choice', 'Every effect has a cause', 'Humans control nature', 'Environment is irrelevant', 'Random events dominate', 'A', 'Determinism states that every effect has a cause in the physical environment.');
+
+    -- Q102
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which type of drought is defined by river discharge?', 'multiple_choice', 'Agricultural drought', 'Meteorological drought', 'Hydrological drought', 'Economic drought', 'C', 'Hydrologists define drought in terms of river discharge.');
+
+    -- Q103
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What shifts when albedo increases from 14% to 35%?', 'multiple_choice', 'Ocean currents', 'Intertropical Discontinuity (ITD)', 'Wind patterns', 'Rainfall distribution', 'B', 'Increasing albedo shifts the ITD boundary between air masses.');
+
+    -- Q104
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When was the serious famine caused by drought in Northern Nigeria?', 'multiple_choice', '1893', '1903', '1913', '1923', 'B', 'Serious famine occurred in 1903 due to drought.');
+
+    -- Q105
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many river basin authorities were initially established?', 'multiple_choice', 'Nine', 'Eleven', 'Nineteen', 'Twenty-one', 'B', 'Eleven river basin authorities were initially established in 1976.');
+
+    -- Q106
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which country has the most heavily forested area in the world?', 'multiple_choice', 'Poland', 'Switzerland', 'Finland', 'Nigeria', 'C', 'Finland is the most heavily forested country in the world.');
+
+    -- Q107
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Where was the Convention on Large Range Trans-boundary Air Pollution signed?', 'multiple_choice', 'Stockholm', 'Geneva', 'Ottawa', 'Amsterdam', 'B', 'Signed in Geneva in November 1979.');
+
+    -- Q108
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does AMCEN stand for?', 'multiple_choice', 'African Ministerial Conference on the Environment', 'American Conservation and Environment Network', 'Asian Marine Conservation and Environment', 'African Marine Conservation and Environment Network', 'A', 'AMCEN means African Ministerial Conference on the Environment.');
+
+    -- Q109
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does EWS stand for?', 'multiple_choice', 'Environmental Warning System', 'Early Warning System', 'Ecological Weather Service', 'Environmental Water Service', 'B', 'EWS stands for Early Warning System.');
+
+    -- Q110
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who invented the mercury barometer?', 'multiple_choice', 'Galileo', 'Newton', 'Toricelli', 'Einstein', 'C', 'Mercury Barometer was invented by Toricelli in 1943.');
+
+    -- Q111
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What type of floods are most dangerous?', 'multiple_choice', 'River floods', 'Flash floods', 'Coastal floods', 'Urban floods', 'C', 'Coastal floods are most dangerous due to compound hazards.');
+
+    -- Q112
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does civilization refer to in environmental context?', 'multiple_choice', 'Industrial development', 'Settlement and agriculture', 'Urbanization', 'Technological advancement', 'B', 'Civilization refers to when man settled and began agriculture.');
+
+    -- Q113
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which layer serves as medium for heat and water exchange?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Thermosphere', 'A', 'Troposphere serves for heat and water exchange between earth and atmosphere.');
+
+    -- Q114
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the main energy source for lithosphere?', 'multiple_choice', 'Solar energy', 'Radioactivity', 'Wind energy', 'Tidal energy', 'B', 'Radioactivity is the most important energy source in lithosphere.');
+
+    -- Q115
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What are created when minerals are exploited?', 'multiple_choice', 'Fertile lands', 'Scars on landscape', 'Water bodies', 'Forest areas', 'B', 'Scars are created on landscape from mineral exploitation.');
+
+    -- Q116
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the study of inland water called?', 'multiple_choice', 'Oceanography', 'Hydrology', 'Limnology', 'Hydrography', 'C', 'Limnology is the scientific study of lakes and fresh water.');
+
+    -- Q117
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What condenses to give precipitation on land?', 'multiple_choice', 'Dust', 'Water vapor', 'Oxygen', 'Carbon dioxide', 'B', 'Water vapor condenses to form precipitation.');
+
+    -- Q118
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT a biotic component?', 'multiple_choice', 'Producers', 'Consumers', 'Decomposers', 'Rocks', 'D', 'Rocks are abiotic components of ecosystem.');
+
+    -- Q119
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'In which layer does temperature increase with height?', 'multiple_choice', 'Troposphere', 'Stratosphere', 'Mesosphere', 'Homosphere', 'B', 'Stratosphere shows temperature increase with height.');
+
+    -- Q120
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the density of SIMA?', 'multiple_choice', '2.7g/cm³', '3.0g/cm³', '2.5g/cm³', '3.5g/cm³', 'B', 'Sima has a density of 3.0g/cm³.');
+
+    -- Q121
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does environmental science stress understanding of?', 'multiple_choice', 'Political systems', 'Natural systems', 'Economic systems', 'Social systems', 'B', 'Environmental science stresses understanding natural systems.');
+
+    -- Q122
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does a lake lose under acid precipitation?', 'multiple_choice', 'Water volume', 'Buffering capacity', 'Aquatic life', 'Mineral content', 'B', 'Lakes lose buffering capacity under acid precipitation.');
+
+    -- Q123
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who are major contributors to acid rain?', 'multiple_choice', 'Natural processes', 'Human activities', 'Animal activities', 'Plant processes', 'B', 'Human activities are major contributors to acid rain.');
+
+    -- Q124
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT a major ocean?', 'multiple_choice', 'Pacific Ocean', 'Atlantic Ocean', 'American Ocean', 'Indian Ocean', 'C', 'American Ocean is not one of the major oceans.');
+
+    -- Q125
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What type of flood is caused by convection storms?', 'multiple_choice', 'Long rain floods', 'Flash floods', 'Coastal floods', 'River floods', 'B', 'Flash floods result from convection storms.');
+
+    -- Q126
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many basic components does an ecosystem have?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'Ecosystems have two basic components: abiotic and biotic.');
+
+    -- Q127
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the boundary between troposphere and stratosphere?', 'multiple_choice', 'Mesopause', 'Stratopause', 'Tropopause', 'Thermopause', 'C', 'Tropopause is the boundary between troposphere and stratosphere.');
+
+    -- Q128
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which group is NOT in biosphere classification?', 'multiple_choice', 'Monera', 'Protista', 'Tantaphyta', 'Metazora', 'C', 'Tantaphyta is not one of the four recognized groups.');
+
+    -- Q129
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT an objective of environmental education?', 'multiple_choice', 'Awareness', 'Knowledge', 'Theory', 'Participation', 'C', 'Theory is not listed among the objectives of environmental education.');
+
+    -- Q130
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is NOT a factor influencing atmospheric composition?', 'multiple_choice', 'Altitude', 'Latitude', 'Scale', 'Time', 'C', 'Scale is not mentioned as a factor influencing atmospheric composition.');
+
+    -- Q131
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What minerals is the upper lithosphere rich in?', 'multiple_choice', 'Iron and copper', 'Alumina and silica', 'Gold and silver', 'Calcium and magnesium', 'B', 'Upper lithosphere is rich in alumina and silica (SIAL).');
+
+    -- Q132
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many people perished in Ogunpa flood?', 'multiple_choice', '500 persons', '1000 persons', '2000 persons', '3000 persons', 'C', 'Over 2000 persons perished in Ogunpa flood in 1980.');
+
+    -- Q133
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What important function does ozone perform?', 'multiple_choice', 'Produces rain', 'Absorbs UV radiation', 'Creates wind', 'Forms clouds', 'B', 'Ozone absorbs ultraviolet radiation harmful to living things.');
+
+    -- Q134
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What effect do aerosols have?', 'multiple_choice', 'Warming effect', 'Cooling effect', 'No effect', 'Humidity effect', 'B', 'Aerosols have a cooling effect on lower atmosphere temperature.');
+
+    -- Q135
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT a type of drought?', 'multiple_choice', 'Agricultural drought', 'Meteorological drought', 'Economic drought', 'Hydrological drought', 'C', 'Economic drought is not mentioned as a type of drought.');
+
+    -- Q136
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What can destroy ozone?', 'multiple_choice', 'Oxygen', 'Nitrogen oxides', 'Carbon dioxide', 'Water vapor', 'B', 'Ozone may be destroyed by nitrogen oxides.');
+
+    -- Q137
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does Rio 92 refer to?', 'multiple_choice', 'Stockholm Conference', 'Earth Summit', 'Ottawa Conference', 'Helsinki Conference', 'B', 'Rio 92 is popularly called the Earth Summit.');
+
+    -- Q138
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What results from global warming?', 'multiple_choice', 'More forests', 'Melting polar glaciers', 'Increased rainfall', 'Cooler temperatures', 'B', 'Global warming results in melting of polar glaciers.');
+
+    -- Q139
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What causes acidification of environment?', 'multiple_choice', 'Acid rain', 'Drought', 'Floods', 'Earthquakes', 'A', 'Acidification of environment can cause acid rain.');
+
+    -- Q140
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What always goes with industrialization?', 'multiple_choice', 'Deforestation', 'Acid rain pollution', 'Soil erosion', 'Water scarcity', 'B', 'Industrialization and acid rain pollution are twin brothers.');
+
+    -- Q141
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is water important for in geomorphic processes?', 'multiple_choice', 'Weathering', 'Erosion', 'Deposition', 'All of the above', 'D', 'Water is a geomorphic agent important for weathering, erosion and deposition.');
+
+    -- Q142
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What contains complex processes in environmental systems?', 'multiple_choice', 'Simple mechanisms', 'Complex processes', 'Basic elements', 'Straightforward systems', 'B', 'Environmental systems contain complex processes that must be understood.');
+
+    -- Q143
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the boundary between stratosphere and mesosphere?', 'multiple_choice', 'Tropopause', 'Stratopause', 'Mesopause', 'Thermopause', 'B', 'Stratopause is the boundary between stratosphere and mesosphere.');
+
+    -- Q144
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many persons per square kilometer in Nile Valley?', 'multiple_choice', '500', '700', '900', '1100', 'C', 'Nile Valley has about 900 persons per square kilometer.');
+
+    -- Q145
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What causes riverine floods?', 'multiple_choice', 'Earthquakes', 'Rainfall', 'Wind storms', 'Tidal waves', 'B', 'Riverine floods are caused by precipitation acting by rainfall.');
+
+    -- Q146
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the most paradoxical extreme event?', 'multiple_choice', 'Drought', 'Flood', 'Earthquake', 'Hurricane', 'B', 'Flood is the most paradoxical of all extreme events.');
+
+    -- Q147
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What effect does SO2 have on health?', 'multiple_choice', 'Beneficial', 'Dangerous', 'Neutral', 'Curative', 'B', 'SO2 can be said to have a dangerous effect on health.');
+
+    -- Q148
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the homosphere characterized by?', 'multiple_choice', 'Variable composition', 'Homogenous composition', 'Layered structure', 'Changing density', 'B', 'The fairly homogenous part is referred to as homosphere.');
+
+    -- Q149
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What was developed to explain human activity patterns?', 'multiple_choice', 'Environmental determinism', 'Biological theory', 'Economic theory', 'Social theory', 'A', 'Environmental determinism explains human activity patterns on earth surface.');
+
+    -- Q150
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the layer after troposphere?', 'multiple_choice', 'Mesosphere', 'Stratosphere', 'Thermosphere', 'Homosphere', 'B', 'The layer after troposphere is the stratosphere.');
+
+    -- Q151
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the origin of most crustal rocks?', 'multiple_choice', 'Sedimentary', 'Metamorphic', 'Igneous', 'Organic', 'C', 'Most rocks in earth''s crust are igneous in origin.');
+
+    -- Q152
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What gives way to stratosphere?', 'multiple_choice', 'Mesosphere', 'Troposphere', 'Thermosphere', 'Homosphere', 'B', 'Troposphere gives way to stratosphere at tropopause.');
+
+    -- Q153
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT an agent of weathering?', 'multiple_choice', 'Water', 'Wind', 'Atmosphere', 'Temperature', 'C', 'Atmosphere itself is not listed as a weathering agent.');
+
+    -- Q154
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What produces 3.5 million tons of SO2 per year?', 'multiple_choice', 'United States', 'United Kingdom', 'Soviet Union', 'China', 'B', 'United Kingdom produces about 3.5 million tons of SO2 yearly.');
+
+    -- Q155
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How many types of river floods did Ward recognize?', 'multiple_choice', 'One', 'Two', 'Three', 'Four', 'B', 'Ward recognized two types of river floods.');
+
+    -- Q156
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What locations are attractive for towns?', 'multiple_choice', 'Mountain tops', 'Desert areas', 'Riverbanks', 'Forest centers', 'C', 'Riverbanks have always been attractive locations for towns.');
+
+    -- Q157
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What can be beneficial if properly controlled?', 'multiple_choice', 'Droughts', 'Floods', 'Earthquakes', 'Volcanoes', 'B', 'Floods have beneficial uses if properly controlled and managed.');
+
+    -- Q158
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What will have planning implications?', 'multiple_choice', 'Climate change', 'Soil types', 'Rock formations', 'Animal migration', 'A', 'Climate change will have planning implications.');
+
+    -- Q159
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT caused by industrialization?', 'multiple_choice', 'Air pollution', 'Water pollution', 'Afforestation', 'Soil degradation', 'C', 'Afforestation is not caused by industrialization; it''s a conservation method.');
+
+    -- Q160
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is the only new thing about environmental science?', 'multiple_choice', 'Its methods', 'Its view points', 'Its tools', 'Its subjects', 'B', 'The only new thing about environmental science is its view points.');
+
+    -- Q161
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What does environmental science study stress?', 'multiple_choice', 'Natural systems', 'Political systems', 'Economic systems', 'Social systems', 'A', 'The study stresses understanding of natural systems.');
+
+    -- Q162
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What was the natural environment before?', 'multiple_choice', 'Cultural and social', 'Non-cultural and non-social', 'Industrial and technological', 'Urban and developed', 'B', 'Natural environment was non-cultural and non-social before man.');
+
+    -- Q163
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is earth''s crust known as?', 'multiple_choice', 'Atmosphere', 'Hydrosphere', 'Lithosphere', 'Biosphere', 'C', 'Earth''s crust is also known as lithosphere.');
+
+    -- Q164
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What do organisms interact with in ecosystems?', 'multiple_choice', 'Only each other', 'Physical environment', 'Only plants', 'Only animals', 'B', 'Organisms interact with each other and physical environment.');
+
+    -- Q165
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What is biosphere densely populated with?', 'multiple_choice', 'Rocks', 'Living organisms', 'Water bodies', 'Minerals', 'B', 'Biosphere is densely populated with living organisms.');
+
+    -- Q166
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Who defines drought by rainfall deviation?', 'multiple_choice', 'Hydrologists', 'Climatologists', 'Agriculturists', 'Economists', 'B', 'Climatologists define drought in terms of rainfall deviation.');
+
+    -- Q167
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'What boundaries do environmental disasters not recognize?', 'multiple_choice', 'Geographical', 'Political', 'Natural', 'Social', 'B', 'Environmental disasters do not recognize political boundaries.');
+
+    -- Q168
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'When was Stockholm UN Conference held?', 'multiple_choice', '1962', '1972', '1982', '1992', 'B', 'UN Conference on Human Environment was held in Stockholm in 1972.');
+
+    -- Q169
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'Which is NOT part of biotic components?', 'multiple_choice', 'Producers', 'Consumers', 'Intervention', 'Decomposers', 'C', 'Intervention is not a biotic component of ecosystems.');
+
+    -- Q170
+    INSERT INTO questions (course_id, question_text, question_type, option_a, option_b, option_c, option_d, correct_answer, explanation)
+    VALUES (v_course_id, 'How is climate defined?', 'multiple_choice', 'Daily weather', 'Synthesis of weather', 'Temperature only', 'Rainfall pattern', 'B', 'Climate can be defined as a synthesis or amalgam of weather.');
+
+    -- Final Fill in the Blank Questions (Q171-Q200)
+    -- These continue from the previous 30 fill-in-blank questions to complete the 15% requirement
+
+    -- Q171 (Continuing from previous fill-in-blank)
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The ______ environment includes everything that affects organism fulfillment.', 'fill_in_blank', 'effective', 'Effective environment influences organism fulfillment.');
+
+    -- Q172
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Environmental science orientation is towards ______ problems.', 'fill_in_blank', 'global', 'Environmental science focuses on global-scale problems.');
+
+    -- Q173
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The earth is seen as a set of ______ and interacting systems.', 'fill_in_blank', 'interlocking', 'Earth systems are interlocking and interacting.');
+
+    -- Q174
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Natural disasters include tornadoes, floods and ______.', 'fill_in_blank', 'earthquakes', 'Earthquakes are among natural disasters mentioned.');
+
+    -- Q175
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The four realms are lithosphere, atmosphere, hydrosphere and ______.', 'fill_in_blank', 'biosphere', 'Biosphere is the fourth realm of environment.');
+
+    -- Q176
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'IUCN was established in ______.', 'fill_in_blank', '1949', 'International Union for Conservation of Nature started in 1949.');
+
+    -- Q177
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The Stockholm Conference was attended by ______ nations.', 'fill_in_blank', '113', '113 nations attended the 1972 Stockholm Conference.');
+
+    -- Q178
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The Belgrade workshop was held in October ______.', 'fill_in_blank', '1975', 'International Workshop on Environmental Education in Belgrade, 1975.');
+
+    -- Q179
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The atmosphere is held by ______ forces.', 'fill_in_blank', 'gravitational', 'Gravitational forces keep atmosphere attached to Earth.');
+
+    -- Q180
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The homosphere extends to about ______ km altitude.', 'fill_in_blank', '80', 'Homosphere composition is uniform up to 80km.');
+
+    -- Q181
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Oxygen constitutes about ______% of atmosphere.', 'fill_in_blank', '20.95', 'Oxygen makes up 20.95% of atmospheric composition.');
+
+    -- Q182
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Dense gases are found in the ______ atmospheric layer.', 'fill_in_blank', 'lower', 'Lower atmosphere contains dense gases up to 15km.');
+
+    -- Q183
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Atmospheric structure is based on ______ variations.', 'fill_in_blank', 'temperature', 'Temperature defines atmospheric layer structure.');
+
+    -- Q184
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The temperature decrease rate in troposphere is called ______.', 'fill_in_blank', 'Environmental Lapse Rate', 'Environmental Lapse Rate describes temperature decrease with height.');
+
+    -- Q185
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The ______ contains the ozone layer.', 'fill_in_blank', 'stratosphere', 'Stratosphere is characterized by ozone concentration.');
+
+    -- Q186
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Lithosphere consists of ______ and SIMA.', 'fill_in_blank', 'SIAL', 'SIAL and SIMA are the two lithosphere components.');
+
+    -- Q187
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Radioactive energy comes from ______ decay.', 'fill_in_blank', 'radioisotope', 'Radioisotope decay generates lithosphere energy.');
+
+    -- Q188
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Most crustal rocks are ______ in origin.', 'fill_in_blank', 'igneous', 'Igneous rocks dominate Earth''s crust.');
+
+    -- Q189
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Soil is crucial for man''s ______ supply.', 'fill_in_blank', 'food', 'Soil as plant growth medium is vital for food supply.');
+
+    -- Q190
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Water occurs naturally in ______ states.', 'fill_in_blank', 'three', 'Water exists as solid, liquid, and gas naturally.');
+
+    -- Q191
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The boiling point of water is ______°C.', 'fill_in_blank', '100', 'Water boils at 100°C at standard pressure.');
+
+    -- Q192
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Plants take nutrients in ______.', 'fill_in_blank', 'solution', 'Plants absorb nutrients dissolved in water.');
+
+    -- Q193
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Water is a ______ solvent.', 'fill_in_blank', 'universal', 'Water''s properties make it a universal solvent.');
+
+    -- Q194
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The hydrological cycle has ______ phases.', 'fill_in_blank', 'two', 'Land and ocean phases comprise hydrological cycle.');
+
+    -- Q195
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Biosphere is also called ______ world.', 'fill_in_blank', 'organic', 'Organic world refers to the biosphere.');
+
+    -- Q196
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Self-nourishing organisms are called ______.', 'fill_in_blank', 'autotrophes', 'Autotrophes produce their own food.');
+
+    -- Q197
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'The four biosphere groups include Monera, Protista, Metaphyta and ______.', 'fill_in_blank', 'Metazora', 'Metazora completes the four-group classification.');
+
+    -- Q198
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Ecosystems have ______ basic components.', 'fill_in_blank', 'two', 'Abiotic and biotic components make up ecosystems.');
+
+    -- Q199
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Environmental ______ emphasizes physical environment as primary determinant.', 'fill_in_blank', 'determinism', 'Determinism sees environment as main behavior influence.');
+
+    -- Q200
+    INSERT INTO questions (course_id, question_text, question_type, correct_answer, explanation)
+    VALUES (v_course_id, 'Possibilism philosophy says nature is ______ but permissive.', 'fill_in_blank', 'not mandatory', 'Nature sets limits but allows choices within them.');
+
+END $$;
