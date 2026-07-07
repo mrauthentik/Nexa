@@ -742,11 +742,34 @@ export const supportAPI = {
 
 // Learn API
 export const learnAPI = {
-    generateContent: async (type: 'audio-script' | 'quiz' | 'mindmap', content: string, title: string, courseCode?: string) => {
+    generateContent: async (
+        type: 'audio-script' | 'quiz' | 'mindmap',
+        content: string,
+        title: string,
+        courseCode?: string,
+        audioMode?: 'full' | 'key-points',
+        existingKeyPoints?: any[]
+    ) => {
+        // Pre-truncate content to 40,000 chars before sending.
+        // Supabase edge functions have a ~1MB body limit — sending full PDF text
+        // causes "Unexpected end of JSON input" when the body is cut off mid-stream.
+        // The edge function does its own smart sampling internally so quality is unchanged.
+        const MAX_CONTENT_CHARS = 40_000;
+        const safeContent = content.length > MAX_CONTENT_CHARS
+            ? content.substring(0, MAX_CONTENT_CHARS)
+            : content;
+
         const response = await fetch(`${FUNCTIONS_URL}/generate-learn-content`, {
             method: 'POST',
             headers: await getAuthHeaders(),
-            body: JSON.stringify({ type, content, title, courseCode }),
+            body: JSON.stringify({
+                type,
+                content: safeContent,
+                title,
+                courseCode,
+                mode: audioMode || 'full',
+                existingKeyPoints: existingKeyPoints || [],
+            }),
         });
 
         if (!response.ok) {
@@ -756,7 +779,18 @@ export const learnAPI = {
         return response.json();
     },
 
-    saveModule: async (data: any) => {
+    saveModule: async (data: {
+        title: string;
+        course_code: string;
+        source_type: 'summary' | 'upload';
+        source_id: string;
+        content_type: string;
+        content: any;
+        key_points?: any[];
+        audio_mode?: 'full' | 'key-points';
+        audio_url?: string | null;
+        word_count?: number | null;
+    }) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('No user found');
 
@@ -771,6 +805,16 @@ export const learnAPI = {
 
         if (error) throw error;
         return saved;
+    },
+
+    // Update key_points on an existing module (for refinement on regeneration)
+    updateModuleKeyPoints: async (id: string, keyPoints: any[]) => {
+        const { error } = await supabase
+            .from('learn_modules')
+            .update({ key_points: keyPoints })
+            .eq('id', id);
+        if (error) throw error;
+        return true;
     },
 
     getModules: async () => {
