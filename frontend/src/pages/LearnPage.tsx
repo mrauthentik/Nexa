@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import DashboardLayout from '../components/DashboardLayout';
 import {
@@ -21,7 +21,12 @@ import {
     Zap,
     AlertTriangle,
     Trash,
-    Trash2
+    Trash2,
+    ChevronDown,
+    ChevronUp,
+    ListChecks,
+    Clock,
+    Mic2
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { summariesAPI, learnAPI, uploadsAPI } from '../services/api';
@@ -41,6 +46,13 @@ import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // Types
+interface KeyPointSection {
+    topic: string;
+    summary: string;
+    keyTakeaways: string[];
+    example?: string;
+}
+
 interface LearnModule {
     id: string;
     title: string;
@@ -52,6 +64,10 @@ interface LearnModule {
     created_at?: string;
     source_id?: string;
     source_type?: 'summary' | 'upload';
+    key_points?: KeyPointSection[];
+    audio_mode?: 'full' | 'key-points';
+    audio_url?: string | null;
+    word_count?: number | null;
 }
 
 interface UserUpload {
@@ -97,12 +113,28 @@ const LearnPage = () => {
     const nodeTypes = useMemo(() => ({}), []);
     const edgeTypes = useMemo(() => ({}), []);
 
-    // Audio Player Professional Controls
+    // Audio Player Controls
     const [speechRate, setSpeechRate] = useState(1.0);
     const [speechPitch, setSpeechPitch] = useState(1.0);
     const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
     const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [showAudioSettings, setShowAudioSettings] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(0); // 0-100
+    const [audioDuration, setAudioDuration] = useState(0);
+    const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Audio Mode Selection Modal
+    const [audioModeModal, setAudioModeModal] = useState<{
+        show: boolean;
+        sourceId: string;
+        sourceType: 'summary' | 'upload';
+    } | null>(null);
+    const [selectedAudioMode, setSelectedAudioMode] = useState<'full' | 'key-points'>('key-points');
+
+    // Player expansion panels
+    const [showKeyPoints, setShowKeyPoints] = useState(true);
+    const [showScriptPreview, setShowScriptPreview] = useState(false);
 
     // Confirmation Modal State
     const [confirmModal, setConfirmModal] = useState<{
@@ -177,7 +209,11 @@ const LearnPage = () => {
                     content: m.content,
                     created_at: m.created_at,
                     source_id: m.source_id,
-                    source_type: m.source_type
+                    source_type: m.source_type,
+                    key_points: m.key_points || [],
+                    audio_mode: m.audio_mode || 'full',
+                    audio_url: m.audio_url || null,
+                    word_count: m.word_count || null,
                 }));
                 setModules(mappedModules);
             }
@@ -240,7 +276,12 @@ const LearnPage = () => {
         }
     }, []);
 
-    const handleGenerateContent = async (sourceId: string, sourceType: 'summary' | 'upload', type: 'audio-script' | 'quiz' | 'mindmap') => {
+    const handleGenerateContent = async (
+        sourceId: string,
+        sourceType: 'summary' | 'upload',
+        type: 'audio-script' | 'quiz' | 'mindmap',
+        audioMode?: 'full' | 'key-points'
+    ) => {
         let sourceTitle = '';
         let sourceContent = '';
         let courseCode = 'General';
@@ -250,7 +291,6 @@ const LearnPage = () => {
             if (!summary) return;
             sourceTitle = summary.title;
             courseCode = summary.course_code;
-            // Build full text
             sourceContent = summary.description || '';
             if (summary.summary_sections) {
                 summary.summary_sections.forEach((section: any) => {
@@ -269,19 +309,33 @@ const LearnPage = () => {
             sourceContent = upload.content;
         }
 
+        // For audio regeneration, try to reuse existing key points from a prior module
+        // to skip Stage 1 and speed up generation
+        let existingKeyPoints: KeyPointSection[] | undefined;
+        if (type === 'audio-script') {
+            const priorModule = modules.find(
+                m => m.source_id === sourceId && m.type === 'audio-script' && m.key_points && m.key_points.length > 0
+            );
+            if (priorModule?.key_points) {
+                existingKeyPoints = priorModule.key_points;
+            }
+        }
+
         setIsProcessing(true);
-        let toastId = toast.loading(`Generating ${type.replace('-', ' ')}...`);
+        const modeLabel = audioMode === 'key-points' ? 'Key Points Audio' : audioMode === 'full' ? 'Full Lecture Audio' : type.replace('-', ' ');
+        let toastId = toast.loading(`Generating ${modeLabel}...`);
 
         try {
             const data = await learnAPI.generateContent(
                 type,
                 sourceContent,
                 sourceTitle,
-                courseCode
+                courseCode,
+                audioMode,
+                existingKeyPoints
             );
 
             let content = data.result;
-            // Parse JSON if needed
             if (type === 'quiz' || type === 'mindmap') {
                 if (typeof content === 'string') {
                     try {
@@ -292,17 +346,21 @@ const LearnPage = () => {
                 }
             }
 
-            // Save to DB
             const savedModule = await learnAPI.saveModule({
-                title: `${sourceTitle} - ${type === 'audio-script' ? 'Audio' : type === 'quiz' ? 'Quiz' : 'Mind Map'}`,
+                title: `${sourceTitle} - ${type === 'audio-script'
+                    ? (audioMode === 'key-points' ? '⚡ Key Points' : '🎙️ Full Lecture')
+                    : type === 'quiz' ? 'Quiz' : 'Mind Map'}`,
                 course_code: courseCode,
                 source_type: sourceType,
                 source_id: sourceId,
                 content_type: type === 'audio-script' ? 'audio' : type,
-                content: content
+                content: content,
+                key_points: data.keyPoints || [],
+                audio_mode: data.mode || audioMode || 'full',
+                audio_url: data.audioUrl || null,
+                word_count: data.wordCount || null,
             });
 
-            // Add to local state
             const newModule: LearnModule = {
                 id: savedModule.id,
                 title: savedModule.title,
@@ -312,11 +370,15 @@ const LearnPage = () => {
                 content: content,
                 created_at: savedModule.created_at,
                 source_id: sourceId,
-                source_type: sourceType
+                source_type: sourceType,
+                key_points: data.keyPoints || [],
+                audio_mode: data.mode || audioMode || 'full',
+                audio_url: data.audioUrl || null,
+                word_count: data.wordCount || null,
             };
 
             setModules([newModule, ...modules]);
-            toast.success(`${type} generated successfully!`, { id: toastId });
+            toast.success(`${modeLabel} generated!`, { id: toastId });
             openModule(newModule);
 
         } catch (error) {
@@ -327,8 +389,35 @@ const LearnPage = () => {
         }
     };
 
+    // Called when user clicks "Audio" — opens the mode selector modal
+    const handleAudioButtonClick = (sourceId: string, sourceType: 'summary' | 'upload') => {
+        setAudioModeModal({ show: true, sourceId, sourceType });
+        setSelectedAudioMode('key-points'); // Default to key points
+    };
+
+    // Confirm from mode modal — start generation
+    const handleAudioModeConfirm = () => {
+        if (!audioModeModal) return;
+        setAudioModeModal(null);
+        handleGenerateContent(audioModeModal.sourceId, audioModeModal.sourceType, 'audio-script', selectedAudioMode);
+    };
+
+    // Helper: estimate listen time from word count
+    const getEstimatedTime = (wordCount?: number | null): string => {
+        if (!wordCount) return '';
+        const minutes = Math.round(wordCount / 150); // ~150 wpm for TTS
+        return minutes < 1 ? '<1 min' : `~${minutes} min`;
+    };
+
     const openModule = (module: LearnModule) => {
         setSelectedModule(module);
+        // Reset audio progress state when switching modules
+        setAudioProgress(0);
+        setAudioCurrentTime(0);
+        setAudioDuration(0);
+        setIsPlaying(false);
+        setShowKeyPoints(true);
+        setShowScriptPreview(false);
         if (module.type === 'audio-script') {
             setActiveTab('player');
             setIsPlaying(true);
@@ -551,50 +640,122 @@ const LearnPage = () => {
         }
     };
 
-    /* Audio Player Logic */
+    /* Audio Player Logic — ElevenLabs audio (primary) + Web Speech API (fallback) */
+
+    // Load Web Speech voices (used as fallback)
     useEffect(() => {
-        let utterance: SpeechSynthesisUtterance | null = null;
-        const synth = window.speechSynthesis;
-
-        if (activeTab === 'player' && isPlaying && selectedModule?.type === 'audio-script') {
-            synth.cancel();
-
-            const rawText = typeof selectedModule.content === 'string'
-                ? selectedModule.content
-                : (selectedModule.content.result || "No audio content available.");
-
-            // Clean markdown characters like **, #, -, etc. so the TTS doesn't read them
-            const textToRead = rawText
-                .replace(/\*\*/g, '') // bold
-                .replace(/\*/g, '')   // italic
-                .replace(/#/g, '')    // headers
-                .replace(/__/g, '')   // underline
-                .replace(/`/g, '')    // code
-                .trim();
-
-            utterance = new SpeechSynthesisUtterance(textToRead);
-            utterance.rate = speechRate;
-            utterance.pitch = speechPitch;
-
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            setAvailableVoices(englishVoices.length > 0 ? englishVoices : voices);
+            if (!selectedVoice && voices.length > 0) {
+                const preferred = voices.find(v =>
+                    v.name.includes('Google') ||
+                    v.name.includes('Samantha') ||
+                    v.name.includes('Microsoft')
+                );
+                setSelectedVoice(preferred || englishVoices[0] || voices[0]);
             }
+        };
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }, []);
 
-            utterance.onend = () => setIsPlaying(false);
-            utterance.onerror = (e) => {
-                console.error("Speech error", e);
-                setIsPlaying(false);
+    // When module changes, wire up the audio element if ElevenLabs audio URL exists
+    useEffect(() => {
+        if (!selectedModule || selectedModule.type !== 'audio-script') return;
+
+        const audioUrl = selectedModule.audio_url;
+        if (audioUrl) {
+            // Use ElevenLabs audio
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            const audio = new Audio(audioUrl);
+            audio.playbackRate = speechRate;
+            audio.ontimeupdate = () => {
+                setAudioCurrentTime(audio.currentTime);
+                if (audio.duration) {
+                    setAudioProgress((audio.currentTime / audio.duration) * 100);
+                }
             };
-
-            synth.speak(utterance);
-        } else {
-            synth.cancel();
+            audio.onloadedmetadata = () => setAudioDuration(audio.duration);
+            audio.onended = () => setIsPlaying(false);
+            audioRef.current = audio;
         }
 
         return () => {
-            synth.cancel();
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+            window.speechSynthesis.cancel();
+        };
+    }, [selectedModule]);
+
+    // Handle play/pause
+    useEffect(() => {
+        if (!selectedModule || selectedModule.type !== 'audio-script') {
+            window.speechSynthesis.cancel();
+            if (audioRef.current) audioRef.current.pause();
+            return;
+        }
+
+        if (selectedModule.audio_url && audioRef.current) {
+            // ElevenLabs path
+            audioRef.current.playbackRate = speechRate;
+            if (isPlaying) {
+                audioRef.current.play().catch(e => {
+                    console.error('Audio play error', e);
+                    setIsPlaying(false);
+                });
+            } else {
+                audioRef.current.pause();
+            }
+        } else {
+            // Web Speech API fallback
+            const synth = window.speechSynthesis;
+            if (isPlaying && activeTab === 'player') {
+                synth.cancel();
+                const rawText = typeof selectedModule.content === 'string'
+                    ? selectedModule.content
+                    : (selectedModule.content.result || 'No audio content available.');
+                const textToRead = rawText
+                    .replace(/\*\*/g, '').replace(/\*/g, '').replace(/#/g, '')
+                    .replace(/__/g, '').replace(/`/g, '').trim();
+
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                utterance.rate = speechRate;
+                utterance.pitch = speechPitch;
+                if (selectedVoice) utterance.voice = selectedVoice;
+                utterance.onend = () => setIsPlaying(false);
+                utterance.onerror = () => setIsPlaying(false);
+                synth.speak(utterance);
+            } else {
+                synth.cancel();
+            }
+        }
+
+        return () => {
+            window.speechSynthesis.cancel();
         };
     }, [isPlaying, activeTab, selectedModule, speechRate, speechPitch, selectedVoice]);
+
+    // Audio seek handler
+    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = parseFloat(e.target.value);
+        setAudioProgress(val);
+        if (audioRef.current && audioDuration) {
+            audioRef.current.currentTime = (val / 100) * audioDuration;
+        }
+    };
+
+    // Format seconds to mm:ss
+    const formatTime = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
 
 
     if (loading) return <DashboardLayout currentPage="/learn"><LoadingSpinner /></DashboardLayout>;
@@ -677,7 +838,7 @@ const LearnPage = () => {
                                                 <div className="flex gap-2 mt-2">
                                                     <button
                                                         disabled={isProcessing}
-                                                        onClick={() => handleGenerateContent(upload.id, 'upload', 'audio-script')}
+                                                        onClick={() => handleAudioButtonClick(upload.id, 'upload')}
                                                         className="flex-1 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                                     >
                                                         <Headphones size={14} /> Audio
@@ -713,7 +874,7 @@ const LearnPage = () => {
                                                 <div className="flex gap-2 mt-2">
                                                     <button
                                                         disabled={isProcessing}
-                                                        onClick={() => handleGenerateContent(summary.id, 'summary', 'audio-script')}
+                                                        onClick={() => handleAudioButtonClick(summary.id, 'summary')}
                                                         className="flex-1 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                                     >
                                                         <Headphones size={14} /> Audio
@@ -790,156 +951,239 @@ const LearnPage = () => {
 
                     {/* PLAYER VIEW */}
                     {activeTab === 'player' && selectedModule && (
-                        <div className="h-full flex flex-col items-center justify-center p-8 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-                            <div className="w-full max-w-2xl text-center z-10">
+                        <div className="h-full overflow-y-auto custom-scrollbar">
+                            <div className="max-w-2xl mx-auto p-6 pb-12">
+
+                                {/* Mode Badge + Estimated Time */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                        selectedModule.audio_mode === 'key-points'
+                                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                    }`}>
+                                        {selectedModule.audio_mode === 'key-points' ? <Zap size={12} /> : <Mic2 size={12} />}
+                                        {selectedModule.audio_mode === 'key-points' ? 'Key Points' : 'Full Lecture'}
+                                    </span>
+                                    {selectedModule.word_count && (
+                                        <span className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+                                            <Clock size={12} />
+                                            {getEstimatedTime(selectedModule.word_count)} listen
+                                        </span>
+                                    )}
+                                </div>
+
                                 {/* Album Art / Visualizer */}
-                                <div className="relative w-56 h-56 mx-auto mb-8 group">
-                                    <div className={`absolute inset-0 rounded-full bg-blue-500 blur-3xl opacity-20 transition-opacity duration-1000 ${isPlaying ? 'opacity-50 animate-pulse' : ''}`}></div>
-                                    <div className={`relative w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-gray-700 shadow-2xl flex items-center justify-center overflow-hidden transition-transform duration-500 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '10s' }}>
-                                        {/* Visualizer Lines */}
+                                <div className="relative w-40 h-40 mx-auto mb-6">
+                                    <div className={`absolute inset-0 rounded-full blur-3xl transition-opacity duration-1000 ${
+                                        selectedModule.audio_mode === 'key-points'
+                                            ? 'bg-amber-500 opacity-20'
+                                            : 'bg-blue-500 opacity-20'
+                                    } ${isPlaying ? 'opacity-50 animate-pulse' : ''}`}></div>
+                                    <div className={`relative w-full h-full rounded-full bg-gradient-to-tr from-gray-800 to-gray-900 border-4 border-gray-700 shadow-2xl flex items-center justify-center overflow-hidden ${
+                                        isPlaying ? 'animate-spin' : ''
+                                    }`} style={{ animationDuration: '12s' }}>
                                         {isPlaying && (
-                                            <div className="absolute inset-x-0 bottom-0 h-1/2 flex items-end justify-center gap-1 opacity-50">
-                                                {[...Array(10)].map((_, i) => (
-                                                    <div key={i} className="w-2 bg-blue-500 rounded-t-full animate-bounce" style={{ height: `${Math.random() * 50 + 20}%`, animationDuration: `${Math.random() * 0.5 + 0.5}s` }}></div>
+                                            <div className="absolute inset-x-0 bottom-0 h-1/2 flex items-end justify-center gap-1 opacity-40">
+                                                {[...Array(8)].map((_, i) => (
+                                                    <div key={i} className={`w-2 rounded-t-full animate-bounce ${
+                                                        selectedModule.audio_mode === 'key-points' ? 'bg-amber-400' : 'bg-blue-500'
+                                                    }`} style={{ height: `${Math.random() * 50 + 20}%`, animationDuration: `${Math.random() * 0.5 + 0.5}s` }}></div>
                                                 ))}
                                             </div>
                                         )}
-                                        <Headphones size={70} className="text-white relative z-10" />
+                                        <Headphones size={56} className="text-white relative z-10" />
                                     </div>
                                 </div>
 
-                                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{selectedModule.title}</h2>
-                                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-sm font-medium mb-6">
-                                    {selectedVoice?.name || 'Audio Lesson'}
-                                </span>
+                                <h2 className="text-xl font-bold mb-1 text-gray-900 dark:text-white text-center">{selectedModule.title}</h2>
 
-                                {/* Playback Controls */}
-                                <div className="flex items-center justify-center gap-6 mb-6">
-                                    <button className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                                        <Rewind size={24} />
-                                    </button>
-                                    <button
-                                        onClick={() => setIsPlaying(!isPlaying)}
-                                        className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all"
-                                    >
-                                        {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-                                    </button>
-                                    <button className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                                        <SkipForward size={24} />
-                                    </button>
-                                    <button
-                                        onClick={() => setShowAudioSettings(!showAudioSettings)}
-                                        className={`p-3 rounded-full transition-all ${showAudioSettings ? 'bg-blue-100 dark:bg-blue-900 text-blue-600' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                                    >
-                                        <Settings2 size={24} />
-                                    </button>
+                                {/* ElevenLabs or Fallback Badge */}
+                                <div className="flex justify-center mb-5">
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                                        selectedModule.audio_url
+                                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                    }`}>
+                                        <Volume2 size={11} />
+                                        {selectedModule.audio_url ? 'ElevenLabs AI Voice' : (selectedVoice?.name || 'Browser Voice (Fallback)')}
+                                    </span>
                                 </div>
 
-                                {/* Audio Settings Panel */}
-                                {showAudioSettings && (
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mb-6 shadow-lg border border-gray-200 dark:border-gray-700 text-left animate-in fade-in duration-200">
-                                        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                            <Volume2 size={16} />
-                                            Audio Settings
-                                        </h3>
-
-                                        {/* Speed Control */}
-                                        <div className="mb-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Speed</label>
-                                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{speechRate.toFixed(1)}x</span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="0.5"
-                                                max="2"
-                                                step="0.1"
-                                                value={speechRate}
-                                                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                            />
-                                            <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                                <span>Slow</span>
-                                                <span>Normal</span>
-                                                <span>Fast</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Pitch Control */}
-                                        <div className="mb-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pitch</label>
-                                                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{speechPitch.toFixed(1)}</span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="0.5"
-                                                max="2"
-                                                step="0.1"
-                                                value={speechPitch}
-                                                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
-                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                            />
-                                            <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                                <span>Deep</span>
-                                                <span>Normal</span>
-                                                <span>High</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Voice Selection */}
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Voice</label>
-                                            <select
-                                                value={selectedVoice?.name || ''}
-                                                onChange={(e) => {
-                                                    const voice = availableVoices.find(v => v.name === e.target.value);
-                                                    if (voice) setSelectedVoice(voice);
-                                                }}
-                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                            >
-                                                {availableVoices.map(voice => (
-                                                    <option key={voice.name} value={voice.name}>
-                                                        {voice.name} ({voice.lang})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {/* Quick Presets */}
-                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Quick Presets</label>
-                                            <div className="flex gap-2 flex-wrap">
-                                                <button
-                                                    onClick={() => { setSpeechRate(0.8); setSpeechPitch(1.0); }}
-                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                                >
-                                                    <BookOpen size={14} />
-                                                    Study Mode
-                                                </button>
-                                                <button
-                                                    onClick={() => { setSpeechRate(1.0); setSpeechPitch(1.0); }}
-                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                                >
-                                                    <Headphones size={14} />
-                                                    Normal
-                                                </button>
-                                                <button
-                                                    onClick={() => { setSpeechRate(1.5); setSpeechPitch(1.0); }}
-                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                                >
-                                                    <Zap size={14} />
-                                                    Speed Review
-                                                </button>
-                                            </div>
+                                {/* Progress Bar (ElevenLabs only) */}
+                                {selectedModule.audio_url && (
+                                    <div className="mb-4">
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            step="0.1"
+                                            value={audioProgress}
+                                            onChange={handleSeek}
+                                            className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-600"
+                                        />
+                                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                            <span>{formatTime(audioCurrentTime)}</span>
+                                            <span>{formatTime(audioDuration)}</span>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Transcript */}
-                                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 max-h-32 overflow-y-auto text-left text-sm text-gray-600 dark:text-gray-300 font-medium leading-relaxed custom-scrollbar">
-                                    <p className="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Transcript</p>
-                                    {typeof selectedModule.content === 'string' ? selectedModule.content : selectedModule.content?.result}
+                                {/* Playback Controls */}
+                                <div className="flex items-center justify-center gap-5 mb-5">
+                                    <button
+                                        onClick={() => {
+                                            if (audioRef.current) audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 15);
+                                        }}
+                                        className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                                        title="Rewind 15s"
+                                    >
+                                        <Rewind size={22} />
+                                    </button>
+                                    <button
+                                        onClick={() => setIsPlaying(!isPlaying)}
+                                        className={`w-16 h-16 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all ${
+                                            selectedModule.audio_mode === 'key-points'
+                                                ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30'
+                                                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
+                                        }`}
+                                    >
+                                        {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (audioRef.current) audioRef.current.currentTime = Math.min(audioDuration, audioRef.current.currentTime + 30);
+                                        }}
+                                        className="p-3 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                                        title="Skip 30s"
+                                    >
+                                        <SkipForward size={22} />
+                                    </button>
+                                    <button
+                                        onClick={() => setShowAudioSettings(!showAudioSettings)}
+                                        className={`p-3 rounded-full transition-all ${
+                                            showAudioSettings
+                                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600'
+                                                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                                        }`}
+                                        title="Settings"
+                                    >
+                                        <Settings2 size={22} />
+                                    </button>
+                                </div>
+
+                                {/* Speed Presets (always visible, compact) */}
+                                <div className="flex justify-center gap-2 mb-5">
+                                    {[0.75, 1.0, 1.25, 1.5, 2.0].map(rate => (
+                                        <button
+                                            key={rate}
+                                            onClick={() => {
+                                                setSpeechRate(rate);
+                                                if (audioRef.current) audioRef.current.playbackRate = rate;
+                                            }}
+                                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
+                                                speechRate === rate
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                            }`}
+                                        >
+                                            {rate}×
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Audio Settings Panel (Pitch + Voice) */}
+                                {showAudioSettings && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mb-4 shadow-lg border border-gray-200 dark:border-gray-700 text-left">
+                                        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                            <Volume2 size={14} /> Fallback Voice Settings
+                                        </h3>
+                                        <div className="mb-4">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pitch</label>
+                                                <span className="text-sm font-bold text-blue-600">{speechPitch.toFixed(1)}</span>
+                                            </div>
+                                            <input type="range" min="0.5" max="2" step="0.1" value={speechPitch}
+                                                onChange={(e) => setSpeechPitch(parseFloat(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Voice</label>
+                                            <select
+                                                value={selectedVoice?.name || ''}
+                                                onChange={(e) => { const v = availableVoices.find(v => v.name === e.target.value); if (v) setSelectedVoice(v); }}
+                                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                            >
+                                                {availableVoices.map(voice => (
+                                                    <option key={voice.name} value={voice.name}>{voice.name} ({voice.lang})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Key Points Panel */}
+                                {selectedModule.key_points && selectedModule.key_points.length > 0 && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+                                        <button
+                                            onClick={() => setShowKeyPoints(!showKeyPoints)}
+                                            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                        >
+                                            <span className="flex items-center gap-2 font-semibold text-gray-800 dark:text-white text-sm">
+                                                <ListChecks size={16} className="text-blue-500" />
+                                                Key Concepts Covered ({selectedModule.key_points.length})
+                                            </span>
+                                            {showKeyPoints ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                                        </button>
+                                        {showKeyPoints && (
+                                            <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-3">
+                                                {selectedModule.key_points.map((kp, i) => (
+                                                    <div key={i} className="flex gap-3">
+                                                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center mt-0.5">
+                                                            {i + 1}
+                                                        </span>
+                                                        <div className="flex-1">
+                                                            <p className="font-semibold text-sm text-gray-900 dark:text-white mb-0.5">{kp.topic}</p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">{kp.summary}</p>
+                                                            <ul className="space-y-1">
+                                                                {kp.keyTakeaways.map((t, ti) => (
+                                                                    <li key={ti} className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+                                                                        <span className="text-blue-500 mt-0.5">•</span>
+                                                                        {t}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                            {kp.example && (
+                                                                <p className="mt-2 text-xs italic text-gray-400 dark:text-gray-500">💡 {kp.example}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Script Preview */}
+                                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                    <button
+                                        onClick={() => setShowScriptPreview(!showScriptPreview)}
+                                        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                    >
+                                        <span className="flex items-center gap-2 font-semibold text-gray-800 dark:text-white text-sm">
+                                            <FileText size={16} className="text-gray-400" />
+                                            View Script
+                                        </span>
+                                        {showScriptPreview ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                                    </button>
+                                    {showScriptPreview && (
+                                        <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700 pt-3 max-h-64 overflow-y-auto custom-scrollbar">
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-wrap">
+                                                {typeof selectedModule.content === 'string'
+                                                    ? selectedModule.content
+                                                    : selectedModule.content?.result}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1281,6 +1525,95 @@ const LearnPage = () => {
                         <div className="mt-6 flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg text-sm text-gray-500">
                             <Sparkles size={16} className="mt-0.5 text-yellow-500" />
                             <p>Our AI will analyze your document and create personalized learning content instantly.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AUDIO MODE SELECTION MODAL */}
+            {audioModeModal?.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between mb-5">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Choose Audio Style</h2>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">How should Nexa narrate this content?</p>
+                            </div>
+                            <button onClick={() => setAudioModeModal(null)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            {/* Key Points Card */}
+                            <button
+                                onClick={() => setSelectedAudioMode('key-points')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                                    selectedAudioMode === 'key-points'
+                                        ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-amber-300'
+                                }`}
+                            >
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                                    selectedAudioMode === 'key-points'
+                                        ? 'bg-amber-500 text-white'
+                                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'
+                                }`}>
+                                    <Zap size={20} />
+                                </div>
+                                <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">Key Points</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                    AI selects the most important concepts and narrates them in a focused, punchy episode (~5–8 min).
+                                </p>
+                                <span className="inline-block mt-3 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold rounded-full">
+                                    ⚡ Recommended
+                                </span>
+                            </button>
+
+                            {/* Full Lecture Card */}
+                            <button
+                                onClick={() => setSelectedAudioMode('full')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${
+                                    selectedAudioMode === 'full'
+                                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                }`}
+                            >
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                                    selectedAudioMode === 'full'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600'
+                                }`}>
+                                    <Mic2 size={20} />
+                                </div>
+                                <p className="font-bold text-gray-900 dark:text-white text-sm mb-1">Full Lecture</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                    Deep narration of the entire document with examples, analogies, and transitions. Like a professor's class (~15–20 min).
+                                </p>
+                                <span className="inline-block mt-3 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
+                                    🎙️ Comprehensive
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setAudioModeModal(null)}
+                                className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAudioModeConfirm}
+                                className={`flex-1 py-2.5 rounded-xl font-semibold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 ${
+                                    selectedAudioMode === 'key-points'
+                                        ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/30'
+                                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
+                                }`}
+                            >
+                                <Sparkles size={16} />
+                                Generate {selectedAudioMode === 'key-points' ? 'Key Points' : 'Full Lecture'} Audio
+                            </button>
                         </div>
                     </div>
                 </div>
