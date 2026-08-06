@@ -351,7 +351,13 @@ export const adminAPI = {
     getAllStudents: async () => {
         const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            // Only fetch columns needed for the admin student list view.
+            // Excludes: stripe_customer_id (sensitive billing reference)
+            .select(
+                'id, email, full_name, role, student_id, department, level, phone, ' +
+                'avatar_url, subscription_tier, subscription_status, ' +
+                'email_verified, last_active_at, is_online, created_at, updated_at'
+            )
             .eq('role', 'student')
             .order('created_at', { ascending: false });
 
@@ -362,10 +368,7 @@ export const adminAPI = {
     getAllTests: async () => {
         const { data, error } = await supabase
             .from('tests')
-            .select(`
-                *,
-                courses(title, code)
-            `)
+            .select('id, title, course_id, course_code, duration, total_questions, passing_score, difficulty, status, is_premium, created_at, courses(title, code)')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -375,11 +378,7 @@ export const adminAPI = {
     getAllSubmissions: async () => {
         const { data, error } = await supabase
             .from('test_submissions')
-            .select(`
-                *,
-                profiles(full_name, email),
-                tests(title, course_code)
-            `)
+            .select('id, test_id, user_id, score, percentage, time_taken, status, submitted_at, profiles(full_name, email), tests(title, course_code)')
             .order('submitted_at', { ascending: false });
 
         if (error) throw error;

@@ -1,16 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, RateLimitConfigs, rateLimitedResponse } from "../_shared/rateLimiter.ts";
+import { corsHeaders } from "../_shared/corsHeaders.ts";
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
 // ElevenLabs voice ID — "Rachel" (clear, educational, US English)
 const ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+const AUDIO_BUCKET = "audio-modules";
 
 interface KeyPointSection {
     topic: string;
@@ -291,12 +292,19 @@ Return only the script in plain spoken English.`;
     return await callGroq(systemPrompt, userPrompt, 4000);
 };
 
-// ─── ElevenLabs TTS ──────────────────────────────────────────────────────────
-// Returns a base64 data URI on success, null on any failure (always non-throwing).
-const generateTTSAudio = async (text: string): Promise<string | null> => {
+// ─── ElevenLabs TTS → Supabase Storage ──────────────────────────────────────
+// Generates TTS audio, uploads it to the 'audio-modules' storage bucket,
+// and returns the public URL. Returns null on any failure (always non-throwing).
+// This replaces the old approach of returning a base64 data URI, which caused
+// massive row bloat when stored in the database (300-500KB per row).
+const generateTTSAudio = async (
+    text: string,
+    userId: string,
+    moduleId: string
+): Promise<{ url: string | null; storagePath: string | null }> => {
     if (!ELEVENLABS_API_KEY) {
         console.warn('ELEVENLABS_API_KEY not set — skipping TTS, will fall back to Web Speech API on client');
-        return null;
+        return { url: null, storagePath: null };
     }
 
     try {
@@ -306,7 +314,7 @@ const generateTTSAudio = async (text: string): Promise<string | null> => {
             ? text.substring(0, maxChars) + '... This has been a key points preview. The full script is available in the transcript below.'
             : text;
 
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+        const ttsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -324,20 +332,42 @@ const generateTTSAudio = async (text: string): Promise<string | null> => {
             }),
         });
 
-        if (!response.ok) {
-            const err = await response.text();
-            console.error('ElevenLabs Error:', response.status, err.substring(0, 200));
-            return null;
+        if (!ttsResponse.ok) {
+            const err = await ttsResponse.text();
+            console.error('ElevenLabs Error:', ttsResponse.status, err.substring(0, 200));
+            return { url: null, storagePath: null };
         }
 
-        // Use Deno's built-in base64 encoding — avoids btoa() issues with binary data
-        const audioBuffer = await response.arrayBuffer();
-        const base64 = encodeBase64(new Uint8Array(audioBuffer));
-        return `data:audio/mpeg;base64,${base64}`;
+        // Upload audio binary directly to Supabase Storage
+        const audioBuffer = await ttsResponse.arrayBuffer();
+        const storagePath = `${userId}/${moduleId}.mp3`;
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        const { error: uploadError } = await supabase.storage
+            .from(AUDIO_BUCKET)
+            .upload(storagePath, audioBuffer, {
+                contentType: 'audio/mpeg',
+                upsert: true, // Overwrite on regeneration
+            });
+
+        if (uploadError) {
+            console.error('Storage upload failed (non-fatal):', uploadError.message);
+            // Fall back: return base64 inline for this request only (not stored in DB)
+            const base64 = encodeBase64(new Uint8Array(audioBuffer));
+            return { url: `data:audio/mpeg;base64,${base64}`, storagePath: null };
+        }
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from(AUDIO_BUCKET)
+            .getPublicUrl(storagePath);
+
+        console.log(`Audio uploaded to storage: ${storagePath}`);
+        return { url: publicUrl, storagePath };
 
     } catch (err) {
         console.error('ElevenLabs TTS failed (non-fatal):', err);
-        return null;
+        return { url: null, storagePath: null };
     }
 };
 
@@ -348,6 +378,37 @@ serve(async (req) => {
     }
 
     try {
+        // ── Rate Limiting ─────────────────────────────────────────────────────
+        // Validate JWT to get the user ID for per-user rate limiting.
+        // AI generation is expensive — 10 generations per hour per user.
+        const authHeader = req.headers.get('Authorization');
+        let rateLimitKey = 'anonymous';
+
+        if (authHeader?.startsWith('Bearer ')) {
+            // Decode user ID from JWT payload (no verification needed here,
+            // Supabase RLS will reject invalid tokens on any DB operation)
+            try {
+                const token = authHeader.replace('Bearer ', '');
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                rateLimitKey = `ai-gen:${payload.sub ?? 'unknown'}`;
+            } catch {
+                // Fall back to anonymous rate limiting
+                rateLimitKey = `ai-gen:${req.headers.get('x-forwarded-for') ?? 'unknown'}`;
+            }
+        } else {
+            // No auth — this will be rejected by DB queries anyway,
+            // but still rate-limit unauthenticated probing attempts
+            return new Response(
+                JSON.stringify({ error: 'Authentication required' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
+        const rateCheck = checkRateLimit(rateLimitKey, RateLimitConfigs.AI_GENERATION);
+        if (!rateCheck.allowed) {
+            return rateLimitedResponse(corsHeaders, rateCheck.resetAt);
+        }
+
         let body: LearnRequest;
         try {
             body = await req.json();
@@ -407,16 +468,27 @@ serve(async (req) => {
             }
 
             // Stage 3: TTS — always non-blocking, falls back to Web Speech API on client
-            console.log('Stage 3: Attempting ElevenLabs TTS...');
-            audioUrl = await generateTTSAudio(script);
-            console.log(audioUrl ? 'TTS audio generated successfully' : 'TTS skipped — client will use Web Speech API');
+            console.log('Stage 3: Attempting ElevenLabs TTS with Supabase Storage...');
+            // Extract userId from the JWT we already decoded for rate limiting
+            const userId = rateLimitKey.replace('ai-gen:', '');
+            const moduleId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+            const ttsResult = await generateTTSAudio(script, userId, moduleId);
+            console.log(ttsResult.url ? 'TTS audio generated and uploaded to storage' : 'TTS skipped — client will use Web Speech API');
 
             const wordCount = script.split(/\s+/).filter(Boolean).length;
 
             return new Response(
-                JSON.stringify({ result: script, keyPoints, mode, audioUrl, wordCount }),
+                JSON.stringify({
+                    result: script,
+                    keyPoints,
+                    mode,
+                    audioUrl: ttsResult.url,           // Public URL or base64 fallback
+                    audio_storage_path: ttsResult.storagePath, // Storage path for saving to DB
+                    wordCount,
+                }),
                 { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
+
         }
 
         // ── QUIZ ──────────────────────────────────────────────────────────────

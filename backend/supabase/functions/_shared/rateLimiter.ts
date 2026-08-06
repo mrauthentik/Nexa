@@ -106,31 +106,75 @@ export const RateLimitConfigs = {
     maxAttempts: 5,
     windowMs: 15 * 60 * 1000 // 15 minutes
   },
-  
+
   // Password reset
   PASSWORD_RESET: {
     maxAttempts: 3,
     windowMs: 60 * 60 * 1000 // 1 hour
   },
-  
-  // API endpoints
+
+  // General API endpoints
   API: {
     maxAttempts: 100,
     windowMs: 60 * 1000 // 1 minute
   },
-  
+
   // Payment endpoints
   PAYMENT: {
     maxAttempts: 10,
     windowMs: 60 * 60 * 1000 // 1 hour
   },
-  
-  // Contact form
+
+  // Contact/support form (public endpoint, strict limit to prevent spam)
   CONTACT: {
     maxAttempts: 3,
     windowMs: 60 * 60 * 1000 // 1 hour
-  }
+  },
+
+  // AI content generation (expensive: hits Groq + ElevenLabs APIs)
+  // Limits per user: 10 generations per hour
+  AI_GENERATION: {
+    maxAttempts: 10,
+    windowMs: 60 * 60 * 1000 // 1 hour
+  },
+
+  // AI explanation (cheaper, but still rate-limited to prevent abuse)
+  AI_EXPLAIN: {
+    maxAttempts: 30,
+    windowMs: 60 * 60 * 1000 // 1 hour
+  },
+
+  // Email verification (prevent OTP brute force)
+  EMAIL_VERIFY: {
+    maxAttempts: 5,
+    windowMs: 15 * 60 * 1000 // 15 minutes
+  },
 };
 
 // Clean up expired entries every 5 minutes
 setInterval(cleanupExpiredEntries, 5 * 60 * 1000);
+
+/**
+ * Create a rate limit response with standard headers
+ */
+export const rateLimitedResponse = (
+  corsHeaders: Record<string, string>,
+  resetAt: number
+): Response => {
+  return new Response(
+    JSON.stringify({
+      error: "Too many requests. Please slow down.",
+      retryAfter: Math.ceil((resetAt - Date.now()) / 1000),
+    }),
+    {
+      status: 429,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Retry-After": Math.ceil((resetAt - Date.now()) / 1000).toString(),
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": new Date(resetAt).toISOString(),
+      },
+    }
+  );
+};

@@ -23,33 +23,67 @@ const Dashboard = () => {
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
 
-  // Fetch notifications and stats from database
+  // Fetch initial data and subscribe to Realtime updates
   useEffect(() => {
-    // Only fetch data if user exists AND profile is verified
-    if (user && profile && profile.email_verified) {
-      // Small delay to ensure session is fully loaded
-      const timer = setTimeout(() => {
-        fetchNotifications();
-        fetchDashboardStats();
-      }, 100);
+    if (!user || !profile || !profile.email_verified) return;
 
-      // Refresh stats every 30 seconds
-      const interval = setInterval(fetchDashboardStats, 30000);
+    // Initial data load with small delay for session readiness
+    const timer = setTimeout(() => {
+      fetchNotifications();
+      fetchDashboardStats();
+    }, 100);
 
-      // Listen for test submission events to refresh immediately
-      const handleTestSubmitted = () => {
-        fetchDashboardStats();
-        fetchNotifications();
-      };
+    // ── Supabase Realtime subscription for user_stats ─────────────────────
+    // Replaces: setInterval(fetchDashboardStats, 30000)
+    // Benefit: Instant updates when a test is submitted, zero polling overhead.
+    const statsChannel = supabase
+      .channel(`dashboard-stats-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // user_stats row changed — refresh dashboard stats
+          fetchDashboardStats();
+        }
+      )
+      .subscribe();
 
-      window.addEventListener('testSubmitted', handleTestSubmitted);
+    // ── Realtime subscription for notifications ───────────────────────────
+    // Instant badge count updates when a DB trigger inserts a notification.
+    const notifChannel = supabase
+      .channel(`dashboard-notifs-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchNotifications();
+        }
+      )
+      .subscribe();
 
-      return () => {
-        clearTimeout(timer);
-        clearInterval(interval);
-        window.removeEventListener('testSubmitted', handleTestSubmitted);
-      };
-    }
+    // ── CustomEvent listener for immediate post-test refresh ──────────────
+    const handleTestSubmitted = () => {
+      fetchDashboardStats();
+      fetchNotifications();
+    };
+    window.addEventListener('testSubmitted', handleTestSubmitted);
+
+    return () => {
+      clearTimeout(timer);
+      supabase.removeChannel(statsChannel);
+      supabase.removeChannel(notifChannel);
+      window.removeEventListener('testSubmitted', handleTestSubmitted);
+    };
   }, [user, profile]);
 
   // Fetch calendar events when month changes
@@ -60,28 +94,20 @@ const Dashboard = () => {
   }, [currentDate, user, profile]);
 
   const fetchNotifications = async () => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, type, title, message, read, link, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error('❌ Error fetching notifications:', error);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error code:', error.code);
-        throw error;
-      }
-
+      if (error) throw error;
       setNotifications(data || []);
-    } catch (error: any) {
-      // Silently handle error
+    } catch {
+      // Silently handle — user will see last known notifications
     }
   };
 
@@ -106,23 +132,18 @@ const Dashboard = () => {
 
   const fetchCalendarEvents = async () => {
     if (!user) return;
-
     try {
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
       const { data, error } = await supabase
         .from('calendar_events')
-        .select('*')
+        .select('id, title, date, type, color, description')
         .eq('user_id', user.id)
         .gte('date', startOfMonth.toISOString().split('T')[0])
         .lte('date', endOfMonth.toISOString().split('T')[0]);
-
       if (error) throw error;
       setCalendarEvents(data || []);
-    } catch (error: any) {
-      console.error('Error fetching calendar events:', error);
-    }
+    } catch { /* silently ignored */ }
   };
 
   const markAsRead = async (notificationId: string) => {

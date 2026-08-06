@@ -95,7 +95,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('*')
+                // Only fetch columns needed for auth context
+                // Excludes stripe_customer_id (not needed globally)
+                .select(
+                    'id, email, full_name, role, student_id, department, level, phone, ' +
+                    'avatar_url, email_verified, subscription_tier, subscription_status, ' +
+                    'subscription_start_date, subscription_end_date'
+                )
                 .eq('id', userId)
                 .single();
 
@@ -112,28 +118,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 full_name: user.user_metadata?.fullName || user.email?.split('@')[0] || 'User',
                                 role: 'student',
                             })
-                            .select()
+                            .select('id, email, full_name, role, student_id, department, level, phone, avatar_url, email_verified, subscription_tier, subscription_status, subscription_start_date, subscription_end_date')
                             .single();
                         
                         if (!insertError && newProfile) {
-                            setProfile(newProfile);
-                            
-                            // Create welcome notification for existing user
-                            await supabase.from('notifications').insert({
-                                user_id: user.id,
-                                type: 'announcement',
-                                title: 'Welcome to NEXA! 🎉',
-                                message: `Hi! Welcome to NOUN Exam Experience Assistant. We're excited to help you excel in your studies.`,
-                                priority: 'high',
-                                read: false,
-                            });
+                            setProfile(newProfile as unknown as Profile);
+                            // NOTE: Welcome notification is created by the DB trigger
+                            // `new_user_notification` in migration 014_notification_triggers.sql
+                            // Do NOT create it here too (causes duplicate notifications).
                         }
                     }
                 } else {
                     throw error;
                 }
             } else {
-                setProfile(data);
+                setProfile(data as unknown as Profile);
                 // Start prefetching user data in background
                 prefetchUserData(userId);
             }
