@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import supabase from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
+
 import { useTheme } from '../context/ThemeContext';
 import toast, { Toaster } from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
@@ -8,7 +10,7 @@ import OnboardingTutorial from '../components/OnboardingTutorial';
 import Tooltip from '../components/Tooltip';
 import { useCoursesWithCounts } from '../hooks/useCourses';
 import { useDebounce } from '../hooks/useDebounce';
-import { BookOpen, Search, Filter, X, CheckCircle } from 'lucide-react';
+import { BookOpen, Search, Filter, X, CheckCircle, Zap, Clock } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -139,10 +141,65 @@ const CBTPracticePage = () => {
     return filtered;
   }, [courses, debouncedSearchQuery, selectedLevel, selectedDepartment, selectedSemester]);
 
-  // Memoized callback to prevent unnecessary re-renders
+  // State for recently practiced courses
+  const [recentCourseIds, setRecentCourseIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('cbt-recent-courses');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Fetch recent test submissions from Supabase as fallback
+  useEffect(() => {
+    const fetchRecentSubmissions = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('test_submissions')
+          .select('course_id')
+          .eq('user_id', user.id)
+          .order('submitted_at', { ascending: false })
+          .limit(10);
+
+        if (!error && data && data.length > 0) {
+          const fetchedIds = data.map(s => s.course_id).filter(Boolean);
+          setRecentCourseIds(prev => {
+            const combined = Array.from(new Set([...prev, ...fetchedIds])).slice(0, 5);
+            localStorage.setItem('cbt-recent-courses', JSON.stringify(combined));
+            return combined;
+          });
+        }
+      } catch {}
+    };
+
+    fetchRecentSubmissions();
+  }, []);
+
+  // Compute recently practiced courses list matching active courses
+  const recentCourses = useMemo(() => {
+    if (!recentCourseIds || recentCourseIds.length === 0 || courses.length === 0) return [];
+    return recentCourseIds
+      .map(id => courses.find(c => c.id === id || c.code === id))
+      .filter((c): c is typeof courses[0] => Boolean(c))
+      .slice(0, 4);
+  }, [recentCourseIds, courses]);
+
+
+  // Memoized callback to handle course click and persist to recently practiced
   const handleCourseClick = useCallback((course: Course) => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('cbt-recent-courses') || '[]');
+      const updated = [course.id, ...stored.filter((id: string) => id !== course.id && id !== course.code)].slice(0, 5);
+      localStorage.setItem('cbt-recent-courses', JSON.stringify(updated));
+      setRecentCourseIds(updated);
+    } catch {}
     navigate(`/cbt/instruction/${course.id}`);
   }, [navigate]);
+
 
   // Memoized departments list
   const departments = useMemo(() => {
@@ -371,7 +428,63 @@ const CBTPracticePage = () => {
       )}
       
       <DashboardLayout currentPage="/cbt">
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6`}>
+        {/* Recently Practiced Courses Quick Jump */}
+        {recentCourses.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-amber-500/10 text-amber-500 rounded-lg">
+                  <Zap size={18} />
+                </div>
+                <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Recently Practiced Courses
+                </h2>
+              </div>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Jump back in without searching
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recentCourses.map((course) => (
+                <div
+                  key={course.id}
+                  onClick={() => handleCourseClick(course)}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md flex flex-col justify-between ${
+                    isDarkMode
+                      ? 'bg-gray-800/90 border-gray-700/80 hover:border-amber-500/50'
+                      : 'bg-white border-gray-200/90 hover:border-amber-500/50'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        {course.code}
+                      </span>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {course.level}
+                      </span>
+                    </div>
+                    <h3 className={`font-semibold text-sm line-clamp-1 mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {course.title}
+                    </h3>
+                    <p className={`text-xs line-clamp-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {course.question_count ? `${course.question_count} questions` : 'Practice Available'}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50 flex items-center justify-between text-xs text-amber-500 font-medium">
+                    <span>Resume Practice →</span>
+                    <Clock size={12} className="text-gray-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6 mb-6`}>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Search */}
               <div className="lg:col-span-2">

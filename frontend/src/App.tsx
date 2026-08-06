@@ -5,9 +5,9 @@ import { AuthProvider } from './context/AuthContext'
 import './App.css'
 import ProtectedRoute from './components/ProtectedRoute'
 import ErrorBoundary from './components/ErrorBoundary'
-import LoadingSpinner from './components/LoadingSpinner'
 import CookieConsent from './components/CookieConsent'
 import AuthCallback from './components/AuthCallback'
+
 
 // ─── Public Pages (lazy loaded) ───────────────────────────────────────────────
 const LandingPage       = lazy(() => import('./pages/LandingPage'))
@@ -54,12 +54,11 @@ const AdminSurveysPage  = lazy(() => import('./pages/AdminSurveysPage'))
 const AdminAddSummary   = lazy(() => import('./pages/AdminAddSummary'))
 const AdminAddQuestions = lazy(() => import('./pages/AdminAddQuestions'))
 
-// ─── Page Loading Fallback ────────────────────────────────────────────────────
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-    <LoadingSpinner />
-  </div>
-)
+import DashboardSkeleton from './components/DashboardSkeleton'
+
+// ─── Page Loading Fallback (Sleek Skeleton Loader) ───────────────────────────
+const PageLoader = () => <DashboardSkeleton />
+
 
 function App() {
   return (
