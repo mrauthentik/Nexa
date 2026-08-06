@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import supabase from '../supabaseClient';
+import DashboardSkeleton from '../components/DashboardSkeleton';
+
 import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '../context/ThemeContext';
@@ -268,15 +270,9 @@ const CBTPracticePage = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className={`mt-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading courses...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
+
 
   return (
     <>

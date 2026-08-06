@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+
 import { adminExtendedAPI } from '../services/api';
 import { Award, TrendingUp, BookOpen, Eye } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
@@ -163,9 +165,10 @@ const AdminDashboard = () => {
               <div className="relative h-64">
                 {loadingAnalytics ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                    <LoadingSpinner />
                   </div>
                 ) : analytics?.charts?.testActivity ? (
+
                   <>
                     {/* Y-axis labels */}
                     <div className={`absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs pr-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>

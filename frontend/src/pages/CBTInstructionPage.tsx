@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import DashboardSkeleton from '../components/DashboardSkeleton';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import supabase from '../supabaseClient';
@@ -97,15 +99,9 @@ const CBTInstructionPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className={`mt-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading course...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
+
 
   if (!course) {
     return (

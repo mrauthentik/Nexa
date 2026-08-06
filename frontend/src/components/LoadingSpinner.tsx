@@ -1,32 +1,38 @@
+import React from 'react';
+import DashboardSkeleton from './DashboardSkeleton';
+import { useTheme } from '../context/ThemeContext';
+
 interface LoadingSpinnerProps {
     size?: 'sm' | 'md' | 'lg';
     fullScreen?: boolean;
     message?: string;
 }
 
-const LoadingSpinner = ({ size = 'md', fullScreen = false, message }: LoadingSpinnerProps) => {
-    const sizeClasses = {
-        sm: 'h-6 w-6',
-        md: 'h-12 w-12',
-        lg: 'h-16 w-16'
-    };
-
-    const spinner = (
-        <div className="text-center">
-            <div className={`animate-spin rounded-full border-b-2 border-primary-600 mx-auto ${sizeClasses[size]}`}></div>
-            {message && <p className="mt-4 text-gray-600">{message}</p>}
-        </div>
-    );
+/**
+ * Universal Skeleton Loader (Replaces legacy circle spinner)
+ * Displays layout-matched shimmering card skeletons instead of spinning circles.
+ */
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ fullScreen = false }) => {
+    const { isDarkMode } = useTheme();
 
     if (fullScreen) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                {spinner}
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
-    return spinner;
+    return (
+        <div className={`w-full p-6 rounded-2xl border ${isDarkMode ? 'bg-gray-800/80 border-gray-700/60' : 'bg-white border-gray-200/80'} shadow-sm animate-pulse space-y-4`}>
+            <div className="flex items-center justify-between">
+                <div className={`h-5 w-40 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
+                <div className={`h-8 w-24 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
+            </div>
+            <div className={`h-24 w-full rounded-xl ${isDarkMode ? 'bg-gray-700/60' : 'bg-gray-100'}`} />
+            <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className={`h-4 w-full rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
+                <div className={`h-4 w-full rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
+                <div className={`h-4 w-full rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`} />
+            </div>
+        </div>
+    );
 };
 
 export default LoadingSpinner;
