@@ -95,13 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                // Only fetch columns needed for auth context
-                // Excludes stripe_customer_id (not needed globally)
-                .select(
-                    'id, email, full_name, role, student_id, department, level, phone, ' +
-                    'avatar_url, email_verified, subscription_tier, subscription_status, ' +
-                    'subscription_start_date, subscription_end_date'
-                )
+                .select('*')
                 .eq('id', userId)
                 .single();
 
@@ -118,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 full_name: user.user_metadata?.fullName || user.email?.split('@')[0] || 'User',
                                 role: 'student',
                             })
-                            .select('id, email, full_name, role, student_id, department, level, phone, avatar_url, email_verified, subscription_tier, subscription_status, subscription_start_date, subscription_end_date')
+                            .select('*')
                             .single();
                         
                         if (!insertError && newProfile) {
