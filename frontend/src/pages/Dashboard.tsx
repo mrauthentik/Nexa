@@ -147,6 +147,8 @@ const Dashboard = () => {
   };
 
   const markAsRead = async (notificationId: string) => {
+    // Optimistically update local state immediately
+    setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     try {
       const { error } = await supabase
         .from('notifications')
@@ -154,13 +156,15 @@ const Dashboard = () => {
         .eq('id', notificationId);
 
       if (error) throw error;
-      fetchNotifications();
     } catch (error: any) {
       console.error('Error marking notification as read:', error);
+      fetchNotifications(); // Rollback on error
     }
   };
 
   const deleteNotification = async (notificationId: string) => {
+    // Optimistically update local state immediately
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
     try {
       const { error } = await supabase
         .from('notifications')
@@ -169,9 +173,9 @@ const Dashboard = () => {
 
       if (error) throw error;
       toast.success('Notification deleted');
-      fetchNotifications();
     } catch (error: any) {
       toast.error('Failed to delete notification');
+      fetchNotifications(); // Rollback on error
     }
   };
 

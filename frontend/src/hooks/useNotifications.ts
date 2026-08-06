@@ -18,35 +18,43 @@ export const NOTIFICATION_QUERY_KEY = ['notifications'];
 
 /**
  * Custom hook for fetching notifications with React Query.
- * Includes automatic caching, background revalidation, and realtime sync.
+ * Bulletproof against non-array response types.
  */
 export const useNotifications = (userId?: string) => {
     const query = useQuery({
         queryKey: NOTIFICATION_QUERY_KEY,
         queryFn: async (): Promise<NotificationItem[]> => {
-            const { data, error } = await supabase
-                .from('notifications')
-                .select('id, user_id, type, title, message, read, link, priority, created_at')
-                .order('created_at', { ascending: false })
-                .limit(20);
+            try {
+                const { data, error } = await supabase
+                    .from('notifications')
+                    .select('id, user_id, type, title, message, read, link, priority, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
 
-            if (error) {
+                if (!error && Array.isArray(data)) {
+                    return data;
+                }
+
                 // Fallback to Edge Function API
                 const res = await notificationsAPI.getAll();
-                return res.data || res || [];
+                if (Array.isArray(res)) return res;
+                if (Array.isArray(res?.data)) return res.data;
+                if (Array.isArray(res?.notifications)) return res.notifications;
+                return [];
+            } catch {
+                return [];
             }
-
-            return data || [];
         },
-        staleTime: 2 * 60 * 1000, // 2 minutes
+        staleTime: 2 * 60 * 1000,
         enabled: !!userId,
     });
 
-    const unreadCount = (query.data || []).filter(n => !n.read).length;
+    const notifications: NotificationItem[] = Array.isArray(query.data) ? query.data : [];
+    const unreadCount = notifications.filter(n => Boolean(n && !n.read)).length;
 
     return {
         ...query,
-        notifications: query.data || [],
+        notifications,
         unreadCount,
     };
 };
@@ -73,9 +81,9 @@ export const useMarkNotificationRead = () => {
             await queryClient.cancelQueries({ queryKey: NOTIFICATION_QUERY_KEY });
             const previous = queryClient.getQueryData<NotificationItem[]>(NOTIFICATION_QUERY_KEY);
 
-            if (previous) {
+            if (previous && Array.isArray(previous)) {
                 queryClient.setQueryData<NotificationItem[]>(NOTIFICATION_QUERY_KEY, old =>
-                    (old || []).map(n => n.id === notificationId ? { ...n, read: true } : n)
+                    (Array.isArray(old) ? old : []).map(n => n.id === notificationId ? { ...n, read: true } : n)
                 );
             }
 
@@ -117,6 +125,7 @@ export const useMarkAllNotificationsRead = () => {
 
 /**
  * Mutation hook to delete a notification.
+ * Optimistically removes item from cache so badge count updates instantly.
  */
 export const useDeleteNotification = () => {
     const queryClient = useQueryClient();
@@ -132,7 +141,24 @@ export const useDeleteNotification = () => {
                 await notificationsAPI.delete(notificationId);
             }
         },
-        onSuccess: () => {
+        onMutate: async (notificationId) => {
+            await queryClient.cancelQueries({ queryKey: NOTIFICATION_QUERY_KEY });
+            const previous = queryClient.getQueryData<NotificationItem[]>(NOTIFICATION_QUERY_KEY);
+
+            if (previous && Array.isArray(previous)) {
+                queryClient.setQueryData<NotificationItem[]>(NOTIFICATION_QUERY_KEY, old =>
+                    (Array.isArray(old) ? old : []).filter(n => n.id !== notificationId)
+                );
+            }
+
+            return { previous };
+        },
+        onError: (_err, _id, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(NOTIFICATION_QUERY_KEY, context.previous);
+            }
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: NOTIFICATION_QUERY_KEY });
         },
     });
