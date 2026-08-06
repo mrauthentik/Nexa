@@ -1,96 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
 import { Bell, Check, Trash2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import supabase from '../supabaseClient';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  created_at: string;
-}
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useDeleteNotification,
+} from '../hooks/useNotifications';
 
 const NotificationsPage = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setNotifications(data || []);
-    } catch (error: any) {
-      console.error('Error fetching notifications:', error);
-      toast.error('Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query hooks replace raw useEffect, useState, and manual Supabase calls
+  const { notifications, isLoading } = useNotifications(user?.id);
+  const markAsReadMutation = useMarkNotificationRead();
+  const deleteMutation = useDeleteNotification();
 
   const filtered = filter === 'unread' ? notifications.filter(n => !n.read) : notifications;
 
-  const markAsRead = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setNotifications(notifications.map(n => 
-        n.id === id ? { ...n, read: true } : n
-      ));
-      toast.success('Marked as read');
-    } catch (error: any) {
-      console.error('Error marking as read:', error);
-      toast.error('Failed to mark as read');
-    }
+  const handleMarkAsRead = (id: string) => {
+    markAsReadMutation.mutate(id, {
+      onSuccess: () => toast.success('Marked as read'),
+      onError: () => toast.error('Failed to mark as read'),
+    });
   };
 
-  const deleteNotification = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      setNotifications(notifications.filter(n => n.id !== id));
-      toast.success('Notification deleted');
-    } catch (error: any) {
-      console.error('Error deleting notification:', error);
-      toast.error('Failed to delete notification');
-    }
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id, {
+      onSuccess: () => toast.success('Notification deleted'),
+      onError: () => toast.error('Failed to delete notification'),
+    });
   };
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (seconds < 60) return 'Just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -122,7 +72,7 @@ const NotificationsPage = () => {
         </div>
 
         <div className="space-y-4">
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-8">
               <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Loading notifications...</p>
             </div>
@@ -151,11 +101,21 @@ const NotificationsPage = () => {
                   </div>
                   <div className="flex gap-2">
                     {!notif.read && (
-                      <button onClick={() => markAsRead(notif.id)} className="p-2 hover:bg-gray-700 rounded">
+                      <button
+                        onClick={() => handleMarkAsRead(notif.id)}
+                        disabled={markAsReadMutation.isPending}
+                        className="p-2 hover:bg-gray-700 rounded transition-colors"
+                        title="Mark as read"
+                      >
                         <Check className="w-4 h-4" />
                       </button>
                     )}
-                    <button onClick={() => deleteNotification(notif.id)} className="p-2 hover:bg-gray-700 rounded text-red-500">
+                    <button
+                      onClick={() => handleDelete(notif.id)}
+                      disabled={deleteMutation.isPending}
+                      className="p-2 hover:bg-gray-700 rounded text-red-500 transition-colors"
+                      title="Delete notification"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
