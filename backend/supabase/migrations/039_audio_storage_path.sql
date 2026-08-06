@@ -11,37 +11,30 @@
 -- The frontend fetches a signed/public URL on demand.
 -- =====================================================
 
--- Add storage path column (replaces audio_url for new content)
-ALTER TABLE public.learn_modules
-    ADD COLUMN IF NOT EXISTS audio_storage_path TEXT DEFAULT NULL;
-
--- Keep audio_url for backward compatibility with existing records,
--- but new records will use audio_storage_path.
--- A background job can migrate old base64 data later.
-
--- Index for quick lookups by user + content type
-CREATE INDEX IF NOT EXISTS idx_learn_modules_user_type
-    ON public.learn_modules (user_id, content_type);
-
--- Create the storage bucket for audio files (idempotent)
--- NOTE: Run this in Supabase dashboard or via supabase CLI:
--- supabase storage create-bucket audio-modules --public
-
--- Add helpful comments
-COMMENT ON COLUMN public.learn_modules.audio_storage_path IS
-    'Supabase Storage object path for the TTS audio file (e.g., user-id/module-id.mp3). '
-    'Use supabase.storage.from(''audio-modules'').getPublicUrl(path) to get the URL. '
-    'Replaces the old base64 audio_url approach to prevent row bloat.';
-
-COMMENT ON COLUMN public.learn_modules.audio_url IS
-    'DEPRECATED: Legacy base64 data URI for old audio modules. '
-    'New modules use audio_storage_path instead. '
-    'Can be cleared after migrating old records to storage.';
-
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Migration 039 complete: Audio storage path column added';
-    RAISE NOTICE '   - audio_storage_path TEXT column added to learn_modules';
-    RAISE NOTICE '   - Remember to create the audio-modules storage bucket in Supabase dashboard';
-    RAISE NOTICE '   - Remember to set bucket to public or configure signed URLs';
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'learn_modules') THEN
+        -- Add storage path column (replaces audio_url for new content)
+        ALTER TABLE public.learn_modules
+            ADD COLUMN IF NOT EXISTS audio_storage_path TEXT DEFAULT NULL;
+
+        -- Index for quick lookups by user + content type
+        CREATE INDEX IF NOT EXISTS idx_learn_modules_user_type
+            ON public.learn_modules (user_id, content_type);
+
+        -- Add helpful comments
+        COMMENT ON COLUMN public.learn_modules.audio_storage_path IS
+            'Supabase Storage object path for the TTS audio file (e.g., user-id/module-id.mp3). '
+            'Use supabase.storage.from(''audio-modules'').getPublicUrl(path) to get the URL. '
+            'Replaces the old base64 audio_url approach to prevent row bloat.';
+
+        COMMENT ON COLUMN public.learn_modules.audio_url IS
+            'DEPRECATED: Legacy base64 data URI for old audio modules. '
+            'New modules use audio_storage_path instead. '
+            'Can be cleared after migrating old records to storage.';
+
+        RAISE NOTICE '✅ Migration 039 complete: Audio storage path column added to learn_modules';
+    ELSE
+        RAISE NOTICE '⚠️  learn_modules table does not exist yet — skipping';
+    END IF;
 END $$;

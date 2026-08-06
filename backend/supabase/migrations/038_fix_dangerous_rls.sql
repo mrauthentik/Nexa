@@ -1,184 +1,269 @@
 -- =====================================================
 -- MIGRATION 038: FIX DANGEROUS RLS POLICIES
 -- =====================================================
--- Problem: Several tables have USING (true) policies that grant
--- any authenticated user full read/write access to ALL rows,
--- including other users' subscription data and stats.
---
--- Fix: Replace overly-permissive policies with proper RLS that
--- restricts writes to the service_role (used only in Edge Functions)
--- and reads to the row's owner.
+-- This migration is written defensively: every section checks
+-- if the table EXISTS before operating on it, so it is safe to
+-- run even if some tables have not been created yet.
 -- =====================================================
 
+
 -- ── 1. FIX subscriptions table ──────────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'subscriptions') THEN
 
--- Drop the dangerous catch-all policy
-DROP POLICY IF EXISTS "System can manage subscriptions" ON subscriptions;
+        -- Remove the catch-all policy that lets any authenticated user
+        -- write to the subscriptions table (self-upgrade attack vector)
+        DROP POLICY IF EXISTS "System can manage subscriptions" ON subscriptions;
 
--- Users can only read their own subscription (keep this one)
--- Already exists: "Users can view their own subscription"
+        -- Allow users to insert their OWN subscription row only
+        -- (service_role bypasses RLS automatically for webhook handlers)
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'subscriptions'
+              AND policyname = 'Users can insert their own subscription'
+        ) THEN
+            CREATE POLICY "Users can insert their own subscription"
+                ON subscriptions FOR INSERT
+                WITH CHECK (auth.uid() = user_id);
+        END IF;
 
--- Allow service_role to do everything (used by Edge Functions)
--- Service role bypasses RLS automatically, so we don't need a policy for it.
--- The dangerous USING(true) was exposing this to the anon/authenticated roles.
-
--- Only allow users to insert/update their OWN subscription row
-CREATE POLICY "Users can insert their own subscription"
-    ON subscriptions FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
-
--- Prevent users from updating their own subscription tier (only webhooks/service role should do this)
--- This blocks client-side tier elevation attacks
--- Updates must go through Edge Functions using the service_role key.
+        RAISE NOTICE '✅ subscriptions table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  subscriptions table does not exist yet — skipping';
+    END IF;
+END $$;
 
 
 -- ── 2. FIX billing_history table ────────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'billing_history') THEN
 
--- Drop the catch-all insert policy
-DROP POLICY IF EXISTS "System can create billing history" ON billing_history;
+        -- Remove the open INSERT that lets any authenticated user create billing records
+        DROP POLICY IF EXISTS "System can create billing history" ON billing_history;
 
--- Only Edge Functions (service_role) can insert billing history.
--- Authenticated users should NOT be able to create billing records client-side.
--- No INSERT policy needed for authenticated role — service_role bypasses RLS.
+        RAISE NOTICE '✅ billing_history table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  billing_history table does not exist yet — skipping';
+    END IF;
+END $$;
 
 
 -- ── 3. FIX user_stats table ─────────────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_stats') THEN
 
--- Drop the dangerous catch-all
-DROP POLICY IF EXISTS "System can update stats" ON user_stats;
+        DROP POLICY IF EXISTS "System can update stats" ON user_stats;
 
--- Re-add safe version: users can update ONLY their own stats row
-CREATE POLICY "Users can update their own stats"
-    ON user_stats FOR UPDATE
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+        -- Users can update only their OWN stats row
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'user_stats'
+              AND policyname = 'Users can update their own stats'
+        ) THEN
+            CREATE POLICY "Users can update their own stats"
+                ON user_stats FOR UPDATE
+                USING (auth.uid() = user_id)
+                WITH CHECK (auth.uid() = user_id);
+        END IF;
 
--- Allow service_role to insert stats rows (done by Edge Functions)
--- service_role bypasses RLS so no explicit policy needed.
--- But authenticated users need to be able to insert their initial row:
-CREATE POLICY "Users can insert their own stats"
-    ON user_stats FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+        -- Allow authenticated users to insert their initial stats row
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'user_stats'
+              AND policyname = 'Users can insert their own stats'
+        ) THEN
+            CREATE POLICY "Users can insert their own stats"
+                ON user_stats FOR INSERT
+                WITH CHECK (auth.uid() = user_id);
+        END IF;
 
-
--- ── 4. FIX admin_notifications INSERT policy ────────────────────────────────
-
--- "System can create admin notifications" WITH CHECK (true) allows
--- any authenticated user to insert admin notifications for any admin.
-DROP POLICY IF EXISTS "System can create admin notifications" ON admin_notifications;
-
--- Only service_role (Edge Functions / triggers) should insert admin notifications.
--- No authenticated-role INSERT policy needed here.
-
-
--- ── 5. FIX user_activity_log INSERT policy ──────────────────────────────────
-
--- "System can create activity logs" WITH CHECK (true) allows any
--- authenticated user to forge activity logs for other users.
-DROP POLICY IF EXISTS "System can create activity logs" ON user_activity_log;
-
--- Users can only insert activity logs for themselves
-CREATE POLICY "Users can insert their own activity logs"
-    ON user_activity_log FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+        RAISE NOTICE '✅ user_stats table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  user_stats table does not exist yet — skipping';
+    END IF;
+END $$;
 
 
--- ── 6. FIX support_messages — anyone can spam ───────────────────────────────
+-- ── 4. FIX admin_notifications table ────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_notifications') THEN
 
--- "Anyone can create support messages" WITH CHECK (true) is public
--- and has no rate limiting at DB level. Keep it (contact form needs it)
--- but add a check so abusive content can be flagged.
--- Rate limiting is handled at the Edge Function layer.
+        DROP POLICY IF EXISTS "System can create admin notifications" ON admin_notifications;
+
+        RAISE NOTICE '✅ admin_notifications table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  admin_notifications table does not exist yet — skipping';
+    END IF;
+END $$;
 
 
--- ── 7. HARDEN profiles RLS — prevent role self-elevation ────────────────────
+-- ── 5. FIX user_activity_log table ──────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_activity_log') THEN
 
--- Users must NOT be able to update their own `role` column to 'admin'.
--- Drop the existing update policy and replace with a column-restricted one.
-DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+        DROP POLICY IF EXISTS "System can create activity logs" ON user_activity_log;
 
--- Re-add update policy that excludes `role` and `email` from self-update
-CREATE POLICY "Users can update their own profile"
-    ON profiles FOR UPDATE
-    USING (auth.uid() = id)
-    WITH CHECK (
-        auth.uid() = id
-        -- Prevent self-elevation: role must stay the same
-        -- This is enforced at the app layer; true column-level enforcement
-        -- requires a BEFORE UPDATE trigger (see below)
-    );
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'user_activity_log'
+              AND policyname = 'Users can insert their own activity logs'
+        ) THEN
+            CREATE POLICY "Users can insert their own activity logs"
+                ON user_activity_log FOR INSERT
+                WITH CHECK (auth.uid() = user_id);
+        END IF;
 
--- Trigger to block role self-elevation
+        RAISE NOTICE '✅ user_activity_log table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  user_activity_log table does not exist yet — skipping';
+    END IF;
+END $$;
+
+
+-- ── 6. FIX profiles table — block role self-elevation ───────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'profiles') THEN
+
+        -- Drop existing broad update policy and replace with a safer one
+        DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'profiles'
+              AND policyname = 'Users can update their own profile'
+        ) THEN
+            CREATE POLICY "Users can update their own profile"
+                ON profiles FOR UPDATE
+                USING (auth.uid() = id)
+                WITH CHECK (auth.uid() = id);
+        END IF;
+
+        RAISE NOTICE '✅ profiles table update policy recreated';
+    ELSE
+        RAISE NOTICE '⚠️  profiles table does not exist yet — skipping';
+    END IF;
+END $$;
+
+-- Trigger to block client-side role elevation on profiles
+-- This fires BEFORE any UPDATE and rejects attempts to change role or
+-- subscription_tier from an authenticated (non-service-role) connection.
 CREATE OR REPLACE FUNCTION prevent_role_elevation()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only allow role changes via service_role (Edge Functions)
-    -- auth.role() = 'authenticated' means this is a client-side call
-    IF current_setting('request.jwt.claims', true)::json->>'role' = 'authenticated' THEN
-        IF NEW.role <> OLD.role THEN
-            RAISE EXCEPTION 'Role changes are not permitted from client connections';
-        END IF;
-        -- Also protect subscription tier from client-side manipulation
-        IF NEW.subscription_tier <> OLD.subscription_tier THEN
-            RAISE EXCEPTION 'Subscription tier changes must go through the billing system';
-        END IF;
+    -- Check if this is a client-side authenticated call (not service_role)
+    IF current_setting('request.jwt.claims', true) IS NOT NULL THEN
+        DECLARE
+            jwt_role TEXT;
+        BEGIN
+            BEGIN
+                jwt_role := current_setting('request.jwt.claims', true)::json->>'role';
+            EXCEPTION WHEN OTHERS THEN
+                jwt_role := NULL;
+            END;
+
+            -- Block role changes from non-service connections
+            IF jwt_role = 'authenticated' THEN
+                IF NEW.role IS DISTINCT FROM OLD.role THEN
+                    RAISE EXCEPTION 'Role changes are not permitted from client connections'
+                        USING ERRCODE = '42501';
+                END IF;
+                IF NEW.subscription_tier IS DISTINCT FROM OLD.subscription_tier THEN
+                    RAISE EXCEPTION 'Subscription tier changes must go through the billing system'
+                        USING ERRCODE = '42501';
+                END IF;
+            END IF;
+        END;
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP TRIGGER IF EXISTS enforce_no_role_elevation ON profiles;
-CREATE TRIGGER enforce_no_role_elevation
-    BEFORE UPDATE ON profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION prevent_role_elevation();
-
-
--- ── 8. HARDEN notifications INSERT ──────────────────────────────────────────
-
--- Currently only admins can insert notifications (good).
--- But the DB triggers also insert notifications. Since triggers run
--- with the table owner's permissions (not the authenticated user's),
--- they bypass RLS. We need to ensure users cannot directly insert notifications
--- for other users. Drop overly broad admin policy and re-add with proper check.
-
-DROP POLICY IF EXISTS "Admins can create notifications" ON notifications;
-
--- Admins can create notifications for any user
-CREATE POLICY "Admins can create notifications"
-    ON notifications FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM profiles
-            WHERE profiles.id = auth.uid()
-            AND profiles.role = 'admin'
-        )
-    );
-
--- Also allow users to insert notifications for themselves
--- (used internally when creating calendar events, etc.)
-CREATE POLICY "Users can insert their own notifications"
-    ON notifications FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
-
-
--- ── 9. Add delete policy for notifications ──────────────────────────────────
-
--- Users should be able to delete their own notifications
-CREATE POLICY IF NOT EXISTS "Users can delete their own notifications"
-    ON notifications FOR DELETE
-    USING (auth.uid() = user_id);
-
-
--- Verification
+-- Only attach the trigger if the profiles table exists
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Migration 038 complete: Dangerous RLS policies fixed';
-    RAISE NOTICE '   - subscriptions: Removed USING(true) catch-all';
-    RAISE NOTICE '   - billing_history: Removed open INSERT';
-    RAISE NOTICE '   - user_stats: Restricted to own-row access';
-    RAISE NOTICE '   - admin_notifications: Removed open INSERT';
-    RAISE NOTICE '   - user_activity_log: Restricted to own-row INSERT';
-    RAISE NOTICE '   - profiles: Added role-elevation prevention trigger';
-    RAISE NOTICE '   - notifications: Fixed admin + own-row policies';
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'profiles') THEN
+        DROP TRIGGER IF EXISTS enforce_no_role_elevation ON profiles;
+        CREATE TRIGGER enforce_no_role_elevation
+            BEFORE UPDATE ON profiles
+            FOR EACH ROW
+            EXECUTE FUNCTION prevent_role_elevation();
+        RAISE NOTICE '✅ Role elevation prevention trigger added to profiles';
+    END IF;
+END $$;
+
+
+-- ── 7. FIX notifications table ──────────────────────────────────────────────
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'notifications') THEN
+
+        -- Replace overly broad admin insert policy
+        DROP POLICY IF EXISTS "Admins can create notifications" ON notifications;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'notifications'
+              AND policyname = 'Admins can create notifications'
+        ) THEN
+            CREATE POLICY "Admins can create notifications"
+                ON notifications FOR INSERT
+                WITH CHECK (
+                    EXISTS (
+                        SELECT 1 FROM profiles
+                        WHERE profiles.id = auth.uid()
+                          AND profiles.role = 'admin'
+                    )
+                );
+        END IF;
+
+        -- Allow users to insert notifications for themselves
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'notifications'
+              AND policyname = 'Users can insert their own notifications'
+        ) THEN
+            CREATE POLICY "Users can insert their own notifications"
+                ON notifications FOR INSERT
+                WITH CHECK (auth.uid() = user_id);
+        END IF;
+
+        -- Allow users to delete their own notifications
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = 'notifications'
+              AND policyname = 'Users can delete their own notifications'
+        ) THEN
+            CREATE POLICY "Users can delete their own notifications"
+                ON notifications FOR DELETE
+                USING (auth.uid() = user_id);
+        END IF;
+
+        RAISE NOTICE '✅ notifications table RLS fixed';
+    ELSE
+        RAISE NOTICE '⚠️  notifications table does not exist yet — skipping';
+    END IF;
+END $$;
+
+
+-- Final summary
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE '✅ Migration 038 completed successfully';
+    RAISE NOTICE '   Any tables that did not exist were safely skipped.';
+    RAISE NOTICE '   Re-run this migration after creating missing tables.';
 END $$;
