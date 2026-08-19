@@ -1,10 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { checkRateLimit, RateLimitConfigs, rateLimitedResponse } from '../_shared/rateLimiter.ts'
+import { corsHeaders } from '../_shared/corsHeaders.ts'
 
 serve(async (req) => {
     // Handle CORS preflight requests
@@ -13,6 +10,19 @@ serve(async (req) => {
     }
 
     try {
+        // ── Rate Limiting ────────────────────────────────────────────────────
+        // This is a public (unauthenticated) endpoint — bots can spam it.
+        // Limit by IP: 3 contact submissions per hour per IP address.
+        const clientIp =
+            req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+            req.headers.get('x-real-ip') ??
+            'unknown';
+
+        const rateCheck = checkRateLimit(`contact:${clientIp}`, RateLimitConfigs.CONTACT);
+        if (!rateCheck.allowed) {
+            return rateLimitedResponse(corsHeaders, rateCheck.resetAt);
+        }
+
         // Use service role key to bypass RLS for public contact form submissions
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
@@ -25,7 +35,17 @@ serve(async (req) => {
             }
         )
 
-        const { name, email, subject, message } = await req.json()
+        let body: { name?: string; email?: string; subject?: string; message?: string };
+        try {
+            body = await req.json();
+        } catch {
+            return new Response(
+                JSON.stringify({ error: 'Invalid JSON body' }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
+        const { name, email, subject, message } = body;
 
         // Validate required fields
         if (!name || !email || !subject || !message) {
@@ -44,7 +64,7 @@ serve(async (req) => {
             )
         }
 
-        // Validate field lengths
+        // Validate field lengths — prevent oversized payloads
         if (name.length > 255 || email.length > 255 || subject.length > 500 || message.length > 5000) {
             return new Response(
                 JSON.stringify({ error: 'Field length exceeded' }),
@@ -52,19 +72,22 @@ serve(async (req) => {
             )
         }
 
+        // Sanitize inputs — basic HTML stripping to prevent XSS in admin view
+        const sanitize = (str: string) => str.replace(/<[^>]*>/g, '').trim();
+
         // Insert contact message
         const { data, error } = await supabaseClient
-            .from('contact_messages')
+            .from('support_messages')
             .insert([
                 {
-                    name: name.trim(),
-                    email: email.trim().toLowerCase(),
-                    subject: subject.trim(),
-                    message: message.trim(),
+                    name: sanitize(name),
+                    email: sanitize(email).toLowerCase(),
+                    subject: sanitize(subject),
+                    message: sanitize(message),
                     status: 'unread'
                 }
             ])
-            .select()
+            .select('id, name, email, subject, created_at')
             .single()
 
         if (error) throw error
@@ -73,13 +96,12 @@ serve(async (req) => {
             JSON.stringify({
                 success: true,
                 message: 'Your message has been sent successfully. We will get back to you soon!',
-                data
+                id: data.id,
             }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
 
-    } catch (error) {
-        console.error('Error submitting contact message:', error)
+    } catch (error: any) {
         return new Response(
             JSON.stringify({ error: error.message || 'Failed to submit message' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

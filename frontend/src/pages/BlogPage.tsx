@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+
 import { BookOpen, Calendar, Clock, User, ArrowRight, TrendingUp, Award, Target, Lightbulb } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -78,16 +80,9 @@ const BlogPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <LoadingSpinner fullScreen />;
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">

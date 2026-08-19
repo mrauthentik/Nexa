@@ -1,2 +1,7 @@
 *.md
 *.deployment-track.json
+
+# Environment variables — NEVER commit these
+.env
+.env.*
+!.env.example

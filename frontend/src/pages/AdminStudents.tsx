@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+
 import { useTheme } from '../context/ThemeContext';
 import { adminExtendedAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -315,11 +317,11 @@ const AdminStudents = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className={`w-full max-w-4xl rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} max-h-[90vh] overflow-y-auto`}>
             {loadingDetails ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading details...</p>
+              <div className="p-8">
+                <LoadingSpinner />
               </div>
             ) : (
+
               <>
                 {/* Modal Header */}
                 <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>

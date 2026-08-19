@@ -112,28 +112,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                                 full_name: user.user_metadata?.fullName || user.email?.split('@')[0] || 'User',
                                 role: 'student',
                             })
-                            .select()
+                            .select('*')
                             .single();
                         
                         if (!insertError && newProfile) {
-                            setProfile(newProfile);
-                            
-                            // Create welcome notification for existing user
-                            await supabase.from('notifications').insert({
-                                user_id: user.id,
-                                type: 'announcement',
-                                title: 'Welcome to NEXA! 🎉',
-                                message: `Hi! Welcome to NOUN Exam Experience Assistant. We're excited to help you excel in your studies.`,
-                                priority: 'high',
-                                read: false,
-                            });
+                            setProfile(newProfile as unknown as Profile);
+                            // NOTE: Welcome notification is created by the DB trigger
+                            // `new_user_notification` in migration 014_notification_triggers.sql
+                            // Do NOT create it here too (causes duplicate notifications).
                         }
                     }
                 } else {
                     throw error;
                 }
             } else {
-                setProfile(data);
+                setProfile(data as unknown as Profile);
                 // Start prefetching user data in background
                 prefetchUserData(userId);
             }

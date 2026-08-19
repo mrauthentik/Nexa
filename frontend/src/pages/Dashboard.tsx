@@ -7,6 +7,12 @@ import toast, { Toaster } from 'react-hot-toast';
 import PerformanceChart from '../components/PerformanceChart';
 import TodoList from '../components/TodoList';
 import ProfileAvatar from '../components/ProfileAvatar';
+import DashboardSkeleton from '../components/DashboardSkeleton';
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useDeleteNotification,
+} from '../hooks/useNotifications';
 
 const Dashboard = () => {
   const [currentDate, setCurrentDate] = useState(new Date()); // Current date
@@ -18,38 +24,71 @@ const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
   const [selectedDateEvents, setSelectedDateEvents] = useState<any[]>([]);
 
-  // Fetch notifications and stats from database
+  // React Query shared notifications store — synced across Dashboard & NotificationsPage
+  const { notifications, unreadCount, refetch: refetchNotifications } = useNotifications(user?.id);
+  const markAsReadMutation = useMarkNotificationRead();
+  const deleteNotifMutation = useDeleteNotification();
+
+  // Fetch initial data and subscribe to Realtime updates
   useEffect(() => {
-    // Only fetch data if user exists AND profile is verified
-    if (user && profile && profile.email_verified) {
-      // Small delay to ensure session is fully loaded
-      const timer = setTimeout(() => {
-        fetchNotifications();
-        fetchDashboardStats();
-      }, 100);
+    if (!user || !profile || !profile.email_verified) return;
 
-      // Refresh stats every 30 seconds
-      const interval = setInterval(fetchDashboardStats, 30000);
+    // Initial data load with small delay for session readiness
+    const timer = setTimeout(() => {
+      fetchDashboardStats();
+    }, 100);
 
-      // Listen for test submission events to refresh immediately
-      const handleTestSubmitted = () => {
-        fetchDashboardStats();
-        fetchNotifications();
-      };
+    // ── Supabase Realtime subscription for user_stats ─────────────────────
+    const statsChannel = supabase
+      .channel(`dashboard-stats-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchDashboardStats();
+        }
+      )
+      .subscribe();
 
-      window.addEventListener('testSubmitted', handleTestSubmitted);
+    // ── Realtime subscription for notifications ───────────────────────────
+    const notifChannel = supabase
+      .channel(`dashboard-notifs-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          refetchNotifications();
+        }
+      )
+      .subscribe();
 
-      return () => {
-        clearTimeout(timer);
-        clearInterval(interval);
-        window.removeEventListener('testSubmitted', handleTestSubmitted);
-      };
-    }
+    // ── CustomEvent listener for immediate post-test refresh ──────────────
+    const handleTestSubmitted = () => {
+      fetchDashboardStats();
+      refetchNotifications();
+    };
+    window.addEventListener('testSubmitted', handleTestSubmitted);
+
+    return () => {
+      clearTimeout(timer);
+      supabase.removeChannel(statsChannel);
+      supabase.removeChannel(notifChannel);
+      window.removeEventListener('testSubmitted', handleTestSubmitted);
+    };
   }, [user, profile]);
 
   // Fetch calendar events when month changes
@@ -59,102 +98,53 @@ const Dashboard = () => {
     }
   }, [currentDate, user, profile]);
 
-  const fetchNotifications = async () => {
-    if (!user) {
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) {
-        console.error('❌ Error fetching notifications:', error);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error code:', error.code);
-        throw error;
-      }
-
-      setNotifications(data || []);
-    } catch (error: any) {
-      // Silently handle error
-    }
-  };
-
   const fetchDashboardStats = async () => {
     if (!user) return;
 
     try {
       const data = await dashboardAPI.getStats(user.id);
-
       if (data.error) {
         console.error('Dashboard stats error:', data.error);
         return;
       }
-
       setDashboardStats(data);
     } catch (error: any) {
       console.error('Error fetching dashboard stats:', error);
-      // Silently handle error - user will see default stats instead
-      // Network issues shouldn't disrupt the user experience
     }
   };
 
   const fetchCalendarEvents = async () => {
     if (!user) return;
-
     try {
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
       const { data, error } = await supabase
         .from('calendar_events')
-        .select('*')
+        .select('id, title, date, type, color, description')
         .eq('user_id', user.id)
         .gte('date', startOfMonth.toISOString().split('T')[0])
         .lte('date', endOfMonth.toISOString().split('T')[0]);
-
       if (error) throw error;
       setCalendarEvents(data || []);
-    } catch (error: any) {
-      console.error('Error fetching calendar events:', error);
-    }
+    } catch { /* silently ignored */ }
   };
 
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-      fetchNotifications();
-    } catch (error: any) {
-      console.error('Error marking notification as read:', error);
-    }
+  const markAsRead = (notificationId: string) => {
+    markAsReadMutation.mutate(notificationId);
   };
 
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-
-      if (error) throw error;
-      toast.success('Notification deleted');
-      fetchNotifications();
-    } catch (error: any) {
-      toast.error('Failed to delete notification');
-    }
+  const deleteNotification = (notificationId: string) => {
+    deleteNotifMutation.mutate(notificationId, {
+      onSuccess: () => toast.success('Notification deleted'),
+      onError: () => toast.error('Failed to delete notification'),
+    });
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Show Skeleton Loader while user or profile is loading
+  if (!user || !profile) {
+    return <DashboardSkeleton />;
+  }
+
 
   // Real-time stats from API
   const stats = dashboardStats?.stats ? [
@@ -452,26 +442,27 @@ const Dashboard = () => {
                                     notification.type === 'grade' ? 'bg-green-100' :
                                       'bg-blue-100'
                                   }`}>
-                                  {notification.icon === 'clipboard' && (
+                                  {(notification as any).icon === 'clipboard' && (
                                     <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                   )}
-                                  {notification.icon === 'calendar' && (
+                                  {(notification as any).icon === 'calendar' && (
                                     <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                   )}
-                                  {notification.icon === 'star' && (
+                                  {(notification as any).icon === 'star' && (
                                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                                     </svg>
                                   )}
-                                  {notification.icon === 'bell' && (
+                                  {((notification as any).icon === 'bell' || !(notification as any).icon) && (
                                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                   )}
+
                                 </div>
 
                                 {/* Content */}
