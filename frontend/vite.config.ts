@@ -32,13 +32,10 @@ export default defineConfig({
           if (id.includes('node_modules/katex') || id.includes('node_modules/react-katex')) {
             return 'katex-vendor'; // Only loaded on pages with LaTeX math
           }
-          if (
-            id.includes('node_modules/leaflet') ||
-            id.includes('node_modules/react-leaflet') ||
-            id.includes('node_modules/@react-leaflet/')
-          ) {
-            return 'leaflet-vendor'; // Only loaded on NounCentersPage (map)
-          }
+          // NOTE: leaflet / react-leaflet are intentionally NOT assigned a manual chunk.
+          // NounCentersPage is lazy-loaded, so Rollup will naturally co-bundle leaflet
+          // into that page's chunk. Giving leaflet its own chunk caused a cross-chunk
+          // React.createContext() initialization ordering crash in production.
 
           // ── Admin code chunk — students NEVER download this ───────────────
           // All admin pages are in their own chunk, completely separate from
