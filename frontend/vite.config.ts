@@ -32,7 +32,11 @@ export default defineConfig({
           if (id.includes('node_modules/katex') || id.includes('node_modules/react-katex')) {
             return 'katex-vendor'; // Only loaded on pages with LaTeX math
           }
-          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+          if (
+            id.includes('node_modules/leaflet') ||
+            id.includes('node_modules/react-leaflet') ||
+            id.includes('node_modules/@react-leaflet/')
+          ) {
             return 'leaflet-vendor'; // Only loaded on NounCentersPage (map)
           }
 
